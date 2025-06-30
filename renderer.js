@@ -6,6 +6,8 @@ const TradeManager = require('./trade_manager.js');
 
 let accounts = [];
 let tradeManager = null;
+let filteredAccounts = []; // Для збереження відфільтрованих акаунтів
+let searchQuery = ''; // Поточний запит пошуку
 
 // Курс USD до UAH (можна оновлювати або отримувати з API)
 const USD_TO_UAH_RATE = 41.5;
@@ -43,6 +45,9 @@ function loadAccounts() {
       accounts = [];
     }
   }
+  
+  // Ініціалізуємо відфільтровані акаунти
+  filteredAccounts = [...accounts];
   render();
 }
 
@@ -53,7 +58,13 @@ function updateField(index, key, value) {
     accounts[index][key] = value;
   }
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function addWeeklyIncome(index) {
@@ -69,14 +80,26 @@ function addWeeklyIncome(index) {
   acc.history.unshift({ date, amount: weekly });
 
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function deleteAccount(index) {
   if (confirm('Видалити акаунт?')) {
     accounts.splice(index, 1);
     saveAccounts();
-    render();
+    // Оновлюємо відфільтровані акаунти
+    if (searchQuery && searchQuery !== '') {
+      searchAccounts(searchQuery);
+    } else {
+      filteredAccounts = [...accounts];
+      render();
+    }
   }
 }
 
@@ -103,7 +126,13 @@ function addAccount() {
     farming: true
   });
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function daysUntil(dateString) {
@@ -116,13 +145,25 @@ function daysUntil(dateString) {
 function updateUnlockDate(index, newDate) {
   accounts[index].unlockDate = newDate;
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function togglePrime(index) {
   accounts[index].prime = !accounts[index].prime;
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function selectMaFile(event, index) {
@@ -153,7 +194,13 @@ function toggleStar(index) {
   }
 
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function generate2FA(index) {
@@ -179,33 +226,61 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text);
 }
 
-// Функція для копіювання загальної суми дропів
-function copyTotalDropPrice(index) {
-  const acc = accounts[index];
-  if (!acc.lastDrops || acc.lastDrops.length === 0) {
-    alert('Немає дропів для копіювання');
-    return;
+// Функція пошуку акаунтів
+function searchAccounts(query) {
+  searchQuery = query.toLowerCase().trim();
+  
+  if (!searchQuery || searchQuery === '') {
+    filteredAccounts = [...accounts];
+  } else {
+    filteredAccounts = accounts.filter(acc => {
+      const login = (acc.login || '').toLowerCase();
+      const name = (acc.name || '').toLowerCase();
+      const lastDrop = (acc.lastDrop || '').toLowerCase();
+      const id = (acc.id || '').toLowerCase();
+      
+      return login.includes(searchQuery) || 
+             name.includes(searchQuery) || 
+             lastDrop.includes(searchQuery) ||
+             id.includes(searchQuery);
+    });
   }
   
-  const totalPrice = acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0);
-  
-  // Копіюємо тільки число гривнів
-  const textToCopy = totalPrice.toFixed(2);
-  
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    // Показуємо feedback
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = '✅';
-    button.style.background = '#10b981';
-    
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.style.background = '';
-    }, 1000);
-  }).catch(() => {
-    alert(`Загальна сума дропів: ${textToCopy} грн`);
-  });
+  render();
+  updateSearchResultCount();
+}
+
+// Обробник введення в поле пошуку
+function handleSearchInput(event) {
+  const query = event.target.value;
+  searchAccounts(query);
+}
+
+// Оновлення лічильника результатів пошуку
+function updateSearchResultCount() {
+  const searchInfo = document.getElementById('search-info');
+  if (searchInfo) {
+    if (searchQuery && searchQuery !== '') {
+      const total = accounts.length;
+      const found = filteredAccounts.length;
+      searchInfo.textContent = `Знайдено ${found} з ${total} акаунтів`;
+      searchInfo.style.display = 'block';
+    } else {
+      searchInfo.style.display = 'none';
+    }
+  }
+}
+
+// Очищення пошуку
+function clearSearch() {
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  searchQuery = '';
+  filteredAccounts = [...accounts];
+  render();
+  updateSearchResultCount();
 }
 
 async function fetchLastDrop(index) {
@@ -288,7 +363,13 @@ async function fetchLastDrop(index) {
       console.log('[fetchLastDrop] Зберігаємо дані...');
       saveAccounts();
       console.log('[fetchLastDrop] Перерендеруємо...');
-      render();
+      // Оновлюємо відфільтровані акаунти після зміни
+      if (searchQuery && searchQuery !== '') {
+        searchAccounts(searchQuery);
+      } else {
+        filteredAccounts = [...accounts];
+        render();
+      }
       
       const dropsText = convertedDrops.map((drop, i) => 
         `${i + 1}. ${drop.name} - ${drop.priceUAH} грн (${drop.originalPrice})`
@@ -330,9 +411,22 @@ function render() {
   const container = document.getElementById('accounts');
   container.innerHTML = '';
  
-  const filteredAccounts = accounts; // Показуємо всі акаунти на головній сторінці
+  const accountsToRender = (!searchQuery || searchQuery === '') ? accounts : filteredAccounts;
 
-  filteredAccounts.forEach((acc, i) => {
+  // Показуємо повідомлення, якщо нічого не знайдено (тільки при активному пошуку)
+  if (searchQuery && searchQuery !== '' && accountsToRender.length === 0) {
+    container.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <h3>Нічого не знайдено</h3>
+        <p>За запитом "${searchQuery}" не знайдено жодного акаунту</p>
+        <button onclick="clearSearch()" class="btn-clear-search-inline">Очистити пошук</button>
+      </div>
+    `;
+    return;
+  }
+
+  accountsToRender.forEach((acc, i) => {
     // Знайдемо оригінальний індекс цього акаунту в основному масиві
     const originalIndex = accounts.indexOf(acc);
     
@@ -358,7 +452,7 @@ function render() {
           <div class="drops-container">
             ${acc.lastDrops.slice(0, 2).map((drop, dropIndex) => `
               <div class="drop-item ${dropIndex === 0 ? 'primary-drop' : 'secondary-drop'}">
-                <img src="${drop.imageUrl || 'https://via.placeholder.com/40x40/333/fff?text=?'}" alt="${drop.name}" class="drop-preview-image ${dropIndex === 0 ? 'large' : 'small'}" onerror="this.src='https://via.placeholder.com/40x40/333/fff?text=?'">
+                <img src="${drop.imageUrl}" alt="${drop.name}" class="drop-preview-image ${dropIndex === 0 ? 'large' : 'small'}" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;40&quot; height=&quot;40&quot; viewBox=&quot;0 0 40 40&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;40&quot; height=&quot;40&quot; rx=&quot;6&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;1&quot; stroke-dasharray=&quot;4,2&quot;/><circle cx=&quot;20&quot; cy=&quot;20&quot; r=&quot;10&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;1&quot; fill=&quot;none&quot; opacity=&quot;0.5&quot;/><path d=&quot;M20 14v12m-6-6h12&quot; stroke=&quot;#059669&quot; stroke-width=&quot;1.5&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;20&quot; cy=&quot;20&quot; r=&quot;1.5&quot; fill=&quot;#059669&quot;/></svg></div>'">
                 <div class="drop-preview-info">
                   <span class="drop-preview-name">${drop.name}</span>
                   <div class="drop-price-container">
@@ -378,7 +472,7 @@ function render() {
           </div>
           <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дропи">🔄</button>
         ` : acc.lastDrop ? `
-          <img src="${acc.lastDropImageUrl || 'https://via.placeholder.com/48x48/333/fff?text=?'}" alt="${acc.lastDrop}" class="drop-preview-image" onerror="this.src='https://via.placeholder.com/48x48/333/fff?text=?'">
+          <img src="${acc.lastDropImageUrl}" alt="${acc.lastDrop}" class="drop-preview-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;48&quot; height=&quot;48&quot; rx=&quot;8&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;1.5&quot; stroke-dasharray=&quot;6,3&quot;/><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;12&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M24 18v12m-6-6h12&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;2&quot; fill=&quot;#10b981&quot;/></svg></div>'">
           <div class="drop-preview-info">
             <span class="drop-preview-name">${acc.lastDrop}</span>
             <span class="drop-preview-price">💰 ${acc.lastDropPrice} грн</span>
@@ -386,7 +480,15 @@ function render() {
           <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дроп">🔄</button>
         ` : `
           <div class="drop-placeholder">
-            <img src="https://via.placeholder.com/48x48/333/fff?text=?" class="drop-preview-image">
+            <div class="drop-placeholder-content">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="48" height="48" rx="8" fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="6,3" opacity="0.6"/>
+                <circle cx="24" cy="24" r="12" stroke="#10b981" stroke-width="1.5" fill="none" opacity="0.7"/>
+                <path d="M24 18v12m-6-6h12" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="24" cy="24" r="2" fill="#10b981"/>
+                <text x="24" y="40" text-anchor="middle" fill="#059669" font-family="Arial" font-size="6" font-weight="bold">NO DROP</text>
+              </svg>
+            </div>
             <div class="drop-preview-info">
               <span class="drop-preview-name">Немає дропів</span>
               <span class="drop-preview-price">Натисніть для отримання</span>
@@ -472,7 +574,7 @@ function render() {
               ${acc.lastDrops.map((drop, dropIndex) => `
                 <div class="drop-history-item">
                   <div class="drop-number">#${dropIndex + 1}</div>
-                  <img src="${drop.imageUrl || 'https://via.placeholder.com/64'}" alt="${drop.name}" class="last-drop-image" onerror="this.src='https://via.placeholder.com/64'">
+                  <img src="${drop.imageUrl}" alt="${drop.name}" class="last-drop-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;64&quot; height=&quot;64&quot; viewBox=&quot;0 0 64 64&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;10&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8,4&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;16&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;2&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M32 20v24m-12-12h24&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;3&quot; fill=&quot;#10b981&quot;/></svg></div>'">
                   <div class="last-drop-details">
                     <span class="last-drop-name">${drop.name}</span>
                     <span class="last-drop-price">Ціна: ${drop.priceUAH} грн (${drop.originalPrice})</span>
@@ -488,7 +590,7 @@ function render() {
               <input type="number" placeholder="Ціна" value="${acc.lastDropPrice || 0}" onchange="updateField(${originalIndex}, 'lastDropPrice', this.value)" /> грн
               
               <div class="last-drop-info">
-                <img src="${acc.lastDropImageUrl || 'https://via.placeholder.com/64'}" alt="${acc.lastDrop}" class="last-drop-image" onerror="this.src='https://via.placeholder.com/64'">
+                <img src="${acc.lastDropImageUrl}" alt="${acc.lastDrop}" class="last-drop-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;64&quot; height=&quot;64&quot; viewBox=&quot;0 0 64 64&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;10&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8,4&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;16&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;2&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M32 20v24m-12-12h24&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;3&quot; fill=&quot;#10b981&quot;/></svg></div>'">
                 <div class="last-drop-details">
                   <span class="last-drop-name">${acc.lastDrop}</span>
                   <span class="last-drop-price">Ціна: ${acc.lastDropPrice} грн</span>
@@ -548,13 +650,25 @@ function saveAccounts() {
 function toggleDetails(index) {
   accounts[index].open = !accounts[index].open;
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 function toggleFarming(index) {
   accounts[index].farming = !accounts[index].farming;
   saveAccounts();
-  render();
+  // Оновлюємо відфільтровані акаунти після зміни
+  if (searchQuery && searchQuery !== '') {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = [...accounts];
+    render();
+  }
 }
 
 // Функція для перемикання табів
