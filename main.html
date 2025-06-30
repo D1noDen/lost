@@ -445,28 +445,281 @@ select, .tab-button {
 .btn-weekly-add {
   background-color: #d0e0ff;
 }
+/* Стилі для кнопки додати акаунт */
+.add-account-section {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.btn-add-account {
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+  color: var(--text-primary);
+  border: 2px solid var(--emerald-400);
+  border-radius: 16px;
+  padding: 16px 32px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-emerald);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.btn-add-account::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-add-account:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+  border-color: var(--emerald-300);
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-400));
+}
+
+.btn-add-account:hover::before {
+  left: 100%;
+}
+
+.btn-add-account:active {
+  transform: translateY(0);
+}
+
+.btn-add-icon {
+  width: 20px;
+  height: 20px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-4px); }
+  60% { transform: translateY(-2px); }
+}
+
+/* Стилі для секції прибутку */
+.profit-section {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.profit-container {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+  border: 2px solid var(--border-primary);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 320px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.profit-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.profit-container:hover {
+  border-color: var(--emerald-400);
+  box-shadow: var(--shadow-emerald);
+  transform: translateY(-2px);
+}
+
+.profit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.profit-icon svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.profit-info {
+  flex: 1;
+}
+
+.profit-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.profit-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--emerald-400);
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.profit-badge {
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  color: white;
+  animation: pulse 3s infinite;
+}
+
+.profit-badge svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Стилі для навігаційних табів */
+.tabs-navigation {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.tabs-container {
+  background: var(--bg-card);
+  border: 2px solid var(--border-primary);
+  border-radius: 20px;
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
+}
+
+.tab-button {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+  color: var(--text-primary);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+}
+
+.tab-button.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.tab-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-text {
+  font-weight: 600;
+}
+
+.btn-reset {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: var(--text-primary);
+  border: 2px solid #f87171;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  margin-left: 12px;
+}
+
+.btn-reset:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+}
+
+.reset-icon {
+  width: 16px;
+  height: 16px;
+  animation: spin-slow 3s linear infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Стилі для інших кнопок */
 .btn-prime-add,
 .btn-prime-remove,
-.btn-weekly-add,
-.btn-add-account,
-.btn-reset {
-  background-color: #222;
-  color: #fff;
-  padding: 6px 10px;
-  border: 1px solid #444;
-  border-radius: 6px;
+.btn-weekly-add {
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border: 1px solid var(--emerald-400);
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   font-size: 14px;
   margin: 4px 2px;
+  font-weight: 500;
 }
 
 .btn-prime-add:hover,
 .btn-prime-remove:hover,
-.btn-weekly-add:hover,
-.btn-add-account:hover,
-.btn-reset:hover {
-  background-color: #333;
+.btn-weekly-add:hover {
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-400));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
 .history-entry {
   display: flex;
@@ -504,91 +757,335 @@ select, .tab-button {
 .history-income {
   color: #4caf50;
   font-weight: bold;
+}/* Стилі для Created By */
+.created-by {
+  text-align: center;
+  margin: 40px auto 30px;
+  padding: 20px 30px;
+  font-size: 16px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: var(--text-muted);
+  background: linear-gradient(135deg, 
+    rgba(30, 51, 46, 0.6),
+    rgba(15, 26, 15, 0.4)
+  );
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1.2px;
+  user-select: none;
+  font-weight: 500;
+  max-width: 300px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInScale 1s ease-out 0.5s both;
 }
+
+.created-by::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent,
+    rgba(16, 185, 129, 0.1),
+    transparent
+  );
+  animation: shimmerSlow 4s ease-in-out infinite;
+}
+
+.created-by .den {
+  color: var(--emerald-400);
+  font-weight: 700;
+  text-shadow: 
+    0 0 10px rgba(16, 185, 129, 0.6),
+    0 0 20px rgba(16, 185, 129, 0.3),
+    0 0 30px rgba(16, 185, 129, 0.1);
+  animation: nameGlow 2.5s ease-in-out infinite alternate;
+  position: relative;
+  display: inline-block;
+}
+
+.created-by .den::before {
+  content: '👨‍💻';
+  position: absolute;
+  left: -107px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  animation: bounce 2s infinite;
+}
+
+/* Стилі для головного контейнера */
 .main-container {
-      text-align: center;
-      padding: 50px 40px;
-      border-radius: 20px;
-      position: relative;
-      background: rgba(20, 20, 20, 0.6);
-      box-shadow: 0 0 20px rgba(0, 255, 170, 0.08), 0 0 60px rgba(0, 255, 170, 0.04);
-      border: 2px solid transparent;
-      background-clip: padding-box;
-      animation: fadeInScale 1.2s ease;
-      overflow: hidden;
-      z-index: 1;
-    }
+  text-align: center;
+  padding: 60px 50px;
+  border-radius: 24px;
+  position: relative;
+  background: linear-gradient(135deg, 
+    rgba(30, 51, 46, 0.95) 0%,
+    rgba(15, 26, 15, 0.9) 50%,
+    rgba(6, 78, 59, 0.85) 100%
+  );
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--border-primary);
+  box-shadow: 
+    var(--shadow-emerald),
+    inset 0 1px 0 rgba(16, 185, 129, 0.1),
+    0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: fadeInScale 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+}
 
-    .main-container::before {
-      content: "";
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      z-index: -1;
-      background: linear-gradient(135deg, #0fffc1, #00ffe0, #00ffc3);
-      filter: blur(12px);
-      border-radius: 20px;
-      opacity: 0.25;
-      animation: pulseGlow 3s infinite ease-in-out;
-    }
+.main-container::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  z-index: -2;
+  background: linear-gradient(135deg, 
+    var(--emerald-400) 0%,
+    var(--emerald-500) 25%,
+    var(--emerald-600) 50%,
+    var(--emerald-500) 75%,
+    var(--emerald-400) 100%
+  );
+  background-size: 400% 400%;
+  filter: blur(16px);
+  border-radius: 27px;
+  opacity: 0.6;
+  animation: gradientShift 4s ease-in-out infinite;
+}
 
-    .main-title {
-      font-size: 36px;
-      font-weight: 600;
-      color: #0fffc1;
-      text-shadow: 0 0 6px #0fffc1aa;
-      margin-bottom: 12px;
-      animation: slideDown 1s ease-out;
-    }
+.main-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(135deg, 
+    transparent 0%,
+    rgba(16, 185, 129, 0.05) 25%,
+    rgba(52, 211, 153, 0.1) 50%,
+    rgba(16, 185, 129, 0.05) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
 
-    .main-sub {
-      font-size: 16px;
-      color: #aaa;
-      animation: fadeInUp 1.4s ease-out;
-    }
+.main-title {
+  font-size: 42px;
+  font-weight: 800;
+  background: linear-gradient(135deg, 
+    var(--emerald-300) 0%,
+    var(--emerald-400) 50%,
+    var(--emerald-300) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+  margin-bottom: 16px;
+  animation: slideDown 1s ease-out, textGlow 3s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
+  line-height: 1.2;
+}
 
-    @keyframes fadeInScale {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
+.main-title::before {
+  content: '💎';
+  position: absolute;
+  left: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  animation: float 3s ease-in-out infinite;
+  opacity: 0.8;
+}
 
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+.main-title::after {
+  content: '✨';
+  position: absolute;
+  right: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  animation: float 3s ease-in-out infinite 1.5s;
+  opacity: 0.8;
+}
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+.main-sub {
+  font-size: 18px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0;
+  animation: fadeInUp 1.4s ease-out;
+  position: relative;
+  z-index: 2;
+  line-height: 1.4;
+  opacity: 0.9;
+}
 
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.25; transform: scale(1); }
-      50% { opacity: 0.45; transform: scale(1.02); }
-    }
-    .created-by {
-    margin-top: 30px;
+
+
+/* Анімації */
+@keyframes fadeInScale {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9) translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  }
+}
+
+@keyframes slideDown {
+  from { 
+    opacity: 0; 
+    transform: translateY(-30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { 
+    opacity: 1; 
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+  50% { 
+    opacity: 0.8; 
+    text-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+  }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-5px) rotate(5deg); }
+  75% { transform: translateY(5px) rotate(-5deg); }
+}
+
+@keyframes gradientShift {
+  0%, 100% { 
+    background-position: 0% 50%; 
+    opacity: 0.6; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+    opacity: 0.8; 
+  }
+}
+
+@keyframes textGlow {
+  0%, 100% { 
+    text-shadow: 0 0 30px rgba(16, 185, 129, 0.5); 
+  }
+  50% { 
+    text-shadow: 0 0 40px rgba(16, 185, 129, 0.8); 
+  }
+}
+
+@keyframes nameGlow {
+  0% { 
+    text-shadow: 
+      0 0 10px rgba(16, 185, 129, 0.6),
+      0 0 20px rgba(16, 185, 129, 0.3),
+      0 0 30px rgba(16, 185, 129, 0.1);
+  }
+  100% { 
+    text-shadow: 
+      0 0 15px rgba(16, 185, 129, 0.8),
+      0 0 25px rgba(16, 185, 129, 0.5),
+      0 0 35px rgba(16, 185, 129, 0.2);
+  }
+}
+
+@keyframes shimmerSlow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(-50%) translateY(0); }
+  40% { transform: translateY(-50%) translateY(-5px); }
+  60% { transform: translateY(-50%) translateY(-3px); }
+}
+
+/* Адаптивні стилі */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 40px 30px;
+    margin: 0 20px;
+  }
+  
+  .main-title {
+    font-size: 32px;
+  }
+  
+  .main-title::before,
+  .main-title::after {
+    display: none;
+  }
+  
+  .main-sub {
     font-size: 16px;
-    font-family: 'Segoe UI', sans-serif;
-    color: #999;
-    text-align: center;
-    letter-spacing: 1px;
-    user-select: none;
   }
+  
+  .created-by {
+    margin: 30px auto 20px;
+    padding: 16px 24px;
+    font-size: 14px;
+  }
+}
 
-  .created-by .den {
-    color: #00ffc3;
-    text-shadow: 0 0 4px #00ffc3, 0 0 10px #00ffc388;
-    font-weight: bold;
-    animation: flicker 2s infinite alternate;
+@media (max-width: 480px) {
+  .main-container {
+    padding: 30px 20px;
+    margin: 0 10px;
   }
-
-  @keyframes flicker {
-    0% { opacity: 1; text-shadow: 0 0 6px #00ffc3, 0 0 12px #00ffc388; }
-    100% { opacity: 0.7; text-shadow: 0 0 2px #00ffc3, 0 0 4px #00ffc344; }
+  
+  .main-title {
+    font-size: 28px;
   }
+  
+  .main-sub {
+    font-size: 14px;
+  }
+  
+  .created-by {
+    font-size: 13px;
+    padding: 12px 20px;
+  }
+}
 
 .last-drop {
   margin-top: 15px;
@@ -1384,6 +1881,154 @@ select, .tab-button {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
 }
+
+/* Адаптивні стилі */
+@media (max-width: 768px) {
+  .add-account-section,
+  .profit-section,
+  .tabs-navigation {
+    margin: 20px 10px;
+  }
+
+  .btn-add-account {
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+
+  .profit-container {
+    min-width: auto;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .profit-info {
+    text-align: center;
+  }
+
+  .profit-amount {
+    font-size: 20px;
+  }
+
+  .tabs-container {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 13px;
+    min-width: auto;
+  }
+
+  .tab-text {
+    display: none;
+  }
+
+  .btn-reset {
+    padding: 10px 16px;
+    margin-left: 0;
+  }
+
+  .reset-text {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-add-account {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+  }
+
+  .profit-container {
+    padding: 16px;
+  }
+
+  .profit-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profit-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .profit-amount {
+    font-size: 18px;
+  }
+
+  .tabs-container {
+    justify-content: center;
+  }
+
+  .tab-button {
+    padding: 8px 12px;
+  }
+
+  .tab-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Анімації та ефекти */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Додаткові ефекти для покращення UX */
+.btn-add-account,
+.profit-container,
+.tab-button {
+  will-change: transform;
+}
+
+.btn-add-account:focus,
+.tab-button:focus,
+.btn-reset:focus {
+  outline: 2px solid var(--emerald-400);
+  outline-offset: 2px;
+}
+
+/* Покращення доступності */
+@media (prefers-reduced-motion: reduce) {
+  .btn-add-icon,
+  .profit-icon,
+  .profit-badge,
+  .reset-icon {
+    animation: none;
+  }
+  
+  .btn-add-account::before,
+  .profit-container::before,
+  .tab-button.active::before {
+    animation: none;
+  }
+}
 </style>
 
 </head>
@@ -1396,15 +2041,82 @@ select, .tab-button {
   
 <div>
   
-  <button class="btn-add-account" onclick="addAccount()">➕ Додати акаунт</button>
-  <h3 id="total-profit">Загальний прибуток: 0 грн</h3>
- <div class="tabs">
-  <button class="tab-button active" onclick="showTab('accounts-tab', this)">Акаунти</button>
-  <button class="tab-button" onclick="window.location.href='trading.html'">Трейди</button>
-  <button class="tab-button" onclick="showTab('history-tab', this)">Історія</button>
-  <button class="tab-button" onclick="window.location.href='statistics.html'">Статистика</button>
-  <button  class="btn-reset" onclick="ResetFarm()">Reset</button>
-</div>
+  <!-- Кнопка додати акаунт -->
+  <div class="add-account-section">
+    <button class="btn-add-account" onclick="addAccount()">
+      <svg class="btn-add-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      <span class="btn-add-text">Додати акаунт</span>
+    </button>
+  </div>
+
+  <!-- Секція прибутку -->
+  <div class="profit-section">
+    <div class="profit-container">
+      <div class="profit-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <div class="profit-info">
+        <div class="profit-label">Загальний прибуток</div>
+        <div id="total-profit" class="profit-amount">0 грн</div>
+      </div>
+      <div class="profit-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Таби навігації -->
+  <div class="tabs-navigation">
+    <div class="tabs-container">
+      <button class="tab-button active" onclick="showTab('accounts-tab', this)">
+        <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span class="tab-text">Акаунти</span>
+      </button>
+      <button class="tab-button" onclick="window.location.href='trading.html'">
+        <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7"/>
+          <path d="M17 17h-10"/>
+          <path d="M17 17V7"/>
+        </svg>
+        <span class="tab-text">Трейди</span>
+      </button>
+      <button class="tab-button" onclick="showTab('history-tab', this)">
+        <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v5h5"/>
+          <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
+        </svg>
+        <span class="tab-text">Історія</span>
+      </button>
+      <button class="tab-button" onclick="window.location.href='statistics.html'">
+        <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"/>
+          <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+        </svg>
+        <span class="tab-text">Статистика</span>
+      </button>
+      <button class="btn-reset" onclick="ResetFarm()">
+        <svg class="reset-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+        </svg>
+        <span class="reset-text">Reset</span>
+      </button>
+    </div>
+  </div>
 
 <!-- Фільтр та пошук -->
 <div class="search-container" style="margin: 20px 0;">
