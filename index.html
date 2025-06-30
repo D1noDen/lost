@@ -4,34 +4,27 @@
   <meta charset="UTF-8" />
   <title>LOST — Вхід</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
     :root {
-      --emerald-50: #ecfdf5;
-      --emerald-100: #d1fae5;
-      --emerald-200: #a7f3d0;
-      --emerald-300: #6ee7b7;
-      --emerald-400: #34d399;
-      --emerald-500: #10b981;
-      --emerald-600: #059669;
-      --emerald-700: #047857;
-      --emerald-800: #065f46;
-      --emerald-900: #064e3b;
-      --emerald-950: #022c22;
-      
-      --bg-primary: #0a0f0a;
-      --bg-secondary: #0f1a0f;
-      --bg-tertiary: #1a2e1a;
-      --bg-card: #1e332e;
-      --bg-hover: #2a4a3a;
-      
-      --text-primary: #ecfdf5;
+      --bg-primary: #080a09;
+      --bg-secondary: #0d1210;
+      --bg-glass: rgba(16, 185, 129, 0.05);
+      --bg-glass-hover: rgba(16, 185, 129, 0.1);
+      --bg-button: #10b981;
+      --bg-button-hover: #34d399;
+
+      --text-primary: #e5e7eb;
       --text-secondary: #a7f3d0;
-      --text-muted: #6ee7b7;
-      
-      --border-primary: #2a4a3a;
-      --border-secondary: #34d399;
-      
-      --shadow-emerald: 0 8px 32px rgba(16, 185, 129, 0.2);
-      --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.4);
+      --text-title: #ffffff;
+      --text-glow: #6ee7b7;
+
+      --border-primary: rgba(110, 231, 183, 0.2);
+      --border-focus: rgba(110, 231, 183, 0.5);
+      --border-error: rgba(255, 107, 107, 0.5);
+
+      --shadow-glow: 0 0 40px rgba(16, 185, 129, 0.3);
+      --shadow-button: 0 4px 20px rgba(16, 185, 129, 0.4);
     }
 
     * {
@@ -41,207 +34,173 @@
     }
 
     body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--emerald-950) 100%);
-      background-attachment: fixed;
-      background-size: 400% 400%;
-      animation: moveBackground 15s ease infinite;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
       color: var(--text-primary);
-      position: relative;
     }
 
-    body::before {
-      content: '';
+    #bg-animation {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
-          radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.12) 0%, transparent 50%),
-          radial-gradient(circle at 40% 80%, rgba(110, 231, 183, 0.1) 0%, transparent 50%);
-      pointer-events: none;
       z-index: 0;
-      animation: float 20s ease-in-out infinite;
-    }
-
-    @keyframes moveBackground {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      33% { transform: translate(30px, -30px) rotate(120deg); }
-      66% { transform: translate(-20px, 20px) rotate(240deg); }
     }
 
     .container {
-      backdrop-filter: blur(20px);
-      background: linear-gradient(135deg, rgba(30, 51, 46, 0.8), rgba(26, 46, 26, 0.6));
-      border: 2px solid var(--border-primary);
-      box-shadow: var(--shadow-card);
-      border-radius: 32px;
-      padding: 48px;
-      width: 420px;
-      text-align: center;
-      animation: fadeIn 1.5s ease-out;
       position: relative;
       z-index: 1;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+      animation: fadeIn 1.5s ease-out forwards;
     }
 
-    .container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
-      background-size: 200% 100%;
-      animation: shimmer 3s ease-in-out infinite;
+    .header-content {
+      text-align: center;
     }
 
-    @keyframes shimmer {
-        0%, 100% { background-position: -200% 0; }
-        50% { background-position: 200% 0; }
+    .main-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: var(--text-title);
+        letter-spacing: -2px;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
     }
 
-    h1 {
-      font-size: 32px;
-      margin-bottom: 32px;
-      background: linear-gradient(135deg, var(--emerald-300), var(--emerald-500));
+    .main-title span {
+      background: linear-gradient(135deg, #6ee7b7, #10b981);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-weight: 700;
-      text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+      animation: subtleGlow 4s ease-in-out infinite alternate;
     }
 
-    .subtitle {
-      font-size: 16px;
-      height: 24px;
-      margin-bottom: 40px;
-      color: var(--emerald-300);
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 2px solid var(--emerald-300);
-      width: 0;
-      animation: typing 4s steps(40, end) 1 forwards, blink 0.8s step-end infinite;
+    .main-sub {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        opacity: 0.9;
     }
 
+    .login-form {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--bg-glass);
+      border: 1px solid var(--border-primary);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      box-shadow: var(--shadow-glow);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    
+    .login-form:hover {
+        background: var(--bg-glass-hover);
+        border-color: var(--border-focus);
+    }
+    
     input[type="password"] {
       width: 100%;
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      border: 2px solid var(--border-primary);
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+      padding: 1rem;
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      background: transparent;
       color: var(--text-primary);
-      font-size: 16px;
+      font-size: 1rem;
       outline: none;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
     }
 
     input[type="password"]:focus {
-      border-color: var(--border-secondary);
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), var(--shadow-emerald);
-      background: linear-gradient(135deg, var(--bg-hover), var(--bg-tertiary));
+      border-color: var(--border-focus);
+      box-shadow: 0 0 15px rgba(110, 231, 183, 0.2);
     }
 
     input[type="password"]::placeholder {
-      color: var(--text-muted);
+      color: var(--text-secondary);
+      opacity: 0.6;
     }
 
     button {
-      padding: 16px 32px;
+      padding: 1rem;
       border: none;
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
-      color: var(--emerald-50);
-      font-size: 16px;
-      font-weight: 600;
+      border-radius: 12px;
+      background: var(--bg-button);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: var(--shadow-emerald);
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-button);
       position: relative;
       overflow: hidden;
     }
-
-    button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.6s ease;
-    }
-
-    button:hover::before {
-      left: 100%;
-    }
-
+    
     button:hover {
-      background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+      background: var(--bg-button-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
     }
 
     button:active {
-      transform: scale(0.96);
+      transform: scale(0.98);
     }
-
+    
     .error {
       color: #ff6b6b;
-      font-size: 14px;
-      margin-top: 16px;
+      font-size: 0.9rem;
+      margin-top: -1rem;
+      margin-bottom: -0.5rem;
+      text-align: center;
       opacity: 0;
-      transition: opacity 0.4s ease;
-      background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(239, 68, 68, 0.05));
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 2px solid rgba(255, 107, 107, 0.3);
+      height: 0;
+      overflow: hidden;
+      transition: opacity 0.4s ease, height 0.4s ease, margin 0.4s ease;
+      background: rgba(255, 107, 107, 0.1);
+      padding: 0 1rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
     }
 
     .error.show {
       opacity: 1;
+      height: auto;
+      padding: 0.75rem 1rem;
+      margin-top: -1rem;
+      margin-bottom: -0.5rem;
+      border-color: var(--border-error);
+    }
+
+    .created-by {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    .created-by .den {
+      color: var(--text-glow);
+      font-weight: 700;
+      text-shadow: 0 0 5px var(--text-glow);
     }
 
     @keyframes fadeIn {
       from {
         opacity: 0;
-        transform: translateY(30px) scale(0.9);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    @keyframes typing {
-      from { width: 0 }
-      to { width: 100% }
-    }
-
-    @keyframes blink {
-      from, to { border-color: transparent }
-      50% { border-color: var(--emerald-300) }
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
@@ -249,72 +208,152 @@
       }
     }
 
-    @keyframes typing {
-      from { width: 0 }
-      to { width: 100% }
+    @keyframes subtleGlow {
+        from {
+            filter: brightness(1);
+        }
+        to {
+            filter: brightness(1.2);
+        }
     }
-
-    @keyframes blink {
-      50% { border-color: transparent }
-    }
-     .created-by {
-    margin-top: 30px;
-    font-size: 16px;
-    font-family: 'Segoe UI', sans-serif;
-    color: #999;
-    text-align: center;
-    letter-spacing: 1px;
-    user-select: none;
-    position: absolute;
-    top: 0;
-  }
-
-  .created-by .den {
-    color: #00ffc3;
-    text-shadow: 0 0 4px #00ffc3, 0 0 10px #00ffc388;
-    font-weight: bold;
-    animation: flicker 2s infinite alternate;
-  }
-
-  @keyframes flicker {
-    0% { opacity: 1; text-shadow: 0 0 6px #00ffc3, 0 0 12px #00ffc388; }
-    100% { opacity: 0.7; text-shadow: 0 0 2px #00ffc3, 0 0 4px #00ffc344; }
-  }
   </style>
-  
 </head>
 <body>
-  <div class="created-by">Created By <span class="den">Den</span></div>
+  <canvas id="bg-animation"></canvas>
+
   <div class="container">
-  <h1 class="title">🔐 Вхід до <span style="color:#00ffc3">LOST</span></h1>
-  <div class="subtitle">👨‍🌾 <span style="color:#80fff0">Фермери Steam акаунтів</span></div>
-  
-  <input type="password" id="password" placeholder="Введіть пароль" autocomplete="off" />
-  
-  <button onclick="login()">🔓 Увійти</button>
-  
-  <div class="error" id="error">❌ Неправильний пароль!</div>
-</div>
+    <div class="header-content">
+      <h1 class="main-title">💼 <span>LOST</span> Accounts</h1>
+      <p class="main-sub">Управління, фарм і безпека акаунтів</p>
+    </div>
+    
+    <div class="login-form">
+      <input type="password" id="password" placeholder="Введіть пароль" autocomplete="current-password" />
+      <button onclick="login()">🔓 Увійти</button>
+      <div class="error" id="error">❌ Неправильний пароль!</div>
+    </div>
+  </div>
+
+  <div class="created-by">Created By <span class="den">Den</span></div>
 
   <script>
     const fs = require('fs');
     const path = require('path');
 
     function login() {
-      const entered = document.getElementById('password').value.trim();
-      const authPath = path.join(__dirname, 'auth.json');
-      const saved = JSON.parse(fs.readFileSync(authPath));
+      const passwordInput = document.getElementById('password');
+      const entered = passwordInput.value.trim();
       const errorBox = document.getElementById('error');
 
-      if (entered === saved.password) {
-        window.location = 'main.html';
-      } else {
+      try {
+        const authPath = path.join(__dirname, 'auth.json');
+        const saved = JSON.parse(fs.readFileSync(authPath));
+        
+        if (entered === saved.password) {
+          window.location.href = 'main.html';
+        } else {
+          errorBox.classList.add('show');
+          passwordInput.focus();
+          setTimeout(() => {
+            errorBox.classList.remove('show');
+          }, 2500);
+        }
+      } catch (err) {
+        console.error("Error reading auth file:", err);
+        errorBox.textContent = 'Помилка конфігурації!';
         errorBox.classList.add('show');
-        setTimeout(() => {
-          errorBox.classList.remove('show');
-        }, 2500);
       }
     }
+
+    document.getElementById('password').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            login();
+        }
+    });
+
+    const canvas = document.getElementById('bg-animation');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const particleCount = 70;
+
+    class Particle {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 2 + 1;
+            this.speedX = Math.random() * 1 - 0.5;
+            this.speedY = Math.random() * 1 - 0.5;
+            this.color = `rgba(110, 231, 183, ${Math.random() * 0.5})`;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            if (this.size > 0.1) this.size -= 0.01;
+
+            if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        }
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function init() {
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+        }
+        connect();
+        requestAnimationFrame(animate);
+    }
+    
+    function connect() {
+      let opacityValue = 1;
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a; b < particles.length; b++) {
+          let distance = Math.sqrt(
+            Math.pow(particles[a].x - particles[b].x, 2) + 
+            Math.pow(particles[a].y - particles[b].y, 2)
+          );
+
+          if (distance < 100) {
+            opacityValue = 1 - (distance / 100);
+            ctx.strokeStyle = `rgba(110, 231, 183, ${opacityValue * 0.3})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        init();
+    });
+
+    init();
+    animate();
+
   </script>
 </body>
 </html>
