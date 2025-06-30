@@ -724,39 +724,143 @@ select, .tab-button {
 .history-entry {
   display: flex;
   align-items: center;
-  background-color: #1c1c1c;
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  color: #ddd;
-  font-size: 14px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  transition: background 0.2s ease;
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);
+  padding: 20px 28px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: var(--shadow-card), 0 0 15px rgba(16, 185, 129, 0.05);
+  border: 2px solid var(--border-primary);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(15px);
+  cursor: pointer;
+}
+
+.history-entry::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--emerald-400) 0%, 
+    var(--emerald-500) 25%, 
+    var(--emerald-600) 50%, 
+    var(--emerald-500) 75%, 
+    var(--emerald-400) 100%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: all 0.5s ease;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.history-entry::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(16, 185, 129, 0.08), 
+    transparent
+  );
+  transition: left 0.8s ease;
 }
 
 .history-entry:hover {
-  background-color: #2a2a2a;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-emerald), 0 20px 60px rgba(16, 185, 129, 0.25);
+  border-color: var(--border-secondary);
+}
+
+.history-entry:hover::before {
+  opacity: 1;
+}
+
+.history-entry:hover::after {
+  left: 100%;
+}
+
+.history-entry:active {
+  transform: translateY(-4px) scale(1.01);
+  transition: all 0.2s ease;
 }
 
 .history-icon {
-  margin-right: 8px;
-  font-size: 16px;
+  margin-right: 16px;
+  font-size: 24px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.history-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.history-entry:hover .history-icon::before {
+  left: 100%;
 }
 
 .history-date {
-  color: #aaa;
-  margin-right: 6px;
+  color: var(--text-muted);
+  margin-right: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  backdrop-filter: blur(5px);
 }
 
 .history-login {
-  font-weight: bold;
-  color: #fff;
-  margin-right: 6px;
+  font-weight: 700;
+  color: var(--emerald-300);
+  margin-right: 12px;
+  font-size: 16px;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
 .history-income {
-  color: #4caf50;
-  font-weight: bold;
+  color: var(--emerald-300);
+  font-weight: 800;
+  font-size: 18px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  min-width: 100px;
+  text-align: center;
 }/* Стилі для Created By */
 .created-by {
   text-align: center;
@@ -1038,6 +1142,134 @@ select, .tab-button {
   0%, 20%, 50%, 80%, 100% { transform: translateY(-50%) translateY(0); }
   40% { transform: translateY(-50%) translateY(-5px); }
   60% { transform: translateY(-50%) translateY(-3px); }
+}
+
+/* Додаткові стилі та анімації для history-entry */
+.history-entry.new-entry {
+  border-color: var(--emerald-400);
+  box-shadow: var(--shadow-emerald), 0 0 25px rgba(16, 185, 129, 0.4);
+  animation: newEntryGlow 3s ease-in-out infinite;
+}
+
+.history-entry.new-entry::before {
+  opacity: 1;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes newEntryGlow {
+  0%, 100% {
+    box-shadow: var(--shadow-emerald), 0 0 25px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: var(--shadow-emerald), 0 0 40px rgba(16, 185, 129, 0.6);
+  }
+}
+
+.history-entry.selected {
+  border-color: var(--emerald-300);
+  background: linear-gradient(135deg, 
+    rgba(16, 185, 129, 0.15), 
+    var(--bg-card), 
+    var(--bg-tertiary)
+  );
+  transform: scale(1.02);
+}
+
+.history-entry.fade-out {
+  opacity: 0;
+  transform: translateX(-100%) scale(0.9);
+  transition: all 0.6s ease;
+}
+
+/* Анімації появи */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px) rotateY(-15deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0deg);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px) rotateY(15deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0deg);
+  }
+}
+
+/* Варіації анімацій для різних елементів */
+.history-entry:nth-child(3n+1) {
+  animation-name: slideInLeft;
+  animation-duration: 0.7s;
+}
+
+.history-entry:nth-child(3n+2) {
+  animation-name: slideInRight;
+  animation-duration: 0.7s;
+}
+
+.history-entry:nth-child(3n) {
+  animation-name: slideInUp;
+  animation-duration: 0.8s;
+}
+
+/* Спеціальні ефекти для різних типів операцій */
+.history-entry.income-entry .history-income {
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  color: var(--emerald-50);
+}
+
+.history-entry.expense-entry .history-income {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fef2f2;
+}
+
+.history-entry.neutral-entry .history-income {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: #f9fafb;
+}
+
+/* Responsive дизайн */
+@media (max-width: 768px) {
+  .history-entry {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  
+  .history-icon {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  
+  .history-date,
+  .history-login {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  
+  .history-income {
+    width: 100%;
+  }
 }
 
 /* Адаптивні стилі */
@@ -1594,7 +1826,13 @@ select, .tab-button {
 /* Стилі для історії транзакцій */
 .history-entry {
   list-style: none;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: slideInUp 0.6s ease forwards;
+  animation-delay: calc(var(--index, 0) * 0.1s);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .history-item {
