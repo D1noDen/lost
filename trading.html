@@ -5,6 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOST - Trading Interface</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --emerald-50: #ecfdf5;
+            --emerald-100: #d1fae5;
+            --emerald-200: #a7f3d0;
+            --emerald-300: #6ee7b7;
+            --emerald-400: #34d399;
+            --emerald-500: #10b981;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --emerald-800: #065f46;
+            --emerald-900: #064e3b;
+            --emerald-950: #022c22;
+            
+            --bg-primary: #0a0f0a;
+            --bg-secondary: #0f1a0f;
+            --bg-tertiary: #1a2e1a;
+            --bg-card: #1e332e;
+            --bg-hover: #2a4a3a;
+            
+            --text-primary: #ecfdf5;
+            --text-secondary: #a7f3d0;
+            --text-muted: #6ee7b7;
+            
+            --border-primary: #2a4a3a;
+            --border-secondary: #34d399;
+            
+            --shadow-emerald: 0 8px 32px rgba(16, 185, 129, 0.2);
+            --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,131 +44,207 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
-            color: #f1f1f1;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--emerald-950) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(110, 231, 183, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
-            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-            border-radius: 16px;
-            border: 1px solid #333;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+            padding: 32px 40px;
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);
+            border-radius: 24px;
+            border: 2px solid var(--border-primary);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: -200% 0; }
+            50% { background-position: 200% 0; }
         }
 
         .main-title {
-            font-size: 32px;
+            font-size: 48px;
             font-weight: 700;
-            background: linear-gradient(135deg, #00ffc3, #00d4aa);
+            background: linear-gradient(135deg, var(--emerald-300), var(--emerald-500), var(--emerald-400));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+            letter-spacing: -0.02em;
         }
 
         .main-sub {
-            color: #aaa;
-            font-size: 16px;
+            color: var(--text-muted);
+            font-size: 18px;
+            font-weight: 400;
         }
 
         .navigation {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            gap: 16px;
         }
 
         .nav-button {
-            background: linear-gradient(135deg, #2a2a2a, #1e1e1e);
-            color: #f1f1f1;
-            border: 1px solid #444;
-            padding: 12px 24px;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            color: var(--text-primary);
+            border: 2px solid var(--border-primary);
+            padding: 16px 32px;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .nav-button:hover::before {
+            left: 100%;
         }
 
         .nav-button:hover {
-            background: linear-gradient(135deg, #3a3a3a, #2e2e2e);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, var(--bg-hover), var(--bg-card));
+            border-color: var(--border-secondary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-emerald);
+            color: var(--emerald-200);
         }
 
         .login-section {
-            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-            padding: 30px;
-            border-radius: 16px;
-            margin: 0 auto 30px;
-            max-width: 500px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            padding: 40px;
+            border-radius: 24px;
+            margin: 0 auto 40px;
+            max-width: 600px;
             text-align: center;
-            border: 1px solid #333;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--border-primary);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
         }
 
         .login-section h3 {
-            color: #00ffc3;
-            margin-bottom: 20px;
-            font-size: 20px;
+            color: var(--emerald-300);
+            margin-bottom: 24px;
+            font-size: 24px;
+            font-weight: 600;
         }
 
         #account-select {
             width: 100%;
-            padding: 16px 20px;
-            border-radius: 12px;
-            border: 2px solid #444;
-            background: linear-gradient(135deg, #2a2a2a, #333);
-            color: #f1f1f1;
+            padding: 20px 24px;
+            border-radius: 16px;
+            border: 2px solid var(--border-primary);
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            color: var(--text-primary);
             font-size: 16px;
             font-weight: 500;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ffc3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
-            background-position: right 16px center;
-            background-size: 20px;
-            padding-right: 50px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background-position: right 20px center;
+            background-size: 24px;
+            padding-right: 60px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
         }
 
         #account-select:hover {
-            border-color: #00ffc3;
-            background: linear-gradient(135deg, #333, #3a3a3a);
-            box-shadow: 0 6px 20px rgba(0, 255, 195, 0.2);
-            transform: translateY(-1px);
+            border-color: var(--border-secondary);
+            background: linear-gradient(135deg, var(--bg-hover), var(--bg-tertiary));
+            box-shadow: var(--shadow-emerald);
+            transform: translateY(-2px);
         }
 
         #account-select:focus {
             outline: none;
-            border-color: #00ffc3;
-            box-shadow: 0 0 0 4px rgba(0, 255, 195, 0.2);
-            background: linear-gradient(135deg, #333, #3a3a3a);
+            border-color: var(--emerald-400);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), var(--shadow-emerald);
+            background: linear-gradient(135deg, var(--bg-hover), var(--bg-tertiary));
         }
 
         #account-select option {
-            background: #2a2a2a;
-            color: #f1f1f1;
-            padding: 12px 16px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 16px 20px;
             border: none;
             font-weight: 500;
         }
 
         #account-select option:hover {
-            background: #3a3a3a;
+            background: var(--bg-hover);
         }
 
         #account-select option:checked {
-            background: linear-gradient(135deg, #00ffc3, #00d4aa);
-            color: #000;
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: var(--emerald-50);
             font-weight: 600;
         }
 
@@ -161,114 +269,189 @@
 
         .select-label {
             display: block;
-            color: #00ffc3;
+            color: var(--emerald-300);
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         .select-icon {
             position: absolute;
-            left: 16px;
+            left: 20px;
             top: 50%;
             transform: translateY(-50%);
-            color: #00ffc3;
-            font-size: 18px;
+            color: var(--emerald-400);
+            font-size: 20px;
             pointer-events: none;
             z-index: 1;
         }
 
         #account-select.with-icon {
-            padding-left: 50px;
+            padding-left: 60px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #00ffc3, #00d4aa);
-            color: #000;
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: var(--emerald-50);
             border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
+            padding: 16px 32px;
+            border-radius: 16px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 255, 195, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-emerald);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 255, 195, 0.4);
+            background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
         }
 
         .btn-secondary {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 12px 24px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-secondary:hover::before {
+            left: 100%;
         }
 
         .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4);
         }
 
         .account-info {
-            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-            padding: 20px 30px;
-            border-radius: 16px;
-            margin: 0 auto 30px;
-            max-width: 500px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            padding: 32px 40px;
+            border-radius: 24px;
+            margin: 0 auto 40px;
+            max-width: 600px;
             text-align: center;
-            border: 1px solid #333;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--border-primary);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
             display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
         }
 
         .account-info .account-name {
-            color: #00ffc3;
-            font-size: 18px;
+            color: var(--emerald-300);
+            font-size: 20px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .tabs {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
-            gap: 10px;
+            margin-bottom: 40px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .tab-button {
-            background: linear-gradient(135deg, #2a2a2a, #1e1e1e);
-            color: #f1f1f1;
-            border: 1px solid #444;
-            padding: 12px 24px;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            color: var(--text-primary);
+            border: 2px solid var(--border-primary);
+            padding: 16px 32px;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .tab-button:hover::before {
+            left: 100%;
         }
 
         .tab-button:hover {
-            background: linear-gradient(135deg, #3a3a3a, #2e2e2e);
+            background: linear-gradient(135deg, var(--bg-hover), var(--bg-card));
+            border-color: var(--border-secondary);
             transform: translateY(-2px);
+            color: var(--emerald-200);
         }
 
         .tab-button.active {
-            background: linear-gradient(135deg, #00ffc3, #00d4aa);
-            color: #000;
-            border-color: #00ffc3;
-            box-shadow: 0 6px 20px rgba(0, 255, 195, 0.4);
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: var(--emerald-50);
+            border-color: var(--emerald-400);
+            box-shadow: var(--shadow-emerald);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active::before {
+            display: none;
         }
 
         .tab-content {
@@ -291,57 +474,102 @@
         }
 
         .trade-offer {
-            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-            border-radius: 16px;
-            border: 1px solid #333;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border-radius: 20px;
+            border: 2px solid var(--border-primary);
+            box-shadow: var(--shadow-card);
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .trade-offer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
         .trade-offer:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-            border-color: #444;
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-emerald);
+            border-color: var(--border-secondary);
+        }
+
+        .trade-offer:hover::before {
+            opacity: 1;
         }
 
         .trade-header {
-            padding: 20px 24px;
-            background: linear-gradient(135deg, #252525, #1a1a1a);
-            border-bottom: 1px solid #333;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            border-bottom: 2px solid var(--border-primary);
         }
 
         .trade-header h3 {
-            color: #00ffc3;
-            font-size: 18px;
+            color: var(--emerald-300);
+            font-size: 20px;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .trade-meta {
-            color: #aaa;
+            color: var(--text-muted);
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: var(--emerald-50);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-accepted {
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+        }
+
+        .status-declined {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
         .trade-body {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            padding: 24px;
+            gap: 32px;
+            padding: 32px;
         }
 
         .trade-section {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #333;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-primary);
         }
 
         .trade-section h4 {
-            color: #00ffc3;
-            margin-bottom: 15px;
+            color: var(--emerald-300);
             font-size: 16px;
             font-weight: 600;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -349,330 +577,498 @@
 
         .items-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 16px;
         }
 
         .item-card {
-            background: linear-gradient(135deg, #2a2a2a, #333);
-            border-radius: 12px;
-            padding: 12px;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            border-radius: 16px;
+            padding: 16px;
+            border: 2px solid var(--border-primary);
             text-align: center;
-            border: 1px solid #444;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .item-card:hover::before {
+            left: 100%;
         }
 
         .item-card:hover {
-            transform: translateY(-2px);
-            border-color: #00ffc3;
-            box-shadow: 0 4px 16px rgba(0, 255, 195, 0.2);
+            transform: translateY(-4px);
+            border-color: var(--border-secondary);
+            box-shadow: var(--shadow-emerald);
         }
 
         .item-card img {
-            width: 64px;
-            height: 64px;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .item-card:hover img {
+            transform: scale(1.05);
         }
 
         .item-name {
-            font-size: 12px;
-            color: #f1f1f1;
+            font-size: 13px;
+            color: var(--text-primary);
             word-break: break-word;
-            line-height: 1.3;
+            line-height: 1.4;
+            font-weight: 500;
         }
 
         .trade-actions {
-            padding: 20px 24px;
-            background: linear-gradient(135deg, #1a1a1a, #252525);
-            border-top: 1px solid #333;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            border-top: 2px solid var(--border-primary);
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
+            gap: 16px;
         }
 
         .btn-accept {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: var(--emerald-50);
             border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
+            padding: 14px 28px;
+            border-radius: 14px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-emerald);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-accept::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-accept:hover::before {
+            left: 100%;
         }
 
         .btn-accept:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
         }
 
         .btn-decline {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
+            padding: 14px 28px;
+            border-radius: 14px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-decline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-decline:hover::before {
+            left: 100%;
         }
 
         .btn-decline:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4);
         }
 
         .no-trades {
             text-align: center;
-            padding: 60px 20px;
-            color: #aaa;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border-radius: 20px;
+            border: 2px solid var(--border-primary);
+            margin: 20px 0;
         }
 
         .no-trades .icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.5;
+            font-size: 80px;
+            margin-bottom: 24px;
+            opacity: 0.7;
+            color: var(--emerald-400);
         }
 
         .no-trades h3 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #666;
+            font-size: 28px;
+            margin-bottom: 16px;
+            color: var(--emerald-300);
+            font-weight: 600;
         }
 
         .no-trades p {
             font-size: 16px;
-            line-height: 1.5;
+            color: var(--text-muted);
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .no-items {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+            border: 2px dashed var(--border-primary);
+            border-radius: 12px;
+            background: var(--bg-tertiary);
         }
 
         .trade-header.accepted {
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
         }
 
         .trade-header.declined {
             background: linear-gradient(135deg, #ef4444, #dc2626);
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-active {
-            background: rgba(0, 255, 195, 0.2);
-            color: #00ffc3;
-            border: 1px solid #00ffc3;
-        }
-
-        .status-accepted {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border: 1px solid #10b981;
-        }
-
-        .status-declined {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: 1px solid #ef4444;
-        }
-
-        .no-items {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            border: 1px dashed #444;
-        }
-
         .loading {
             text-align: center;
-            padding: 40px;
-            color: #aaa;
+            padding: 32px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border-radius: 16px;
+            border: 2px solid var(--border-primary);
+            margin: 20px 0;
         }
 
         .loading .spinner {
             display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 3px solid #333;
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-primary);
             border-radius: 50%;
-            border-top-color: #00ffc3;
+            border-top-color: var(--emerald-400);
             animation: spin 1s ease-in-out infinite;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
+        .success-message, .error-message {
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin: 16px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            color: var(--emerald-300);
+            border: 2px solid var(--emerald-500);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            color: #fca5a5;
+            border: 2px solid #ef4444;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Анімації */
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .success-message {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
-            border: 1px solid #10b981;
-            color: #10b981;
-            padding: 16px;
-            border-radius: 12px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .error-message {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
-            border: 1px solid #ef4444;
-            color: #ef4444;
-            padding: 16px;
-            border-radius: 12px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        /* Анімації для селекту */
-        @keyframes selectPulse {
-            0% {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
             }
-            50% {
-                box-shadow: 0 6px 20px rgba(0, 255, 195, 0.3);
-            }
-            100% {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Стани селекта */
         #account-select.loading {
-            animation: selectPulse 2s infinite;
-        }
-
-        /* Статуси для різних станів селекту */
-        #account-select.empty {
-            border-color: #fbbf24;
-            color: #fbbf24;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2'%3e%3cpath d='M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83'/%3e%3c/svg%3e");
+            animation: spin 1s linear infinite;
         }
 
         #account-select.ready {
-            border-color: #10b981;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
         }
 
         #account-select.error {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2'%3e%3ccircle cx='12' cy='12' r='10'/%3e%3cline x1='15' y1='9' x2='9' y2='15'/%3e%3cline x1='9' y1='9' x2='15' y2='15'/%3e%3c/svg%3e");
             border-color: #ef4444;
-            color: #ef4444;
+            animation: shake 0.5s ease-in-out;
         }
 
-        /* Стилі для option з емодзі */
-        #account-select option[value=""] {
-            font-style: italic;
-            color: #888;
+        #account-select.empty {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3e%3ccircle cx='12' cy='12' r='10'/%3e%3cpath d='M12 6v6l4 2'/%3e%3c/svg%3e");
+            color: #6b7280;
         }
 
-        #account-select option:not([value=""]) {
-            color: #f1f1f1;
-            font-weight: 500;
-        }
-
-        /* Анімація тряски для помилок */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-
-        /* Стилі для різних станів selecх */
-        .select-status-indicator {
-            position: absolute;
-            right: 45px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-            pointer-events: none;
-        }
-
-        .status-loading {
-            background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
-        }
-
-        .status-ready {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .status-error {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        /* Покращення для мобільних пристроїв */
+        /* Мобільна адаптивність */
         @media (max-width: 768px) {
-            #account-select {
-                font-size: 16px; /* Запобігає зумінгу на iOS */
-                padding: 14px 18px;
-                padding-left: 45px;
-                padding-right: 45px;
+            body {
+                padding: 12px;
             }
-            
-            .select-icon {
-                left: 14px;
+
+            .header {
+                padding: 24px 20px;
+                margin-bottom: 24px;
+            }
+
+            .main-title {
+                font-size: 32px;
+            }
+
+            .main-sub {
                 font-size: 16px;
             }
-        }
 
-        /* Додаткові стилі для кращого вигляду */
-        .login-section {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 255, 195, 0.03) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .login-section > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        @media (max-width: 768px) {
-            .trade-body {
-                grid-template-columns: 1fr;
-            }
-            
-            .tabs {
-                flex-direction: column;
-                align-items: center;
-            }
-            
             .navigation {
                 flex-direction: column;
-                align-items: center;
+                gap: 12px;
+                margin-bottom: 24px;
             }
+
+            .tabs {
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 24px;
+            }
+
+            .login-section, .account-info {
+                padding: 24px 20px;
+                margin-bottom: 24px;
+            }
+
+            .trade-body {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .trade-actions {
+                padding: 20px;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 12px;
+            }
+
+            .item-card {
+                padding: 12px;
+            }
+
+            .item-card img {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 28px;
+            }
+
+            .trade-offer {
+                border-radius: 16px;
+            }
+
+            .items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 8px;
+            }
+        }
+
+        /* Стилі пошуку */
+        .search-section {
+            max-width: 1200px;
+            margin: 0 auto 32px;
+            padding: 0 20px;
+        }
+
+        .search-container {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border-radius: 20px;
+            padding: 24px;
+            border: 2px solid var(--border-primary);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid var(--border-primary);
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .search-input:focus {
+            border-color: var(--border-secondary);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), var(--shadow-emerald);
+            background: linear-gradient(135deg, var(--bg-hover), var(--bg-tertiary));
+        }
+
+        .search-clear-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-clear-btn:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .search-clear-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Анімація для результатів пошуку */
+        .search-result-count {
+            margin-top: 16px;
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .search-highlight {
+            background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+            color: var(--emerald-50);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* Мобільна адаптивність для пошуку */
+        @media (max-width: 768px) {
+            .search-section {
+                padding: 0 12px;
+                margin-bottom: 24px;
+            }
+
+            .search-container {
+                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .search-input-wrapper {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .search-input {
+                width: 100%;
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+
+            .search-clear-btn {
+                width: 100%;
+                height: 44px;
+            }
+        }
+
+        /* Стилі для виділення знайдених елементів */
+        .trade-offer.search-match {
+            border-color: var(--emerald-400);
+            box-shadow: var(--shadow-emerald);
+        }
+
+        .trade-offer.search-match::before {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <div class="header">
+     <div class="header">
         <h1 class="main-title">📈 Trade Management</h1>
         <p class="main-sub">💼 Управління трейдами Steam</p>
     </div>
@@ -723,7 +1119,6 @@
             📜 Історія
         </button>
     </div>
-
     <div class="trades-container">
         <div id="active-trades-tab" class="tab-content active">
             <div id="trades-container" class="trades-grid">

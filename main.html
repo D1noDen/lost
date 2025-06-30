@@ -4,37 +4,88 @@
   <meta charset="UTF-8" />
   <title>LOST - Steam Accounts</title>
    <style>
+:root {
+    --emerald-50: #ecfdf5;
+    --emerald-100: #d1fae5;
+    --emerald-200: #a7f3d0;
+    --emerald-300: #6ee7b7;
+    --emerald-400: #34d399;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --emerald-700: #047857;
+    --emerald-800: #065f46;
+    --emerald-900: #064e3b;
+    --emerald-950: #022c22;
+    
+    --bg-primary: #0a0f0a;
+    --bg-secondary: #0f1a0f;
+    --bg-tertiary: #1a2e1a;
+    --bg-card: #1e332e;
+    --bg-hover: #2a4a3a;
+    
+    --text-primary: #ecfdf5;
+    --text-secondary: #a7f3d0;
+    --text-muted: #6ee7b7;
+    
+    --border-primary: #2a4a3a;
+    --border-secondary: #34d399;
+    
+    --shadow-emerald: 0 8px 32px rgba(16, 185, 129, 0.2);
+    --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
 body {
-  background: #121212;
-  color: #f1f1f1;
-  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--emerald-950) 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(110, 231, 183, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 button {
   font-family: inherit;
 }
+
 .account-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  padding: 20px;
+  gap: 24px;
+  padding: 24px;
   justify-content: flex-start;
 }
 
 .account-card {
-  background: linear-gradient(145deg, #1e293b, #0f172a);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+  border-radius: 20px;
   padding: 0;
-  width: 450px;
-  min-height: 200px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+  width: 480px;
+  min-height: 220px;
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid #334155;
-  transition: all 0.3s ease;
+  border: 2px solid var(--border-primary);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 .account-card::before {
@@ -43,33 +94,41 @@ button {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+  height: 4px;
+  background: linear-gradient(90deg, var(--emerald-400), var(--emerald-600), var(--emerald-400));
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { background-position: -200% 0; }
+    50% { background-position: 200% 0; }
 }
 
 .account-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(16, 185, 129, 0.3);
-  border-color: #10b981;
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-emerald);
+  border-color: var(--border-secondary);
 }
 
 .account-header {
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.05));
+  padding: 24px 28px;
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 2px solid var(--border-primary);
 }
 
 .account-header:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.08));
+  background: linear-gradient(135deg, var(--bg-hover), var(--bg-tertiary));
 }
 
 .account-title {
@@ -77,104 +136,139 @@ button {
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .account-title b {
-  font-size: 16px;
-  color: #10b981;
+  font-size: 18px;
+  color: var(--emerald-300);
   font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .account-title span {
-  font-size: 15px;
-  color: #f1f5f9;
-  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-weight: 500;
   margin-top: 2px;
 }
 
 .account-id {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: 12px;
+  color: var(--text-muted);
   font-weight: 400;
   font-style: italic;
-  margin-top: 4px;
+  margin-top: 6px;
+  opacity: 0.8;
 }
 
 .account-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
 }
 
 .account-meta span {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(30, 41, 59, 0.6);
-  border-radius: 8px;
-  font-size: 12px;
-  border: 1px solid rgba(51, 65, 85, 0.5);
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+  border-radius: 12px;
+  font-size: 13px;
+  border: 2px solid var(--border-primary);
+  transition: all 0.3s ease;
+}
+
+.account-meta span:hover {
+  border-color: var(--border-secondary);
+  background: linear-gradient(135deg, var(--bg-hover), var(--bg-tertiary));
 }
 
 .account-meta button {
-  background: linear-gradient(135deg, #475569, #334155);
-  color: #e2e8f0;
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+  color: var(--emerald-50);
   border: none;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 11px;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.3s ease;
   margin-left: auto;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .account-meta button:hover {
-  background: linear-gradient(135deg, #64748b, #475569);
-  transform: scale(1.05);
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
 }
 
 .copy-btn, .btn-2fa, .remove-prime, .delete-btn {
-  background: #3b3b3b;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+  color: var(--text-primary);
+  border: 2px solid var(--border-primary);
+  padding: 8px 16px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 12px;
-  transition: 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
-.copy-btn:hover, .btn-2fa:hover, .remove-prime:hover, .delete-btn:hover {
-  background: #555;
+
+.copy-btn:hover, .btn-2fa:hover {
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+  border-color: var(--emerald-500);
+  color: var(--emerald-50);
+  transform: translateY(-2px);
+}
+
+.remove-prime:hover, .delete-btn:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #ef4444;
+  color: white;
+  transform: translateY(-2px);
 }
 
 .farm-status {
-  background-color: #10b981;
-  color: white;
-  padding: 3px 8px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  color: var(--emerald-50);
+  padding: 6px 12px;
+  border-radius: 10px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .account-body input[type="text"],
 .account-body input[type="password"],
 .account-body input[type="number"] {
   width: 100%;
-  padding: 6px 10px;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  color: white;
-  border-radius: 6px;
-  margin-top: 4px;
-  font-size: 13px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+  border: 2px solid var(--border-primary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.account-body input:focus {
+  outline: none;
+  border-color: var(--border-secondary);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
 .account-body input[type="file"] {
-  color: #ccc;
-  margin-top: 4px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  background: var(--bg-tertiary);
+  border: 2px dashed var(--border-primary);
+  border-radius: 12px;
+  padding: 12px;
 }
 
 .finance {
