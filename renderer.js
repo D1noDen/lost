@@ -844,7 +844,6 @@ function renderHistory() {
               <div class="history-header">
                 <span class="history-icon">${amount > 0 ? '💰' : amount < 0 ? '💸' : '💱'}</span>
                 <span class="history-account">${entry.accountName}</span>
-                <span class="history-time">${time}${isNew ? ' 🆕' : ''}</span>
               </div>
               <div class="history-income ${amountClass}">
                 ${amount > 0 ? '+' : ''}${amount.toFixed(2)} грн
