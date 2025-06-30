@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEO-Stat Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent-color: #00ffc8;
+  --text-glow: 0 0 10px #00ffc8, 0 0 20px #00ffc8aa;
+  --bg-gradient: linear-gradient(135deg, #0f4c4c, #066);
+  --header-shadow: 0 0 25px #00ffc855, inset 0 0 20px #00ffc822;
+}
+
+body {
+  font-family: 'Orbitron', sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #0a0a0a;
+  color: var(--accent-color);
+  overflow-x: hidden;
+}
+
+.created-by {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+  color: #ccc;
+}
+.created-by .den {
+  color: var(--accent-color);
+  font-weight: bold;
+  text-shadow: var(--text-glow);
+}
+
+.stats-header {
+  background: var(--bg-gradient);
+  border-radius: 25px;
+  padding: 50px 30px;
+  text-align: center;
+  box-shadow: var(--header-shadow);
+  margin-bottom: 50px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-header::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 220%;
+  height: 220%;
+  background: radial-gradient(circle, rgba(0,255,200,0.1), transparent 60%);
+  animation: rotateGlow 30s linear infinite;
+  z-index: 0;
+}
+
+.stats-header h1 {
+  font-size: 2.8rem;
+  color: var(--accent-color);
+  text-shadow: var(--text-glow);
+  z-index: 1;
+  position: relative;
+}
+
+.stats-header p {
+  color: #ccc;
+  font-size: 1.1rem;
+  margin-top: 12px;
+  text-shadow: 0 0 8px #00ffc822;
+  position: relative;
+  z-index: 1;
+}
+.back-button {
+  background: linear-gradient(145deg, #006b5a, #009d87);
+  color: #00ffc8;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 255, 200, 0.2);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin: 20px;
+}
+
+.back-button:hover {
+  background: linear-gradient(145deg, #009d87, #00ffc8);
+  color: #000;
+  box-shadow: 0
+}
+.chart-container {
+  background: #112;
+  border: 1px solid #00ffc81a;
+  border-radius: 20px;
+  padding: 30px;
+  margin: 30px auto;
+  width: 90%;
+  height: 500px;
+  box-shadow: 0 0 30px #00ffc825, inset 0 0 15px #00ffc812;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart-container:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 40px #00ffc840, inset 0 0 20px #00ffc820;
+}
+
+canvas {
+  background-color: #101820;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: inset 0 0 12px #00ffc825;
+  max-height: 400px;
+  width: 100% !important;
+  height: 400px !important;
+}
+
+.weekly-stats-title {
+  text-align: center;
+  color: var(--accent-color);
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  text-shadow: var(--text-glow);
+}
+
+@keyframes rotateGlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>
+
+</head>
+<body>
+  <button onclick="location.href='main.html'" class="back-button">← Назад</button>
+   <div class="created-by">Created By <span class="den">Den</span></div>
+ <div class="stats-header">
+    
+  <h1>📊 LOST — Статистика</h1>
+  <p>Аналіз акаунтів, прибутків і активності</p>
+</div>
+  <div class="chart-container">
+    <canvas id="lineChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="barChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2 class="weekly-stats-title">📅 Тижневі доходи (Середа - Середа)</h2>
+    <canvas id="weeklyChart"></canvas>
+  </div>
+
+  <script src="statistics.js"></script>
+</body>
+</html>

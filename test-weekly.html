@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weekly Statistics Test</title>
+</head>
+<body>
+    <h1>Weekly Statistics Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Test data
+        const testDates = [
+            "23.05.2025", // Friday
+            "22.05.2025", // Thursday  
+            "21.05.2025", // Wednesday
+            "20.05.2025", // Tuesday
+            "19.05.2025", // Monday
+            "15.05.2025", // Thursday (previous week)
+            "14.05.2025", // Wednesday (week start)
+        ];
+
+        function parseDate(dateStr) {
+            const parts = dateStr.split('.');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]);
+                const year = parseInt(parts[2]);
+                return new Date(year, month - 1, day);
+            }
+            return null;
+        }
+
+        function getWednesdayWeekStart(date) {
+            const dayOfWeek = date.getDay();
+            let daysFromWednesday;
+            
+            if (dayOfWeek >= 3) {
+                daysFromWednesday = dayOfWeek - 3;
+            } else {
+                daysFromWednesday = dayOfWeek + 4;
+            }
+            
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - daysFromWednesday);
+            return weekStart;
+        }
+
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        // Test the function
+        let output = '<h2>Test Results:</h2>';
+        testDates.forEach(dateStr => {
+            const date = parseDate(dateStr);
+            const weekStart = getWednesdayWeekStart(date);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            output += `<p><strong>${dateStr}</strong> (${date.toLocaleDateString('uk-UA', {weekday: 'long'})}) → Week: ${formatDate(weekStart)} - ${formatDate(weekEnd)}</p>`;
+        });
+
+        document.getElementById('output').innerHTML = output;
+    </script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LOST - Trading</title>
+    <style>
+        body {
+            background: #121212;
+            color: #f1f1f1;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 16px;
+        }
+        .main-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .main-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #00ffc3;
+        }
+        .main-sub {
+            color: #aaa;
+        }
+        .tab-button {
+            background: #2a2a2a;
+            color: #f1f1f1;
+            border: 1px solid #444;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        #login-container, #account-info {
+            background: #1e1e1e;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 20px auto;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid #2c2c2c;
+        }
+        #account-select, #login-container button, #account-info button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #2a2a2a;
+            color: #f1f1f1;
+            margin: 0 5px;
+        }
+        .trades-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .trade-offer {
+            background: #1e1e1e;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border: 1px solid #2c2c2c;
+            overflow: hidden;
+        }
+        .trade-header {
+            padding: 12px 16px;
+            background: #252525;
+            font-weight: bold;
+        }
+        .trade-body {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            gap: 16px;
+        }
+        .trade-items-section {
+            width: 50%;
+        }
+        .trade-items-section h4 {
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+        .items-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .item-card {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 8px;
+            width: 90px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .item-card img {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 5px;
+        }
+        .item-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+        .trade-actions {
+            padding: 12px 16px;
+            background: #252525;
+            text-align: right;
+        }
+        .trade-actions button {
+            background: #3b3b3b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+            margin-left: 10px;
+        }
+        .trade-actions button.accept:hover {
+            background: #10b981;
+        }
+        .trade-actions button.decline:hover {
+            background: #ef4444;
+        }
+        .tabs {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .trade-header.accepted {
+            background: #10b981;
+        }
+        .trade-header.declined {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1 class="main-title">📈 Управління трейдами</h1>
+        <p class="main-sub">💼 Прийняття та відхилення трейдів</p>
+    </div>
+
+    <div>
+        <button class="tab-button" onclick="window.location.href='main.html'">🏠 Аккаунти</button>
+    </div>
+
+    <div id="login-container">
+        <select id="account-select"></select>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="account-info" style="display: none;">
+        <span>Logged in as: <b id="current-account-name"></b></span>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="showTab('active-trades-tab', this)">Активні угоди</button>
+        <button class="tab-button" onclick="showTab('history-tab', this)">Історія</button>
+    </div>
+
+    <div id="active-trades-tab" class="tab-content active">
+        <div id="trades-container" class="trades-grid">
+            <!-- Trade offers will be rendered here -->
+        </div>
+    </div>
+
+    <div id="history-tab" class="tab-content">
+        <div id="history-container" class="trades-grid">
+            <!-- Trade history will be rendered here -->
+        </div>
+    </div>
+
+    <script src="trading.js"></script>
+</body>
+</html> 

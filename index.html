@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>LOST — Вхід</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(115deg, #000000 0%, #0f1f1f 35%, #001010 100%);
+  background-attachment: fixed;
+  background-size: 200% 200%;
+  animation: moveBackground 20s ease infinite;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  color: #ffffffcc;
+  position: relative;
+}
+@keyframes moveBackground {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+    .container {
+      backdrop-filter: blur(20px);
+      background: rgba(20, 20, 20, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+      border-radius: 20px;
+      padding: 40px;
+      width: 360px;
+      text-align: center;
+      animation: fadeIn 1.2s ease-out;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #ffffffcc;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      height: 20px;
+      margin-bottom: 30px;
+      color: #55ff99;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid #55ff99;
+      width: 0;
+      animation: typing 3.5s steps(30, end) 1 forwards, blink 0.7s step-end infinite;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    input[type="password"]:focus {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    button {
+      padding: 12px 26px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1d1d1d, #444);
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 255, 150, 0.2);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 255, 150, 0.4);
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .error {
+      color: #ff5f5f;
+      font-size: 14px;
+      margin-top: 12px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .error.show {
+      opacity: 1;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent }
+    }
+     .created-by {
+    margin-top: 30px;
+    font-size: 16px;
+    font-family: 'Segoe UI', sans-serif;
+    color: #999;
+    text-align: center;
+    letter-spacing: 1px;
+    user-select: none;
+    position: absolute;
+    top: 0;
+  }
+
+  .created-by .den {
+    color: #00ffc3;
+    text-shadow: 0 0 4px #00ffc3, 0 0 10px #00ffc388;
+    font-weight: bold;
+    animation: flicker 2s infinite alternate;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 1; text-shadow: 0 0 6px #00ffc3, 0 0 12px #00ffc388; }
+    100% { opacity: 0.7; text-shadow: 0 0 2px #00ffc3, 0 0 4px #00ffc344; }
+  }
+  </style>
+  
+</head>
+<body>
+  <div class="created-by">Created By <span class="den">Den</span></div>
+  <div class="container">
+  <h1 class="title">🔐 Вхід до <span style="color:#00ffc3">LOST</span></h1>
+  <div class="subtitle">👨‍🌾 <span style="color:#80fff0">Фермери Steam акаунтів</span></div>
+  
+  <input type="password" id="password" placeholder="Введіть пароль" autocomplete="off" />
+  
+  <button onclick="login()">🔓 Увійти</button>
+  
+  <div class="error" id="error">❌ Неправильний пароль!</div>
+</div>
+
+  <script>
+    const fs = require('fs');
+    const path = require('path');
+
+    function login() {
+      const entered = document.getElementById('password').value.trim();
+      const authPath = path.join(__dirname, 'auth.json');
+      const saved = JSON.parse(fs.readFileSync(authPath));
+      const errorBox = document.getElementById('error');
+
+      if (entered === saved.password) {
+        window.location = 'main.html';
+      } else {
+        errorBox.classList.add('show');
+        setTimeout(() => {
+          errorBox.classList.remove('show');
+        }, 2500);
+      }
+    }
+  </script>
+</body>
+</html>
