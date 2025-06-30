@@ -49,6 +49,7 @@ function loadAccounts() {
   // Ініціалізуємо відфільтровані акаунти
   filteredAccounts = [...accounts];
   render();
+  renderHistory(); // Рендеримо історію при завантаженні
 }
 
 function updateField(index, key, value) {
@@ -65,6 +66,7 @@ function updateField(index, key, value) {
     filteredAccounts = [...accounts];
     render();
   }
+  renderHistory(); // Оновлюємо історію при зміні полів
 }
 
 function addWeeklyIncome(index) {
@@ -75,11 +77,16 @@ function addWeeklyIncome(index) {
   acc.income = (parseFloat(acc.income) || 0) + weekly;
   acc.weeklyIncome = 0;
 
-  const date = new Date().toLocaleDateString();
+  // Зберігаємо дату в ISO форматі для коректного сортування
+  const date = new Date().toISOString();
   acc.history = acc.history || [];
   acc.history.unshift({ date, amount: weekly });
 
   saveAccounts();
+  
+  // Показуємо сповіщення
+  showNotification(`💰 Додано ${weekly} грн до ${acc.name || acc.login}`, 'success');
+  
   // Оновлюємо відфільтровані акаунти після зміни
   if (searchQuery && searchQuery !== '') {
     searchAccounts(searchQuery);
@@ -87,6 +94,9 @@ function addWeeklyIncome(index) {
     filteredAccounts = [...accounts];
     render();
   }
+  
+  // Оновлюємо історію
+  renderHistory();
 }
 
 function deleteAccount(index) {
@@ -698,6 +708,37 @@ function showTab(tabId, buttonElement) {
   }
 }
 
+// Функція для показу сповіщень
+function showNotification(message, type = 'info') {
+  // Створюємо контейнер для сповіщень, якщо його немає
+  let notificationContainer = document.querySelector('.notification-container');
+  if (!notificationContainer) {
+    notificationContainer = document.createElement('div');
+    notificationContainer.className = 'notification-container';
+    document.body.appendChild(notificationContainer);
+  }
+
+  // Створюємо сповіщення
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <span class="notification-message">${message}</span>
+    <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+  `;
+
+  // Додаємо сповіщення
+  notificationContainer.appendChild(notification);
+
+  // Анімація появи
+  setTimeout(() => notification.classList.add('show'), 100);
+
+  // Автоматично видаляємо через 5 секунд
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
+}
+
 // Функція для рендеру історії
 function renderHistory() {
   const historyList = document.getElementById('history-list');
@@ -710,8 +751,19 @@ function renderHistory() {
   accounts.forEach((acc, accIndex) => {
     if (acc.history && acc.history.length > 0) {
       acc.history.forEach(entry => {
+        // Міграція старих дат до ISO формату
+        let entryDate = entry.date;
+        if (!entryDate.includes('T') && !entryDate.includes('-')) {
+          // Конвертуємо старий формат дати
+          const parts = entryDate.split('.');
+          if (parts.length === 3) {
+            entryDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}T12:00:00`;
+          }
+        }
+        
         allHistory.push({
           ...entry,
+          date: entryDate,
           accountName: acc.name || acc.login || `Акаунт #${accIndex + 1}`,
           accountIndex: accIndex
         });
@@ -723,33 +775,96 @@ function renderHistory() {
   allHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (allHistory.length === 0) {
-    historyList.innerHTML = '<div class="no-history">📊 Історія транзакцій порожня</div>';
+    historyList.innerHTML = '<div class="no-history">📊 Історія доходів порожня</div>';
     return;
   }
 
-  // Рендеримо історію
+  // Групуємо по датах
+  const groupedHistory = {};
   allHistory.forEach(entry => {
-    const listItem = document.createElement('li');
-    listItem.className = 'history-entry';
+    const date = new Date(entry.date);
+    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const displayDate = date.toLocaleDateString('uk-UA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
     
-    const amount = parseFloat(entry.amount) || 0;
-    const amountClass = amount > 0 ? 'positive' : amount < 0 ? 'negative' : 'neutral';
-    
-    listItem.innerHTML = `
-      <div class="history-item">
-        <div class="history-header">
-          <span class="history-icon">💰</span>
-          <span class="history-account">${entry.accountName}</span>
-          <span class="history-date">${entry.date}</span>
-        </div>
-        <div class="history-amount ${amountClass}">
-          ${amount > 0 ? '+' : ''}${amount} грн
-        </div>
-      </div>
-    `;
-    
-    historyList.appendChild(listItem);
+    if (!groupedHistory[dateKey]) {
+      groupedHistory[dateKey] = {
+        displayDate,
+        entries: []
+      };
+    }
+    groupedHistory[dateKey].entries.push(entry);
   });
+
+  // Рендеримо групи по датах
+  Object.keys(groupedHistory)
+    .sort((a, b) => new Date(b) - new Date(a)) // Сортуємо дати (найновіші спочатку)
+    .forEach(dateKey => {
+      const group = groupedHistory[dateKey];
+      
+      // Додаємо заголовок дати
+      const dateHeader = document.createElement('div');
+      dateHeader.className = 'history-date-header';
+      dateHeader.innerHTML = `
+        <span class="date-icon">📅</span>
+        <span class="date-text">${group.displayDate}</span>
+        <span class="date-count">(${group.entries.length})</span>
+      `;
+      historyList.appendChild(dateHeader);
+
+      // Додаємо групу записів
+      const dateGroup = document.createElement('div');
+      dateGroup.className = 'history-date-group';
+      
+      // Сортуємо записи в групі за часом (найновіші спочатку)
+      group.entries
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .forEach((entry, index) => {
+          const listItem = document.createElement('div');
+          listItem.className = 'history-entry';
+          
+          const amount = parseFloat(entry.amount) || 0;
+          const amountClass = amount > 0 ? 'income-entry' : amount < 0 ? 'expense-entry' : 'neutral-entry';
+          
+          // Перевіряємо, чи це новий запис (додано менше ніж 5 хвилин тому)
+          const entryTime = new Date(entry.date);
+          const now = new Date();
+          const isNew = (now - entryTime) < 5 * 60 * 1000; // 5 хвилин
+          
+          const time = entryTime.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+          listItem.innerHTML = `
+            <div class="history-item ${amountClass}">
+              <div class="history-header">
+                <span class="history-icon">${amount > 0 ? '💰' : amount < 0 ? '💸' : '💱'}</span>
+                <span class="history-account">${entry.accountName}</span>
+                <span class="history-time">${time}${isNew ? ' 🆕' : ''}</span>
+              </div>
+              <div class="history-income ${amountClass}">
+                ${amount > 0 ? '+' : ''}${amount.toFixed(2)} грн
+              </div>
+            </div>
+          `;
+          
+          // Додаємо анімацію для нових записів
+          if (isNew) {
+            listItem.classList.add('new-entry');
+          }
+          
+          // Анімація появи з затримкою
+          listItem.style.animationDelay = `${index * 0.1}s`;
+          
+          dateGroup.appendChild(listItem);
+        });
+      
+      historyList.appendChild(dateGroup);
+    });
 }
 
 // Функція для ресету (якщо потрібна)
