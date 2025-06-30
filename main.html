@@ -16,33 +16,127 @@ button {
 .account-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px;
+  gap: 20px;
+  padding: 20px;
+  justify-content: flex-start;
 }
 
 .account-card {
-  background: #1e1e1e;
-  border-radius: 12px;
-  padding: 16px;
-  width: 320px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border-radius: 16px;
+  padding: 0;
+  width: 450px;
+  min-height: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border: 1px solid #2c2c2c;
+  gap: 0;
+  border: 1px solid #334155;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.account-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+}
+
+.account-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(16, 185, 129, 0.3);
+  border-color: #10b981;
 }
 
 .account-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
   flex-wrap: wrap;
   font-weight: bold;
   color: #fff;
   font-size: 14px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.05));
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.copy-btn, .2fa-btn, .remove-prime, .delete-btn {
+.account-header:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.08));
+}
+
+.account-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.account-title b {
+  font-size: 16px;
+  color: #10b981;
+  font-weight: 700;
+}
+
+.account-title span {
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.account-id {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 400;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.account-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.account-meta span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.account-meta button {
+  background: linear-gradient(135deg, #475569, #334155);
+  color: #e2e8f0;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.account-meta button:hover {
+  background: linear-gradient(135deg, #64748b, #475569);
+  transform: scale(1.05);
+}
+
+.copy-btn, .btn-2fa, .remove-prime, .delete-btn {
   background: #3b3b3b;
   color: white;
   border: none;
@@ -52,7 +146,7 @@ button {
   font-size: 12px;
   transition: 0.2s;
 }
-.copy-btn:hover, .2fa-btn:hover, .remove-prime:hover, .delete-btn:hover {
+.copy-btn:hover, .btn-2fa:hover, .remove-prime:hover, .delete-btn:hover {
   background: #555;
 }
 
@@ -131,30 +225,46 @@ button {
 }
 
 .account-details {
-  padding: 16px;
+  padding: 20px 24px;
   background: #181818;
   border-top: 1px solid #333;
 }
 
 .buttonFarm {
   border: none;
-  border-radius: 6px;
-  padding: 5px 12px;
+  border-radius: 8px;
+  padding: 8px 16px;
   font-size: 12px;
   cursor: pointer;
   margin-top: 4px;
-  font-weight: bold;
+  font-weight: 600;
   text-transform: uppercase;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
 .buttonFarm.farm {
-  background-color: #10b981; 
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #ffffff;
+  box-shadow: 0 3px 10px rgba(34, 197, 94, 0.3);
+}
+
+.buttonFarm.farm:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
 }
 
 .buttonFarm.unFarm {
-  background-color: #ef4444; 
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #ffffff;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+}
+
+.buttonFarm.unFarm:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
 }
 
 .farm-toggle {
@@ -385,6 +495,606 @@ select, .tab-button {
     0% { opacity: 1; text-shadow: 0 0 6px #00ffc3, 0 0 12px #00ffc388; }
     100% { opacity: 0.7; text-shadow: 0 0 2px #00ffc3, 0 0 4px #00ffc344; }
   }
+
+.last-drop {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #333;
+}
+
+.last-drop-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.last-drop-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.last-drop-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.last-drop-name {
+  font-weight: bold;
+  color: #f1f1f1;
+}
+
+.last-drop-price {
+  color: #00ffc3;
+}
+
+.no-drop {
+  color: #888;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.btn-fetch-drop {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-bottom: 10px;
+  transition: background 0.2s;
+}
+
+.btn-fetch-drop:hover {
+  background: #2563eb;
+}
+
+.btn-fetch-drop:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.drop-controls {
+  margin-bottom: 10px;
+}
+
+.account-id {
+  font-size: 10px;
+  color: #888;
+  font-weight: normal;
+  display: block;
+  margin-top: 2px;
+}
+
+.drop-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+ padding: 8px 4px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border: 1px solid #374151;
+  margin: 8px 0;
+  transition: all 0.2s ease;
+  min-height: 60px;
+  width: 100%;
+}
+
+.drop-preview:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.1);
+}
+
+.drop-preview.has-drop {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+}
+
+.drop-preview.no-drop-yet {
+  border-color: #6b7280;
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.05));
+}
+
+.drop-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  opacity: 0.7;
+}
+
+.drop-preview-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.drop-preview-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.drop-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.drop-preview-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f3f4f6;
+  line-height: 1.2;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drop-preview-price {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.btn-refresh-drop,
+.btn-fetch-drop-mini {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-refresh-drop:hover,
+.btn-fetch-drop-mini:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+.btn-fetch-drop-mini {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+}
+
+.btn-fetch-drop-mini:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+}
+
+.btn-refresh-drop:hover,
+.btn-fetch-drop-mini:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.btn-fetch-drop-mini {
+  background: #10b981;
+}
+
+.btn-fetch-drop-mini:hover {
+  background: #059669;
+}
+
+/* Стилі для двох дропів */
+.drops-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  margin-right: 16px;
+  min-width: 320px;
+  padding-left: 4px;
+}
+
+.drop-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.06));
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-width: 300px;
+}
+
+.drop-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.drop-item:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.09));
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15);
+}
+
+.drop-item.primary-drop {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
+}
+
+.drop-item.secondary-drop {
+  border-left: 4px solid #6366f1;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.06));
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.drop-item.secondary-drop:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.09));
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15);
+}
+
+.drop-item.secondary-drop::before {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
+
+.drop-preview-image.large {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.drop-preview-image.small {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.drop-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.drop-preview-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.2;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drop-price-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drop-preview-price {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.drop-preview-price-usd {
+  font-size: 10px;
+  color: #94a3b8;
+  font-style: italic;
+  background: rgba(148, 163, 184, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Стилі для загальної суми дропів */
+.total-drops-price {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  margin-top: 4px;
+  min-width: 280px;
+}
+
+.total-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.total-amount {
+  font-size: 12px;
+  color: #22c55e;
+  font-weight: 700;
+  flex: 1;
+}
+
+.btn-copy-total {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.btn-copy-total:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+/* Стилі для історії дропів */
+.drops-history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px;
+  background: #111827;
+  border-radius: 12px;
+  border: 1px solid #374151;
+}
+
+.drop-history-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1f2937, #111827);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-history-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.drop-history-item:hover {
+  border-color: #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+}
+
+.drop-number {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.last-drop-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.last-drop-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.last-drop-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f3f4f6;
+  line-height: 1.3;
+}
+
+.last-drop-price {
+  font-size: 14px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.last-drop-date {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.legacy-drop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #1f2937;
+  border-radius: 12px;
+  border: 1px solid #374151;
+}
+
+/* Стилі для історії транзакцій */
+.history-entry {
+  list-style: none;
+  margin-bottom: 12px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border-radius: 12px;
+  border: 1px solid #374151;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  border-color: #10b981;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.1);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-icon {
+  font-size: 18px;
+}
+
+.history-account {
+  font-weight: 600;
+  color: #f3f4f6;
+  font-size: 14px;
+}
+
+.history-date {
+  color: #9ca3af;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.history-amount {
+  font-weight: bold;
+  font-size: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.history-amount.positive {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.history-amount.negative {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.history-amount.neutral {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.1);
+}
+
+.no-history {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 16px;
+  background: #1f2937;
+  border-radius: 12px;
+  border: 2px dashed #374151;
+}
+
+/* Стилі для табів */
+.tab {
+  display: none;
+  padding: 20px 0;
+}
+
+.tab.active {
+  display: block;
+}
+
+#history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.btn-farming {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3) !important;
+  margin: 0 !important;
+}
+
+.btn-farming:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4) !important;
+}
+
+.btn-2fa {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3) !important;
+  margin: 0 !important;
+}
+
+.btn-2fa:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4) !important;
+}
+
+.toggle-arrow {
+  font-size: 16px;
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.1);
+  cursor: pointer;
+}
 </style>
 
 </head>
@@ -401,7 +1111,6 @@ select, .tab-button {
   <h3 id="total-profit">Загальний прибуток: 0 грн</h3>
  <div class="tabs">
   <button class="tab-button active" onclick="showTab('accounts-tab', this)">Акаунти</button>
-  <button class="tab-button"  onclick="window.location.href='farming.html'">Фармляться</button>
   <button class="tab-button" onclick="window.location.href='trading.html'">Трейди</button>
   <button class="tab-button" onclick="showTab('history-tab', this)">Історія</button>
   <button class="tab-button" onclick="window.location.href='statistics.html'">Статистика</button>
@@ -413,15 +1122,15 @@ select, .tab-button {
   <input type="text" id="search-input" placeholder="Пошук акаунта..." oninput="render()" />
 </div>
 
-<div id="accounts-tab" class="tab active">
+<div id="accounts-tab" class="tab active" style="display: block;">
   <div id="accounts" class="account-grid"></div>
 </div>
 
-<div id="farming-tab" class="tab">
+<div id="farming-tab" class="tab" style="display: none;">
   <div id="farming-accounts" class="account-grid"></div>
 </div>
 
-<div id="history-tab" class="tab">
+<div id="history-tab" class="tab" style="display: none;">
   <ul id="history-list"></ul>
 </div>
 

@@ -7,16 +7,6 @@ const TradeManager = require('./trade_manager.js');
 let accounts = [];
 let tradeManager = null;
 
-// Курс USD до UAH (можна оновлювати або отримувати з API)
-const USD_TO_UAH_RATE = 41.5;
-
-function convertUsdToUah(usdPrice) {
-  // Видаляємо символ $ та конвертуємо в число
-  const cleanPrice = parseFloat(usdPrice.replace('$', ''));
-  if (isNaN(cleanPrice)) return 0;
-  return (cleanPrice * USD_TO_UAH_RATE).toFixed(2);
-}
-
 function loadAccounts() {
   if (fs.existsSync(filePath)) {
     const raw = fs.readFileSync(filePath);
@@ -32,9 +22,7 @@ function loadAccounts() {
           open: acc.open || false,
           lastDrop: acc.lastDrop || '',
           lastDropPrice: acc.lastDropPrice || 0,
-          lastDropImageUrl: acc.lastDropImageUrl || '',
-          // Додаємо підтримку двох останніх дропів
-          lastDrops: acc.lastDrops || []
+          lastDropImageUrl: acc.lastDropImageUrl || ''
         };
       });
       // Зберігаємо оновлені дані з ID
@@ -98,7 +86,6 @@ function addAccount() {
     lastDrop: '',
     lastDropPrice: 0,
     lastDropImageUrl: '',
-    lastDrops: [], // Масив для двох останніх дропів
     open: false,
     farming: true
   });
@@ -179,35 +166,6 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text);
 }
 
-// Функція для копіювання загальної суми дропів
-function copyTotalDropPrice(index) {
-  const acc = accounts[index];
-  if (!acc.lastDrops || acc.lastDrops.length === 0) {
-    alert('Немає дропів для копіювання');
-    return;
-  }
-  
-  const totalPrice = acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0);
-  
-  // Копіюємо тільки число гривнів
-  const textToCopy = totalPrice.toFixed(2);
-  
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    // Показуємо feedback
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = '✅';
-    button.style.background = '#10b981';
-    
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.style.background = '';
-    }, 1000);
-  }).catch(() => {
-    alert(`Загальна сума дропів: ${textToCopy} грн`);
-  });
-}
-
 async function fetchLastDrop(index) {
   const acc = accounts[index];
   console.log(`[fetchLastDrop] Початок для акаунту ${acc.login}, index: ${index}`);
@@ -258,31 +216,30 @@ async function fetchLastDrop(index) {
     await tradeManager.login(acc.login, acc.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
     console.log(`[fetchLastDrop] Увійшли в акаунт ${acc.login}`);
 
-    console.log(`[fetchLastDrop] Отримуємо інформацію про дропи...`);
-    const dropsInfo = await tradeManager.getLastDrops(acc.login, 2); // Отримуємо 2 останні дропи
-    console.log(`[fetchLastDrop] Результат getLastDrops:`, dropsInfo);
+    console.log(`[fetchLastDrop] Отримуємо інформацію про дроп...`);
+    const dropInfo = await tradeManager.getLastDrop(acc.login);
+    console.log(`[fetchLastDrop] Результат getLastDrop:`, dropInfo);
     
-    if (dropsInfo && dropsInfo.length > 0) {
-      console.log('[fetchLastDrop] Отримано інформацію про дропи:', dropsInfo);
-      
-      // Конвертуємо ціни в гривні та оновлюємо дані
-      const convertedDrops = dropsInfo.map(drop => ({
-        ...drop,
-        priceUAH: convertUsdToUah(drop.price),
-        originalPrice: drop.price
-      }));
+    if (dropInfo) {
+      console.log('[fetchLastDrop] Отримано інформацію про дроп:', dropInfo);
       
       // Оновлюємо дані акаунту
-      accounts[index].lastDrops = convertedDrops;
+      const oldDropData = {
+        lastDrop: acc.lastDrop,
+        lastDropImageUrl: acc.lastDropImageUrl,
+        lastDropPrice: acc.lastDropPrice
+      };
       
-      // Для зворотної сумісності зберігаємо перший дроп в старих полях
-      if (convertedDrops.length > 0) {
-        accounts[index].lastDrop = convertedDrops[0].name;
-        accounts[index].lastDropImageUrl = convertedDrops[0].imageUrl;
-        accounts[index].lastDropPrice = convertedDrops[0].priceUAH;
-      }
+      accounts[index].lastDrop = dropInfo.name;
+      accounts[index].lastDropImageUrl = dropInfo.imageUrl;
+      accounts[index].lastDropPrice = dropInfo.price;
       
-      console.log('[fetchLastDrop] Оновлені дропи:', convertedDrops);
+      console.log('[fetchLastDrop] Старі дані:', oldDropData);
+      console.log('[fetchLastDrop] Нові дані:', {
+        lastDrop: accounts[index].lastDrop,
+        lastDropImageUrl: accounts[index].lastDropImageUrl,
+        lastDropPrice: accounts[index].lastDropPrice
+      });
       
       // Зберігаємо та перерендеруємо
       console.log('[fetchLastDrop] Зберігаємо дані...');
@@ -290,14 +247,10 @@ async function fetchLastDrop(index) {
       console.log('[fetchLastDrop] Перерендеруємо...');
       render();
       
-      const dropsText = convertedDrops.map((drop, i) => 
-        `${i + 1}. ${drop.name} - ${drop.priceUAH} грн (${drop.originalPrice})`
-      ).join('\n');
-      
-      alert(`Дропи оновлено!\n\n${dropsText}`);
+      alert(`Останній дроп оновлено!\nПредмет: ${dropInfo.name}\nЦіна: ${dropInfo.price}`);
     } else {
-      console.log('[fetchLastDrop] dropsInfo is null, undefined або порожній');
-      alert('Не вдалося знайти інформацію про дропи або інвентар порожній');
+      console.log('[fetchLastDrop] dropInfo is null або undefined');
+      alert('Не вдалося знайти інформацію про дроп або інвентар порожній');
     }
 
     tradeManager.disconnect();
@@ -327,10 +280,10 @@ async function fetchLastDrop(index) {
 }
 
 function render() {
-  const container = document.getElementById('accounts');
+  const container = document.getElementById('accountsFarm');
   container.innerHTML = '';
  
-  const filteredAccounts = accounts; // Показуємо всі акаунти на головній сторінці
+  const filteredAccounts = accounts.filter(item => item.farming);
 
   filteredAccounts.forEach((acc, i) => {
     // Знайдемо оригінальний індекс цього акаунту в основному масиві
@@ -353,45 +306,22 @@ function render() {
       </div>
 
       <!-- Завжди показуємо секцію дропу -->
-      <div class="drop-preview ${(acc.lastDrops && acc.lastDrops.length > 0) || acc.lastDrop ? 'has-drop' : 'no-drop-yet'}">
-        ${(acc.lastDrops && acc.lastDrops.length > 0) ? `
-          <div class="drops-container">
-            ${acc.lastDrops.slice(0, 2).map((drop, dropIndex) => `
-              <div class="drop-item ${dropIndex === 0 ? 'primary-drop' : 'secondary-drop'}">
-                <img src="${drop.imageUrl || 'https://via.placeholder.com/40x40/333/fff?text=?'}" alt="${drop.name}" class="drop-preview-image ${dropIndex === 0 ? 'large' : 'small'}" onerror="this.src='https://via.placeholder.com/40x40/333/fff?text=?'">
-                <div class="drop-preview-info">
-                  <span class="drop-preview-name">${drop.name}</span>
-                  <div class="drop-price-container">
-                    <span class="drop-preview-price">💰 ${drop.priceUAH} грн</span>
-                    <span class="drop-preview-price-usd">(${drop.originalPrice})</span>
-                  </div>
-                </div>
-              </div>
-            `).join('')}
-            ${acc.lastDrops.length > 1 ? `
-              <div class="total-drops-price">
-                <span class="total-label">Загалом:</span>
-                <span class="total-amount">${(acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2)} грн</span>
-                <button onclick="event.stopPropagation(); copyTotalDropPrice(${originalIndex})" class="btn-copy-total" title="Копіювати загальну суму">📋</button>
-              </div>
-            ` : ''}
-          </div>
-          <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дропи">🔄</button>
-        ` : acc.lastDrop ? `
+      <div class="drop-preview ${acc.lastDrop ? 'has-drop' : 'no-drop-yet'}">
+        ${acc.lastDrop ? `
           <img src="${acc.lastDropImageUrl || 'https://via.placeholder.com/48x48/333/fff?text=?'}" alt="${acc.lastDrop}" class="drop-preview-image" onerror="this.src='https://via.placeholder.com/48x48/333/fff?text=?'">
           <div class="drop-preview-info">
             <span class="drop-preview-name">${acc.lastDrop}</span>
-            <span class="drop-preview-price">💰 ${acc.lastDropPrice} грн</span>
+            <span class="drop-preview-price">💰 ${acc.lastDropPrice}</span>
           </div>
           <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дроп">🔄</button>
         ` : `
           <div class="drop-placeholder">
             <img src="https://via.placeholder.com/48x48/333/fff?text=?" class="drop-preview-image">
             <div class="drop-preview-info">
-              <span class="drop-preview-name">Немає дропів</span>
+              <span class="drop-preview-name">Немає дропу</span>
               <span class="drop-preview-price">Натисніть для отримання</span>
             </div>
-            <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-fetch-drop-mini" title="Отримати дропи">🎁</button>
+            <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-fetch-drop-mini" title="Отримати дроп">🎁</button>
           </div>
         `}
       </div>
@@ -462,40 +392,23 @@ function render() {
         </div>
 
         <div class="last-drop">
-          <label>🎁 Останні дропи:</label>
+          <label>🎁 Останній дроп:</label>
           <div class="drop-controls">
-            <button id="fetch-drop-${originalIndex}" onclick="fetchLastDrop(${originalIndex})" class="btn-fetch-drop">🎁 Отримати дропи зі Steam</button>
+            <button id="fetch-drop-${originalIndex}" onclick="fetchLastDrop(${originalIndex})" class="btn-fetch-drop">🎁 Отримати дроп зі Steam</button>
           </div>
+          <input type="text" placeholder="Назва предмету" value="${acc.lastDrop || ''}" onchange="updateField(${originalIndex}, 'lastDrop', this.value)" />
+          <input type="text" placeholder="URL зображення" value="${acc.lastDropImageUrl || ''}" onchange="updateField(${originalIndex}, 'lastDropImageUrl', this.value)" />
+          <input type="number" placeholder="Ціна" value="${acc.lastDropPrice || 0}" onchange="updateField(${originalIndex}, 'lastDropPrice', this.value)" /> грн
           
-          ${(acc.lastDrops && acc.lastDrops.length > 0) ? `
-            <div class="drops-history">
-              ${acc.lastDrops.map((drop, dropIndex) => `
-                <div class="drop-history-item">
-                  <div class="drop-number">#${dropIndex + 1}</div>
-                  <img src="${drop.imageUrl || 'https://via.placeholder.com/64'}" alt="${drop.name}" class="last-drop-image" onerror="this.src='https://via.placeholder.com/64'">
-                  <div class="last-drop-details">
-                    <span class="last-drop-name">${drop.name}</span>
-                    <span class="last-drop-price">Ціна: ${drop.priceUAH} грн (${drop.originalPrice})</span>
-                    <span class="last-drop-date">Дата: ${new Date(drop.date).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          ` : acc.lastDrop ? `
-            <div class="legacy-drop-info">
-              <input type="text" placeholder="Назва предмету" value="${acc.lastDrop || ''}" onchange="updateField(${originalIndex}, 'lastDrop', this.value)" />
-              <input type="text" placeholder="URL зображення" value="${acc.lastDropImageUrl || ''}" onchange="updateField(${originalIndex}, 'lastDropImageUrl', this.value)" />
-              <input type="number" placeholder="Ціна" value="${acc.lastDropPrice || 0}" onchange="updateField(${originalIndex}, 'lastDropPrice', this.value)" /> грн
-              
-              <div class="last-drop-info">
-                <img src="${acc.lastDropImageUrl || 'https://via.placeholder.com/64'}" alt="${acc.lastDrop}" class="last-drop-image" onerror="this.src='https://via.placeholder.com/64'">
-                <div class="last-drop-details">
-                  <span class="last-drop-name">${acc.lastDrop}</span>
-                  <span class="last-drop-price">Ціна: ${acc.lastDropPrice} грн</span>
-                </div>
+          ${acc.lastDrop ? `
+            <div class="last-drop-info">
+              <img src="${acc.lastDropImageUrl || 'https://via.placeholder.com/64'}" alt="${acc.lastDrop}" class="last-drop-image" onerror="this.src='https://via.placeholder.com/64'">
+              <div class="last-drop-details">
+                <span class="last-drop-name">${acc.lastDrop}</span>
+                <span class="last-drop-price">Ціна: ${acc.lastDropPrice} грн</span>
               </div>
             </div>
-          ` : '<div class="no-drop">Немає інформації про дропи</div>'}
+          ` : '<div class="no-drop">Немає інформації про дроп</div>'}
         </div>
 
         <button class="delete-btn" onclick="deleteAccount(${originalIndex})">🗑️ Видалити</button>
@@ -555,99 +468,6 @@ function toggleFarming(index) {
   accounts[index].farming = !accounts[index].farming;
   saveAccounts();
   render();
-}
-
-// Функція для перемикання табів
-function showTab(tabId, buttonElement) {
-  // Ховаємо всі таби
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(tab => {
-    tab.style.display = 'none';
-  });
-
-  // Видаляємо active клас з усіх кнопок
-  const buttons = document.querySelectorAll('.tab-button');
-  buttons.forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  // Показуємо обраний таб
-  const selectedTab = document.getElementById(tabId);
-  if (selectedTab) {
-    selectedTab.style.display = 'block';
-    buttonElement.classList.add('active');
-  }
-
-  // Якщо це таб історії, рендеримо історію
-  if (tabId === 'history-tab') {
-    renderHistory();
-  }
-}
-
-// Функція для рендеру історії
-function renderHistory() {
-  const historyList = document.getElementById('history-list');
-  if (!historyList) return;
-
-  historyList.innerHTML = '';
-
-  // Збираємо всю історію з усіх акаунтів
-  const allHistory = [];
-  accounts.forEach((acc, accIndex) => {
-    if (acc.history && acc.history.length > 0) {
-      acc.history.forEach(entry => {
-        allHistory.push({
-          ...entry,
-          accountName: acc.name || acc.login || `Акаунт #${accIndex + 1}`,
-          accountIndex: accIndex
-        });
-      });
-    }
-  });
-
-  // Сортуємо за датою (найновіші спочатку)
-  allHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  if (allHistory.length === 0) {
-    historyList.innerHTML = '<div class="no-history">📊 Історія транзакцій порожня</div>';
-    return;
-  }
-
-  // Рендеримо історію
-  allHistory.forEach(entry => {
-    const listItem = document.createElement('li');
-    listItem.className = 'history-entry';
-    
-    const amount = parseFloat(entry.amount) || 0;
-    const amountClass = amount > 0 ? 'positive' : amount < 0 ? 'negative' : 'neutral';
-    
-    listItem.innerHTML = `
-      <div class="history-item">
-        <div class="history-header">
-          <span class="history-icon">💰</span>
-          <span class="history-account">${entry.accountName}</span>
-          <span class="history-date">${entry.date}</span>
-        </div>
-        <div class="history-amount ${amountClass}">
-          ${amount > 0 ? '+' : ''}${amount} грн
-        </div>
-      </div>
-    `;
-    
-    historyList.appendChild(listItem);
-  });
-}
-
-// Функція для ресету (якщо потрібна)
-function ResetFarm() {
-  if (confirm('Скинути всі дані фарму? Ця дія незворотна!')) {
-    accounts.forEach(acc => {
-      acc.farming = false;
-      acc.open = false;
-    });
-    saveAccounts();
-    render();
-  }
 }
 
 window.onload = loadAccounts;
