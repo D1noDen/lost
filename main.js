@@ -160,9 +160,10 @@ autoUpdater.on('checking-for-update', () => {
 });
 
 autoUpdater.on('update-available', (info) => {
-  console.log('Доступне оновлення:', info.version);
+  console.log('Доступне оновлення:', info ? info.version : 'невідома версія');
   if (mainWindow) {
-    mainWindow.webContents.send('update-status', `Доступне оновлення v${info.version}. Завантаження...`);
+    const version = info && info.version ? info.version : 'невідома';
+    mainWindow.webContents.send('update-status', `Доступне оновлення v${version}. Завантаження...`);
   }
 });
 
@@ -174,23 +175,29 @@ autoUpdater.on('update-not-available', (info) => {
 });
 
 autoUpdater.on('error', (err) => {
-  console.error('Помилка автоматичного оновлення:', err);
+  const errorMessage = err && err.message ? err.message : 'Невідома помилка';
+  console.error('Помилка автоматичного оновлення:', errorMessage);
   if (mainWindow) {
     mainWindow.webContents.send('update-status', 'Помилка перевірки оновлень');
   }
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
-  let log_message = "Швидкість завантаження: " + progressObj.bytesPerSecond;
-  log_message = log_message + ' - Завантажено ' + progressObj.percent + '%';
-  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  const percent = progressObj && progressObj.percent ? Math.round(progressObj.percent) : 0;
+  const bytesPerSecond = progressObj && progressObj.bytesPerSecond ? progressObj.bytesPerSecond : 0;
+  const transferred = progressObj && progressObj.transferred ? progressObj.transferred : 0;
+  const total = progressObj && progressObj.total ? progressObj.total : 0;
+  
+  let log_message = "Швидкість завантаження: " + bytesPerSecond;
+  log_message = log_message + ' - Завантажено ' + percent + '%';
+  log_message = log_message + ' (' + transferred + "/" + total + ')';
   console.log(log_message);
   
   if (mainWindow) {
     mainWindow.webContents.send('update-progress', {
-      percent: Math.round(progressObj.percent),
-      transferred: progressObj.transferred,
-      total: progressObj.total
+      percent: percent,
+      transferred: transferred,
+      total: total
     });
   }
 });
@@ -218,10 +225,27 @@ autoUpdater.on('update-downloaded', (info) => {
 ipcMain.handle('check-for-updates', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
-    return result;
+    // Повертаємо тільки необхідні дані, щоб уникнути проблем з клонуванням
+    if (result) {
+      return {
+        updateInfo: result.updateInfo ? {
+          version: result.updateInfo.version,
+          releaseDate: result.updateInfo.releaseDate,
+          releaseName: result.updateInfo.releaseName,
+          releaseNotes: result.updateInfo.releaseNotes
+        } : null,
+        cancelled: result.cancelled || false
+      };
+    }
+    return null;
   } catch (error) {
     console.error('Помилка перевірки оновлень:', error);
-    throw error;
+    // Повертаємо серіалізовану помилку
+    return {
+      error: true,
+      message: error.message || 'Невідома помилка',
+      code: error.code || 'UNKNOWN_ERROR'
+    };
   }
 });
 
