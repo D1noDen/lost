@@ -42,8 +42,24 @@ function animateCounter(elementId, targetValue, suffix = '', color = '#10b981') 
 
 async function loadData() {
   try {
-    const response = await fetch('accounts.json');
-    const data = await response.json();
+    // Використовуємо IPC для отримання шляху до файлу акаунтів
+    const { ipcRenderer } = require('electron');
+    const accountsFilePath = await ipcRenderer.invoke('get-accounts-file-path');
+    
+    // Читаємо файл через Node.js fs замість fetch
+    const fs = require('fs');
+    
+    if (!fs.existsSync(accountsFilePath)) {
+      console.warn('Файл акаунтів не знайдено, створюємо порожню структуру');
+      const data = { accounts: [] };
+      updateStatCards(data.accounts);
+      renderCharts({}, [], {}, {});
+      return;
+    }
+    
+    const fileContent = fs.readFileSync(accountsFilePath, 'utf8');
+    const data = JSON.parse(fileContent);
+    
     const dateProfit = {};
     const accountProfits = [];
     let farming = 0, inactive = 0;
@@ -83,6 +99,9 @@ async function loadData() {
     updateWeeklySummary(weeklyData); // Оновлення статистики тижневих доходів
   } catch (error) {
     console.error('Помилка завантаження даних:', error);
+    // Відображаємо порожню статистику у випадку помилки
+    updateStatCards([]);
+    renderCharts({}, [], {}, {});
   }
 }
 
