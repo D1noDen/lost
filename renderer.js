@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const filePath = path.join(__dirname, 'accounts.json');
+const { ipcRenderer } = require('electron');
 const SteamTotp = require('steam-totp');
 const TradeManager = require('./trade_manager.js');
 
@@ -9,8 +9,106 @@ let tradeManager = null;
 let filteredAccounts = []; // Для збереження відфільтрованих акаунтів
 let searchQuery = ''; // Поточний запит пошуку
 
+// Глобальні шляхи (будуть отримані від main процесу)
+let accountsFilePath = '';
+let maFilesPath = '';
+
 // Курс USD до UAH (можна оновлювати або отримувати з API)
 const USD_TO_UAH_RATE = 41.5;
+
+// Функції для автоматичного оновлення
+async function initUpdater() {
+  // Отримання версії додатка
+  ipcRenderer.invoke('get-app-version').then(version => {
+    const versionEl = document.getElementById('app-version');
+    if (versionEl) {
+      versionEl.textContent = `v${version}`;
+    }
+  });
+
+  // Отримання шляхів від main процесу
+  try {
+    accountsFilePath = await ipcRenderer.invoke('get-accounts-file-path');
+    maFilesPath = await ipcRenderer.invoke('get-mafiles-path');
+    
+    console.log('Шляхи ініціалізовані:', { accountsFilePath, maFilesPath });
+    
+    // Забезпечуємо існування директорії maFiles
+    await ipcRenderer.invoke('ensure-mafiles-directory');
+  } catch (error) {
+    console.error('Помилка ініціалізації шляхів:', error);
+  }
+
+  // Обробка статусу оновлення
+  ipcRenderer.on('update-status', (event, message) => {
+    showUpdateNotification(message, 'info');
+  });
+
+  // Обробка прогресу завантаження
+  ipcRenderer.on('update-progress', (event, progress) => {
+    showUpdateProgress(progress);
+  });
+}
+
+function checkForUpdates() {
+  ipcRenderer.invoke('check-for-updates').then(() => {
+    showUpdateNotification('Перевірка оновлень...', 'info');
+  }).catch(error => {
+    showUpdateNotification('Помилка перевірки оновлень: ' + error.message, 'error');
+  });
+}
+
+function showUpdateNotification(message, type = 'info') {
+  // Створюємо або оновлюємо елемент статусу оновлення
+  let updateStatus = document.getElementById('update-status');
+  if (!updateStatus) {
+    updateStatus = document.createElement('div');
+    updateStatus.id = 'update-status';
+    updateStatus.className = 'update-notification';
+    document.body.appendChild(updateStatus);
+  }
+  
+  updateStatus.className = `update-notification ${type}`;
+  updateStatus.textContent = message;
+  updateStatus.style.display = 'block';
+  
+  // Автоматично ховаємо через 10 секунд для звичайних повідомлень
+  if (type === 'info' && !message.includes('Завантаження') && !message.includes('завантажено')) {
+    setTimeout(() => {
+      updateStatus.style.display = 'none';
+    }, 10000);
+  }
+}
+
+function showUpdateProgress(progress) {
+  let progressBar = document.getElementById('update-progress');
+  if (!progressBar) {
+    progressBar = document.createElement('div');
+    progressBar.id = 'update-progress';
+    progressBar.className = 'update-progress';
+    progressBar.innerHTML = `
+      <div class="progress-label">Завантаження оновлення...</div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+      <div class="progress-text">0%</div>
+    `;
+    document.body.appendChild(progressBar);
+  }
+  
+  const progressFill = progressBar.querySelector('.progress-fill');
+  const progressText = progressBar.querySelector('.progress-text');
+  
+  progressFill.style.width = `${progress.percent}%`;
+  progressText.textContent = `${progress.percent}%`;
+  progressBar.style.display = 'block';
+  
+  if (progress.percent >= 100) {
+    setTimeout(() => {
+      progressBar.style.display = 'none';
+    }, 2000);
+  }
+}
 
 function convertUsdToUah(usdPrice) {
   // Видаляємо символ $ та конвертуємо в число
@@ -20,8 +118,13 @@ function convertUsdToUah(usdPrice) {
 }
 
 function loadAccounts() {
-  if (fs.existsSync(filePath)) {
-    const raw = fs.readFileSync(filePath);
+  if (!accountsFilePath) {
+    console.error('Шлях до файлу акаунтів ще не ініціалізований');
+    return;
+  }
+  
+  if (fs.existsSync(accountsFilePath)) {
+    const raw = fs.readFileSync(accountsFilePath);
     try {
       const loaded = JSON.parse(raw).accounts || [];
       accounts = loaded.map((acc, index) => {
@@ -33,7 +136,7 @@ function loadAccounts() {
           lastDrop: acc.lastDrop || '',
           lastDropPrice: acc.lastDropPrice || 0,
           lastDropImageUrl: acc.lastDropImageUrl || '',
-          tradeUrl: acc.tradeUrl || '', // Додаємо трейд-лінку
+          tradeUrl: acc.tradeUrl || '', // Додаємо трейд-лінк
           // Додаємо підтримку двох останніх дропів
           lastDrops: acc.lastDrops || []
         };
@@ -185,12 +288,106 @@ function togglePrime(index) {
 }
 
 function selectMaFile(event, index) {
-  console.log(event)
+  console.log('selectMaFile called with event:', event);
   const file = event.target.files[0];
-  if (file) {
-    updateField(index, 'maFilePath', `./resources/app/maFiles/${file.name}`);
-  } else {
-    alert('Неможливо отримати шлях до файлу. Переконайтесь, що ви використовуєте Electron.');
+  console.log('Selected file object:', file);
+  console.log('File properties:', file ? {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    lastModified: file.lastModified,
+    path: file.path, // Це може бути undefined в production
+    webkitRelativePath: file.webkitRelativePath
+  } : 'No file selected');
+  
+  if (file && maFilesPath) {
+    console.log('Selected file:', file.name, 'Size:', file.size);
+    console.log('maFilesPath:', maFilesPath);
+    
+    // Копіюємо файл в папку maFiles в userData
+    const fileName = file.name;
+    const destinationPath = path.join(maFilesPath, fileName);
+    console.log('Destination path will be:', destinationPath);
+    
+    // Використовуємо FileReader для читання файлу
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      try {
+        console.log('FileReader успішно прочитав файл, size:', e.target.result.byteLength);
+        
+        // Отримуємо дані файлу як ArrayBuffer
+        const arrayBuffer = e.target.result;
+        const buffer = Buffer.from(arrayBuffer);
+        
+        console.log('Trying to write file to:', destinationPath);
+        
+        // Зберігаємо файл в userData/maFiles
+        fs.writeFileSync(destinationPath, buffer);
+        
+        console.log('File successfully written via fs.writeFileSync');
+        
+        // Зберігаємо правильний шлях
+        updateField(index, 'maFilePath', destinationPath);
+        console.log(`Файл ${fileName} скопійовано до ${destinationPath}`);
+        
+        // Показуємо повідомлення про успіх
+        showNotification(`✅ Файл ${fileName} успішно завантажено`, 'success');
+        
+      } catch (error) {
+        console.error('Помилка копіювання файлу через fs:', error);
+        console.log('Fallback: trying to copy via IPC...');
+        
+        // Спробуємо через IPC як fallback
+        copyMaFileViaIPC(arrayBuffer, fileName, index);
+      }
+    };
+    
+    reader.onerror = function(error) {
+      console.error('Помилка читання файлу:', error);
+      alert('Помилка читання файлу: ' + error.message);
+    };
+    
+    // Читаємо файл як ArrayBuffer
+    reader.readAsArrayBuffer(file);
+    
+  } else if (!file) {
+    alert('Файл не обрано.');
+  } else if (!maFilesPath) {
+    alert('Папка maFiles не ініціалізована. Спробуйте перезапустити додаток.');
+  }
+}
+
+// Альтернативна функція через IPC
+async function copyMaFileViaIPC(arrayBuffer, fileName, index) {
+  try {
+    console.log('Спроба копіювання через IPC...');
+    console.log('arrayBuffer size:', arrayBuffer.byteLength);
+    console.log('fileName:', fileName);
+    console.log('index:', index);
+    
+    // Конвертуємо ArrayBuffer в масив для передачі через IPC
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const fileData = Array.from(uint8Array);
+    
+    console.log('Converted to array, length:', fileData.length);
+    
+    // Копіюємо файл через main процес
+    console.log('Invoking IPC copy-mafile...');
+    const destinationPath = await ipcRenderer.invoke('copy-mafile', fileData, fileName);
+    
+    console.log('IPC returned destination path:', destinationPath);
+    
+    // Зберігаємо правильний шлях
+    updateField(index, 'maFilePath', destinationPath);
+    console.log(`IPC: Файл ${fileName} скопійовано до ${destinationPath}`);
+    
+    // Показуємо повідомлення про успіх
+    showNotification(`✅ Файл ${fileName} успішно завантажено через IPC`, 'success');
+    
+  } catch (error) {
+    console.error('Помилка копіювання через IPC:', error);
+    alert('Помилка копіювання файлу: ' + error.message);
   }
 }
 
@@ -333,9 +530,11 @@ async function fetchLastDrop(index) {
   // Спочатку перевіряємо, чи є maFile в заданому шляху
   let maFilePath = acc.maFilePath;
   if (!maFilePath || !fs.existsSync(maFilePath)) {
-    // Якщо шлях не вказаний або файл не існує, шукаємо в стандартній папці
-    maFilePath = path.join(__dirname, 'maFiles', `${acc.login}.maFile`);
-    if (!fs.existsSync(maFilePath)) {
+    // Якщо шлях не вказаний або файл не існує, шукаємо в папці userData
+    if (maFilesPath) {
+      maFilePath = path.join(maFilesPath, `${acc.login}.maFile`);
+    }
+    if (!maFilePath || !fs.existsSync(maFilePath)) {
       alert(`maFile не знайдено для акаунту ${acc.login}.\nПеревірено:\n- ${acc.maFilePath}\n- ${maFilePath}`);
       return;
     }
@@ -678,10 +877,16 @@ function render() {
 }
 
 function saveAccounts() {
+  if (!accountsFilePath) {
+    console.error('Шлях до файлу акаунтів ще не ініціалізований');
+    return;
+  }
+  
   try {
     const dataToSave = { accounts };
-    fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2));
+    fs.writeFileSync(accountsFilePath, JSON.stringify(dataToSave, null, 2));
     console.log('[saveAccounts] Акаунти збережено успішно:', accounts.length, 'акаунтів');
+    console.log('[saveAccounts] Шлях збереження:', accountsFilePath);
     
     // Додаткове логування для дропів
     accounts.forEach((acc, i) => {
@@ -923,4 +1128,7 @@ function renumberAccountIds() {
   saveAccounts();
 }
 
-window.onload = loadAccounts;
+window.onload = async () => {
+  await initUpdater(); // Спочатку ініціалізуємо updater та шляхи
+  loadAccounts(); // Потім завантажуємо акаунти
+};

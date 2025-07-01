@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test MaFile Selection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .file-input {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: white;
+        }
+        .log {
+            background: #111;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test MaFile Selection</h1>
+    
+    <div class="test-section">
+        <h3>Тест 1: Вибір файлу</h3>
+        <input type="file" id="testFile" class="file-input" accept=".maFile" onchange="testFileSelection(event)">
+        <div>Оберіть .maFile для тестування</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Тест 2: Інформація про середовище</h3>
+        <button onclick="checkEnvironment()">Перевірити середовище</button>
+        <div id="envInfo"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Тест 3: Шляхи</h3>
+        <button onclick="checkPaths()">Перевірити шляхи</button>
+        <div id="pathInfo"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Логи</h3>
+        <button onclick="clearLogs()">Очистити логи</button>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        function testFileSelection(event) {
+            log('=== File Selection Test Started ===');
+            
+            const file = event.target.files[0];
+            if (!file) {
+                log('No file selected');
+                return;
+            }
+
+            log(`File selected: ${file.name}`);
+            log(`File size: ${file.size} bytes`);
+            log(`File type: ${file.type}`);
+            log(`File lastModified: ${file.lastModified}`);
+            log(`File path: ${file.path || 'undefined'}`);
+            log(`File webkitRelativePath: ${file.webkitRelativePath || 'empty'}`);
+
+            // Test FileReader
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    log('FileReader onload triggered');
+                    log(`ArrayBuffer size: ${e.target.result.byteLength}`);
+                    
+                    // Test Buffer.from
+                    const buffer = Buffer.from(e.target.result);
+                    log(`Buffer created successfully, size: ${buffer.length}`);
+                    
+                    // Test conversion to array
+                    const uint8Array = new Uint8Array(e.target.result);
+                    const fileData = Array.from(uint8Array);
+                    log(`Converted to array, length: ${fileData.length}`);
+                    
+                    log('✅ All file processing tests passed');
+                    
+                } catch (error) {
+                    log(`❌ Error in file processing: ${error.message}`);
+                    console.error(error);
+                }
+            };
+            
+            reader.onerror = function(error) {
+                log(`❌ FileReader error: ${error.message}`);
+                console.error(error);
+            };
+            
+            log('Starting FileReader.readAsArrayBuffer...');
+            reader.readAsArrayBuffer(file);
+        }
+
+        function checkEnvironment() {
+            log('=== Environment Check ===');
+            
+            log(`Node.js process: ${typeof process !== 'undefined' ? 'available' : 'not available'}`);
+            log(`Electron: ${typeof require !== 'undefined' ? 'available' : 'not available'}`);
+            
+            if (typeof require !== 'undefined') {
+                try {
+                    const fs = require('fs');
+                    log('fs module: available');
+                } catch (error) {
+                    log(`fs module: ${error.message}`);
+                }
+                
+                try {
+                    const path = require('path');
+                    log('path module: available');
+                } catch (error) {
+                    log(`path module: ${error.message}`);
+                }
+                
+                try {
+                    const { ipcRenderer } = require('electron');
+                    log('ipcRenderer: available');
+                } catch (error) {
+                    log(`ipcRenderer: ${error.message}`);
+                }
+            }
+            
+            document.getElementById('envInfo').innerHTML = 'Check logs for details';
+        }
+
+        async function checkPaths() {
+            log('=== Paths Check ===');
+            
+            if (typeof require !== 'undefined') {
+                try {
+                    const { ipcRenderer } = require('electron');
+                    
+                    const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+                    log(`User data path: ${userDataPath}`);
+                    
+                    const accountsPath = await ipcRenderer.invoke('get-accounts-file-path');
+                    log(`Accounts file path: ${accountsPath}`);
+                    
+                    const maFilesPath = await ipcRenderer.invoke('get-mafiles-path');
+                    log(`MaFiles path: ${maFilesPath}`);
+                    
+                    document.getElementById('pathInfo').innerHTML = 'Check logs for paths';
+                    
+                } catch (error) {
+                    log(`❌ Error getting paths: ${error.message}`);
+                    document.getElementById('pathInfo').innerHTML = 'Error getting paths';
+                }
+            } else {
+                log('IPC not available - not running in Electron');
+                document.getElementById('pathInfo').innerHTML = 'Not running in Electron';
+            }
+        }
+
+        // Initialize
+        log('Test page loaded');
+        log('Ready for testing');
+    </script>
+</body>
+</html>

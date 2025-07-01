@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
@@ -16,19 +16,8 @@
     "directories": {
       "output": "dist"
     },
-    "extraResources": [
-      {
-        "from": "maFiles/",
-        "to": "maFiles/"
-      },
-      {
-        "from": "accounts.json",
-        "to": "accounts.json"
-      }
-    ],
     "files": [
       "**/*",
-      "maFiles/**/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/node_modules/*.d.ts",
@@ -49,9 +38,7 @@
           "arch": ["x64"]
         }
       ],
-      "forceCodeSigning": false,
-      "verifyUpdateCodeSignature": false,
-      "signAndEditExecutable": false
+      "forceCodeSigning": false
     },
     "nsis": {
       "oneClick": false,
@@ -61,7 +48,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "D1noDen",
+      "owner": "your-github-username",
       "repo": "lost"
     }
   },

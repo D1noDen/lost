@@ -2489,6 +2489,129 @@ select, .tab-button {
     animation: none;
   }
 }
+
+/* Стилі для оновлення */
+.btn-update {
+  background: var(--emerald-600);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.btn-update:hover {
+  background: var(--emerald-500);
+  transform: translateY(-1px);
+}
+
+.update-icon {
+  transition: transform 0.3s ease;
+}
+
+.btn-update:hover .update-icon {
+  transform: rotate(180deg);
+}
+
+.app-version {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid var(--emerald-600);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  opacity: 0.8;
+}
+
+.update-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10000;
+  max-width: 300px;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  animation: slideInRight 0.3s ease-out;
+}
+
+.update-notification.info {
+  background: rgba(16, 185, 129, 0.9);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+}
+
+.update-notification.error {
+  background: rgba(255, 107, 107, 0.9);
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+}
+
+.update-progress {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 300px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.progress-label {
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--emerald-500), var(--emerald-400));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.progress-text {
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 </style>
 
 </head>
@@ -2618,6 +2741,20 @@ select, .tab-button {
           <polyline points="1 20 1 14 7 14"/>
           <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
         </svg>
+        <span class="reset-text">Скинути</span>
+      </button>
+      <button class="btn-update" onclick="checkForUpdates()" title="Перевірити оновлення">
+        <svg class="update-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
+        <span class="update-text">Оновити</span>
+      </button>
+      <div class="app-version">
+        <span id="app-version">v1.0.0</span>
+      </div>
         <span class="reset-text">Reset</span>
       </button>
     </div>
