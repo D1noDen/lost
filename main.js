@@ -296,6 +296,30 @@ ipcMain.handle('save-accounts-data', (event, data) => {
   }
 });
 
+// IPC обробник для читання .maFile
+ipcMain.handle('read-mafile', (event, accountLogin) => {
+  const maFilesPath = path.join(app.getPath('userData'), 'maFiles');
+  const maFilePath = path.join(maFilesPath, `${accountLogin}.maFile`);
+  
+  try {
+    if (!fs.existsSync(maFilePath)) {
+      return { success: false, error: `maFile не знайдено для акаунта ${accountLogin}` };
+    }
+    
+    const fileContent = fs.readFileSync(maFilePath, 'utf8');
+    const maFileData = JSON.parse(fileContent);
+    
+    return { 
+      success: true, 
+      sharedSecret: maFileData.shared_secret,
+      identitySecret: maFileData.identity_secret
+    };
+  } catch (error) {
+    console.error(`Помилка читання maFile для ${accountLogin}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('get-mafiles-path', () => {
   return path.join(app.getPath('userData'), 'maFiles');
 });

@@ -454,9 +454,19 @@ async function loginToNextAccount(accounts, index = 0) {
     }
 
     const account = accounts[index];
-    const { shared_secret: sharedSecret, identity_secret: identitySecret } = JSON.parse(fs.readFileSync(path.join(__dirname, 'maFiles', `${account.login}.maFile`), 'utf8'));
-
+    
     try {
+        // Читаємо .maFile через IPC
+        const maFileResult = await ipcRenderer.invoke('read-mafile', account.login);
+        
+        if (!maFileResult.success) {
+            console.error(`Помилка читання maFile для ${account.login}:`, maFileResult.error);
+            showMessage(`❌ Помилка читання maFile для ${account.login}: ${maFileResult.error}`, 'error');
+            return;
+        }
+        
+        const { sharedSecret, identitySecret } = maFileResult;
+
         console.log(`Logging in as ${account.login}...`);
         await tradeManager.login(account.login, account.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
         console.log(`Logged in as ${account.login}.`);
