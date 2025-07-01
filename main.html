@@ -455,9 +455,9 @@ select, .tab-button {
 }
 
 .btn-add-account {
-  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+  background: linear-gradient(135deg, #FF9800, #FF9800);
   color: var(--text-primary);
-  border: 2px solid var(--emerald-400);
+  border: 2px solid #d38534;
   border-radius: 16px;
   padding: 16px 32px;
   cursor: pointer;
@@ -487,8 +487,8 @@ select, .tab-button {
 .btn-add-account:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
-  border-color: var(--emerald-300);
-  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-400));
+  border-color: #c47704;
+  background: linear-gradient(135deg, #c47704, #9c6006);
 }
 
 .btn-add-account:hover::before {
@@ -1084,7 +1084,7 @@ select, .tab-button {
 
 @keyframes textGlow {
   0%, 100% {
-    text-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+    text-shadow: 0 0 40px rgba(171, 255, 227, 0.6);
   }
   50% {
     text-shadow: 0 0 50px rgba(16, 185, 129, 0.8);
@@ -1274,7 +1274,6 @@ select, .tab-button {
   animation: fadeInScale 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   z-index: 1;
-  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -1333,34 +1332,12 @@ select, .tab-button {
   justify-content: center;
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, 
-    var(--emerald-500) 0%,
-    var(--emerald-600) 50%,
-    var(--emerald-700) 100%
-  );
   border-radius: 24px;
-  box-shadow: 
-    0 8px 32px rgba(16, 185, 129, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  animation: float 4s ease-in-out infinite;
   position: relative;
   overflow: hidden;
 }
 
-.main-icon::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  animation: shimmer 3s ease-in-out infinite;
-}
+
 
 .main-icon svg {
   color: white;
@@ -2555,6 +2532,10 @@ select, .tab-button {
   font-weight: 500;
   margin-left: 8px;
   opacity: 0.8;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
 }
 
 .update-notification {
@@ -2639,9 +2620,9 @@ select, .tab-button {
 }
 
 .btn-change-password {
-  background: linear-gradient(135deg, var(--emerald-700), var(--emerald-600));
+  background: linear-gradient(135deg, #dc2626, #dc2626);
   color: var(--text-primary);
-  border: 2px solid var(--emerald-500);
+  border: 2px solid #dc2626;
   border-radius: 16px;
   padding: 16px 32px;
   cursor: pointer;
@@ -2671,8 +2652,8 @@ select, .tab-button {
 .btn-change-password:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
-  border-color: var(--emerald-400);
-  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+  border-color:#972c2c;
+  background: linear-gradient(135deg, #972c2c, #8a0e0e);
 }
 
 .btn-change-password:hover::before {
@@ -2684,9 +2665,9 @@ select, .tab-button {
 }
 
 .btn-import-export {
-  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
   color: var(--text-primary);
-  border: 2px solid #60a5fa;
+  border: 2px solid #c084fc;
   border-radius: 16px;
   padding: 16px 32px;
   cursor: pointer;
@@ -2716,10 +2697,10 @@ select, .tab-button {
 .btn-import-export:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
-  border-color: #93c5fd;
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  border-color: #d8b4fe;
+  background: linear-gradient(135deg, #a855f7, #c084fc);
 }
-
+ 
 .btn-import-export:hover::before {
   left: 100%;
 }
@@ -2729,9 +2710,9 @@ select, .tab-button {
 }
 
 .btn-auto-link {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+ background: linear-gradient(135deg, #1e40af, #3b82f6);
   color: var(--text-primary);
-  border: 2px solid #c084fc;
+  border: 2px solid #60a5fa;
   border-radius: 16px;
   padding: 16px 32px;
   cursor: pointer;
@@ -2757,12 +2738,12 @@ select, .tab-button {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s;
 }
-
+ 
 .btn-auto-link:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(168, 85, 247, 0.4);
-  border-color: #d8b4fe;
-  background: linear-gradient(135deg, #a855f7, #c084fc);
+ border-color: #93c5fd;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
 }
 
 .btn-auto-link:hover::before {
@@ -3125,11 +3106,7 @@ select, .tab-button {
   <div class="main-container">
     <div class="title-icon-group">
       <div class="main-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-          <line x1="8" y1="21" x2="16" y2="21"/>
-          <line x1="12" y1="17" x2="12" y2="21"/>
-        </svg>
+       <img style="width:100%; height: 100%;" src="./icon.png"/>
       </div>
       <h1 class="main-title">LOST — Steam Accounts</h1>
     </div>
@@ -3205,30 +3182,7 @@ select, .tab-button {
       <span class="btn-add-text">Авто-з'єднання</span>
     </button>
   </div>
-
-  <!-- Секція прибутку -->
-  <div class="profit-section">
-    <div class="profit-container">
-      <div class="profit-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="1" x2="12" y2="23"/>
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-        </svg>
-      </div>
-      <div class="profit-info">
-        <div class="profit-label">Загальний прибуток</div>
-        <div id="total-profit" class="profit-amount">0 грн</div>
-      </div>
-      <div class="profit-badge">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-          <polyline points="17 6 23 6 23 12"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Таби навігації -->
+ <!-- Таби навігації -->
   <div class="tabs-navigation">
     <div class="tabs-container">
       <button class="tab-button active" onclick="showTab('accounts-tab', this)">
@@ -3277,21 +3231,34 @@ select, .tab-button {
         </svg>
         <span class="update-text">Оновити</span>
       </button>
-      <button class="btn-password" onclick="changePassword()" title="Змінити пароль">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <circle cx="12" cy="16" r="1"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        <span>Пароль</span>
-      </button>
-      <div class="app-version">
-        <span id="app-version">v1.0.0</span>
-      </div>
-        <span class="reset-text">Reset</span>
-      </button>
     </div>
   </div>
+ <div class="app-version">
+        <span id="app-version">v1.0.0</span>
+      </div>
+  <!-- Секція прибутку -->
+  <div class="profit-section">
+    <div class="profit-container">
+      <div class="profit-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <div class="profit-info">
+        <div class="profit-label">Загальний прибуток</div>
+        <div id="total-profit" class="profit-amount">0 грн</div>
+      </div>
+      <div class="profit-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+ 
 
 <!-- Фільтр та пошук -->
 <div class="search-container" style="margin: 20px 0;">
@@ -3312,6 +3279,71 @@ select, .tab-button {
 
 <div id="history-tab" class="tab" style="display: none;">
   <ul id="history-list"></ul>
+</div>
+
+<!-- Модальне вікно для імпорту/експорту -->
+<div id="importExportModal" class="import-export-modal" style="display: none;">
+  <div class="import-export-modal-content">
+    <div class="import-export-modal-header">
+      <h3>📁 Імпорт/Експорт</h3>
+      <button onclick="closeModal('importExportModal')" class="close-modal-btn">&times;</button>
+    </div>
+    <div class="import-export-modal-body">
+      <div class="import-export-section">
+        <h4>📤 Експорт акаунтів</h4>
+        <button onclick="exportAccounts()" class="btn-action">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="15" y1="15" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="12" y2="12"/>
+          </svg>
+          Експортувати акаунти
+        </button>
+      </div>
+      
+      <div class="import-export-section">
+        <h4>📥 Імпорт акаунтів</h4>
+        <button onclick="importAccounts()" class="btn-action">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <line x1="12" y1="12" x2="12" y2="18"/>
+            <line x1="9" y1="15" x2="12" y2="18"/>
+            <line x1="15" y1="15" x2="12" y2="18"/>
+          </svg>
+          Імпортувати акаунти
+        </button>
+      </div>
+      
+      <div class="import-export-section">
+        <h4>🔑 Імпорт .maFile файлів</h4>
+        <button onclick="importMaFilesFolder()" class="btn-action">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <line x1="12" y1="11" x2="12" y2="17"/>
+            <line x1="9" y1="14" x2="12" y2="17"/>
+            <line x1="15" y1="14" x2="12" y2="17"/>
+          </svg>
+          Імпорт папки з .maFile
+        </button>
+        <button onclick="importMaFilesIndividual()" class="btn-action">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <line x1="12" y1="11" x2="12" y2="17"/>
+            <line x1="9" y1="14" x2="12" y2="17"/>
+            <line x1="15" y1="14" x2="12" y2="17"/>
+          </svg>
+          Імпорт окремих .maFile
+        </button>
+      </div>
+    </div>
+    <div class="import-export-modal-footer">
+      <button onclick="closeModal('importExportModal')" class="btn-close">Закрити</button>
+    </div>
+  </div>
 </div>
 
  

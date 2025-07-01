@@ -1317,6 +1317,48 @@ async function importMaFiles() {
   }
 }
 
+// Функція для імпорту папки з .maFile файлами
+async function importMaFilesFolder() {
+  try {
+    showNotification('Виберіть папку з .maFile файлами для імпорту...', 'info');
+    const result = await ipcRenderer.invoke('import-mafiles-folder');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+      // Перезавантажуємо список акаунтів
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка імпорту папки maFiles:', error);
+    showNotification('Помилка імпорту папки maFiles: ' + error.message, 'error');
+  }
+}
+
+// Функція для імпорту окремих .maFile файлів
+async function importMaFilesIndividual() {
+  try {
+    showNotification('Виберіть .maFile файли для імпорту...', 'info');
+    const result = await ipcRenderer.invoke('import-mafiles-individual');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+      // Перезавантажуємо список акаунтів
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка імпорту окремих maFiles:', error);
+    showNotification('Помилка імпорту окремих maFiles: ' + error.message, 'error');
+  }
+}
+
 async function exportAccounts() {
   try {
     showNotification('Виберіть місце для збереження файлу...', 'info');
@@ -1449,6 +1491,8 @@ async function autoLinkAllMaFiles() {
 window.importAccounts = importAccounts;
 window.importTradeHistory = importTradeHistory;
 window.importMaFiles = importMaFiles;
+window.importMaFilesFolder = importMaFilesFolder;
+window.importMaFilesIndividual = importMaFilesIndividual;
 window.exportAccounts = exportAccounts;
 window.showImportExportModal = showImportExportModal;
 window.autoLinkAllMaFiles = autoLinkAllMaFiles;
