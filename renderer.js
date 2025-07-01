@@ -242,6 +242,19 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text);
 }
 
+// Функція для копіювання загальної суми дропів
+function copyTotalDropPrice(index) {
+  const acc = accounts[index];
+  if (acc.lastDrops && acc.lastDrops.length > 0) {
+    const totalPrice = acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0);
+    const formattedTotal = totalPrice.toFixed(2);
+    copyToClipboard(formattedTotal);
+    showNotification(`💰 Загальна сума дропів скопійована: ${formattedTotal} грн`, 'success');
+  } else {
+    showNotification('❌ Немає дропів для копіювання', 'error');
+  }
+}
+
 // Функція пошуку акаунтів
 function searchAccounts(query) {
   searchQuery = query.toLowerCase().trim();
