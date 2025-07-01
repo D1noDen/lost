@@ -33,6 +33,7 @@ function loadAccounts() {
           lastDrop: acc.lastDrop || '',
           lastDropPrice: acc.lastDropPrice || 0,
           lastDropImageUrl: acc.lastDropImageUrl || '',
+          tradeUrl: acc.tradeUrl || '', // Додаємо трейд-лінку
           // Додаємо підтримку двох останніх дропів
           lastDrops: acc.lastDrops || []
         };
@@ -134,6 +135,7 @@ function addAccount() {
     prime: false,
     unlockDate: new Date().toISOString().split('T')[0],
     maFilePath: '',
+    tradeUrl: '', // Трейд-лінка
     lastDrop: '',
     lastDropPrice: 0,
     lastDropImageUrl: '',
@@ -540,6 +542,10 @@ function render() {
 
         <button onclick="event.stopPropagation(); generate2FA(${originalIndex})" class="btn-2fa">📟 Копіювати 2FA</button>
 
+        <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}')" class="btn-trade-url" title="Копіювати трейд-лінку">
+          🔗 ${acc.tradeUrl ? 'Трейд-лінка' : 'Немає трейд-лінки'}
+        </button>
+
         <button onclick="event.stopPropagation(); toggleFarming(${originalIndex})" class="btn-farming">
           ${acc.farming ? '✅ Фармиться' : '🚫 Не фармиться'}
         </button>
@@ -569,6 +575,11 @@ function render() {
 
         <input type="file" onchange="selectMaFile(event, ${originalIndex})" />
         <input type="text" placeholder="Шлях до maFile" value="${acc.maFilePath || ''}" onchange="updateField(${originalIndex}, 'maFilePath', this.value)" />
+
+        <div class="trade-url-field">
+          <input type="text" placeholder="Трейд-лінка (Trade URL)" value="${acc.tradeUrl || ''}" onchange="updateField(${originalIndex}, 'tradeUrl', this.value)" />
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}')" title="Копіювати трейд-лінку">🔗</button>
+        </div>
 
         <input type="text" placeholder="Ім'я" value="${acc.name || ''}" onchange="updateField(${originalIndex}, 'name', this.value)" />
         <input type="text" placeholder="Login" value="${acc.login}" onchange="updateField(${originalIndex}, 'login', this.value)" />
