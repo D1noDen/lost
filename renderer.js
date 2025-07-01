@@ -233,15 +233,23 @@ function generate2FA(index) {
     const sharedSecret = maData.shared_secret;
 
     const code = SteamTotp.generateAuthCode(sharedSecret);
-    copyToClipboard(code);
-    alert("Код скопійовано: " + code);
+    copyToClipboard(code, `🔐 2FA код скопійовано: ${code}`);
   } catch (e) {
     alert("Помилка при зчитуванні maFile: " + e.message);
   }
 }
 
-function copyToClipboard(text) {
+function copyToClipboard(text, message = null) {
   navigator.clipboard.writeText(text);
+  
+  // Показуємо сповіщення про копіювання
+  if (message) {
+    showNotification(message, 'success');
+  } else if (text && text.trim() !== '') {
+    showNotification(`📋 Скопійовано в буфер обміну`, 'success');
+  } else {
+    showNotification(`❌ Нічого копіювати`, 'warning');
+  }
 }
 
 // Функція для копіювання загальної суми дропів
@@ -250,8 +258,7 @@ function copyTotalDropPrice(index) {
   if (acc.lastDrops && acc.lastDrops.length > 0) {
     const totalPrice = acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0);
     const formattedTotal = totalPrice.toFixed(2);
-    copyToClipboard(formattedTotal);
-    showNotification(`💰 Загальна сума дропів скопійована: ${formattedTotal} грн`, 'success');
+    copyToClipboard(formattedTotal, `💰 Загальна сума дропів скопійована: ${formattedTotal} грн`);
   } else {
     showNotification('❌ Немає дропів для копіювання', 'error');
   }
@@ -532,17 +539,17 @@ function render() {
       <div class="account-meta">
         <span>
           👤 ${acc.login}
-          <button onclick="event.stopPropagation(); copyToClipboard('${acc.login}')">📋</button>
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.login}', '👤 Логін скопійовано: ${acc.login}')">📋</button>
         </span>
 
         <span>
           🔒••••••
-          <button onclick="event.stopPropagation(); copyToClipboard('${acc.password}')">📋</button>
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.password}', '🔒 Пароль скопійовано')">📋</button>
         </span>
 
         <button onclick="event.stopPropagation(); generate2FA(${originalIndex})" class="btn-2fa">📟 Копіювати 2FA</button>
 
-        <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}')" class="btn-trade-url" title="Копіювати трейд-лінку">
+        <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}', '🔗 Трейд-лінка скопійована')" class="btn-trade-url" title="Копіювати трейд-лінку">
           🔗 ${acc.tradeUrl ? 'Трейд-лінка' : 'Немає трейд-лінки'}
         </button>
 
@@ -578,7 +585,7 @@ function render() {
 
         <div class="trade-url-field">
           <input type="text" placeholder="Трейд-лінка (Trade URL)" value="${acc.tradeUrl || ''}" onchange="updateField(${originalIndex}, 'tradeUrl', this.value)" />
-          <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}')" title="Копіювати трейд-лінку">🔗</button>
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}', '🔗 Трейд-лінка скопійована')" title="Копіювати трейд-лінку">🔗</button>
         </div>
 
         <input type="text" placeholder="Ім'я" value="${acc.name || ''}" onchange="updateField(${originalIndex}, 'name', this.value)" />
