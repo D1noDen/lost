@@ -117,6 +117,46 @@ function convertUsdToUah(usdPrice) {
   return (cleanPrice * USD_TO_UAH_RATE).toFixed(2);
 }
 
+// Функції для показу індикатора завантаження
+function showLoadingIndicator(message = 'Завантаження...') {
+  let loadingIndicator = document.getElementById('global-loading-indicator');
+  
+  if (!loadingIndicator) {
+    loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'global-loading-indicator';
+    loadingIndicator.className = 'global-loading';
+    document.body.appendChild(loadingIndicator);
+  }
+  
+  loadingIndicator.innerHTML = `
+    <div class="loading-backdrop">
+      <div class="loading-content">
+        <div class="loading-spinner">⏳</div>
+        <div class="loading-text">${message}</div>
+      </div>
+    </div>
+  `;
+  
+  loadingIndicator.style.display = 'flex';
+}
+
+function hideLoadingIndicator() {
+  const loadingIndicator = document.getElementById('global-loading-indicator');
+  if (loadingIndicator) {
+    loadingIndicator.style.display = 'none';
+  }
+}
+
+function updateLoadingMessage(message) {
+  const loadingIndicator = document.getElementById('global-loading-indicator');
+  if (loadingIndicator) {
+    const textElement = loadingIndicator.querySelector('.loading-text');
+    if (textElement) {
+      textElement.textContent = message;
+    }
+  }
+}
+
 function loadAccounts() {
   if (!accountsFilePath) {
     console.error('Шлях до файлу акаунтів ще не ініціалізований');
@@ -559,24 +599,34 @@ async function fetchLastDrop(index) {
       document.querySelector(`[onclick="fetchLastDrop(${index})"]`)
     ];
     
-    buttons.forEach(button => {
+    // Зберігаємо оригінальний текст кнопок
+    const originalTexts = [];
+    buttons.forEach((button, i) => {
       if (button) {
-        button.textContent = 'Завантаження...';
+        originalTexts[i] = button.textContent;
+        button.innerHTML = '<span class="spinner">⏳</span> Завантаження...';
         button.disabled = true;
+        button.style.opacity = '0.7';
       }
     });
 
+    // Показуємо глобальний індикатор завантаження
+    showLoadingIndicator(`Отримання дропів для ${acc.login}...`);
+
     console.log(`[fetchLastDrop] Намагаємося увійти в акаунт ${acc.login}...`);
+    updateLoadingMessage(`Вхід в акаунт ${acc.login}...`);
     await tradeManager.login(acc.login, acc.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
     console.log(`[fetchLastDrop] Увійшли в акаунт ${acc.login}`);
 
     console.log(`[fetchLastDrop] Отримуємо інформацію про дропи...`);
+    updateLoadingMessage(`Завантаження інвентаря ${acc.login}...`);
     const dropsInfo = await tradeManager.getLastDrops(acc.login, 2); // Отримуємо 2 останні дропи
     console.log(`[fetchLastDrop] Результат getLastDrops:`, dropsInfo);
     
     if (dropsInfo && dropsInfo.length > 0) {
       console.log('[fetchLastDrop] Отримано інформацію про дропи:', dropsInfo);
       
+      updateLoadingMessage(`Обробка дропів для ${acc.login}...`);
       // Конвертуємо ціни в гривні та оновлюємо дані
       const convertedDrops = dropsInfo.map(drop => ({
         ...drop,
@@ -624,20 +674,25 @@ async function fetchLastDrop(index) {
     console.error(`[fetchLastDrop] Помилка при отриманні дропу для ${acc.login}:`, e);
     alert(`Помилка: ${e.message}`);
   } finally {
+    // Ховаємо глобальний індикатор завантаження
+    hideLoadingIndicator();
+    
     // Відновлюємо кнопки
     const buttons = [
       document.getElementById(`fetch-drop-${index}`),
       document.querySelector(`[onclick="fetchLastDrop(${index})"]`)
     ];
     
-    buttons.forEach(button => {
+    buttons.forEach((button, i) => {
       if (button) {
-        if (button.textContent.includes('🔄')) {
-          button.textContent = '🔄';
+        // Відновлюємо оригінальний текст або встановлюємо стандартний
+        if (button.id && button.id.includes('fetch-drop')) {
+          button.innerHTML = '🎁 Отримати дропи зі Steam';
         } else {
-          button.textContent = '🎁';
+          button.innerHTML = '🎁';
         }
         button.disabled = false;
+        button.style.opacity = '1';
       }
     });
     console.log(`[fetchLastDrop] Завершено для акаунту ${acc.login}`);
@@ -1110,13 +1165,30 @@ function renderHistory() {
 
 // Функція для ресету (якщо потрібна)
 function ResetFarm() {
-  if (confirm('Скинути всі дані фарму? Ця дія незворотна!')) {
+  if (confirm('Скинути стан фарму та останні дропи? Ця дія незворотна!')) {
     accounts.forEach(acc => {
+      // Скидаємо стан фармингу
       acc.farming = false;
       acc.open = false;
+      
+      // Скидаємо стан "відфармлений"
+      acc.starred = false;
+      
+      // Скидаємо дані про останній дроп
+      acc.lastDrop = '';
+      acc.lastDropPrice = 0;
+      acc.lastDropImageUrl = '';
+      acc.lastDrops = [];
     });
     saveAccounts();
-    render();
+    
+    // Оновлюємо відфільтровані акаунти після зміни
+    if (searchQuery && searchQuery !== '') {
+      searchAccounts(searchQuery);
+    } else {
+      filteredAccounts = [...accounts];
+      render();
+    }
   }
 }
 
