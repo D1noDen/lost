@@ -1,4 +1,4 @@
-# Release Notes v1.0.11
+# Release Notes v1.0.12
 
 **Дата релізу:** 1 липня 2025
 
