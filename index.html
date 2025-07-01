@@ -313,6 +313,9 @@
       <input type="password" id="password" placeholder="Введіть пароль" autocomplete="current-password" />
       <button onclick="login()">🔓 Увійти</button>
       <div class="error" id="error">❌ Неправильний пароль!</div>
+      <div id="default-hint" style="color: #6ee7b7; font-size: 12px; margin-top: 8px; opacity: 0.7; text-align: center;">
+        Перший запуск? Використайте пароль: <strong>admin</strong>
+      </div>
     </div>
   </div>
 
@@ -333,11 +336,21 @@
 
       try {
         const authPath = path.join(__dirname, 'auth.json');
+        
+        // Перевіряємо, чи існує файл auth.json
+        if (!fs.existsSync(authPath)) {
+          // Якщо файл не існує, створюємо його з дефолтним паролем
+          const defaultAuth = { password: 'admin' };
+          fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
+          console.log('Created default auth.json with password: admin');
+        }
+        
         const saved = JSON.parse(fs.readFileSync(authPath));
         
         if (entered === saved.password) {
           window.location.href = 'main.html';
         } else {
+          errorBox.textContent = 'Невірний пароль!';
           errorBox.classList.add('show');
           passwordInput.focus();
           setTimeout(() => {
@@ -346,8 +359,23 @@
         }
       } catch (err) {
         console.error("Error reading auth file:", err);
-        errorBox.textContent = 'Помилка конфігурації!';
-        errorBox.classList.add('show');
+        // Якщо виникла помилка, також створюємо дефолтний файл
+        try {
+          const authPath = path.join(__dirname, 'auth.json');
+          const defaultAuth = { password: 'admin' };
+          fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
+          
+          if (entered === 'admin') {
+            window.location.href = 'main.html';
+          } else {
+            errorBox.textContent = 'Використайте пароль: admin';
+            errorBox.classList.add('show');
+          }
+        } catch (createErr) {
+          console.error("Error creating auth file:", createErr);
+          errorBox.textContent = 'Помилка конфігурації!';
+          errorBox.classList.add('show');
+        }
       }
     }
 
@@ -356,6 +384,21 @@
             event.preventDefault();
             login();
         }
+    });
+
+    // Перевіряємо при завантаженні сторінки, чи існує auth.json
+    window.addEventListener('load', function() {
+      try {
+        const authPath = path.join(__dirname, 'auth.json');
+        const hintElement = document.getElementById('default-hint');
+        
+        if (fs.existsSync(authPath)) {
+          // Якщо файл існує, приховуємо підказку
+          hintElement.style.display = 'none';
+        }
+      } catch (err) {
+        console.log('Could not check auth file existence:', err);
+      }
     });
 
     const canvas = document.getElementById('bg-animation');

@@ -1132,3 +1132,46 @@ window.onload = async () => {
   await initUpdater(); // Спочатку ініціалізуємо updater та шляхи
   loadAccounts(); // Потім завантажуємо акаунти
 };
+
+// Функція для зміни пароля
+async function changePassword() {
+  const currentPassword = prompt('Введіть поточний пароль:');
+  if (!currentPassword) return;
+
+  try {
+    const authPath = path.join(__dirname, 'auth.json');
+    
+    // Перевіряємо, чи існує файл
+    if (!fs.existsSync(authPath)) {
+      alert('Файл авторизації не знайдено! Буде створено новий з поточним паролем.');
+      const defaultAuth = { password: 'admin' };
+      fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
+    }
+
+    const saved = JSON.parse(fs.readFileSync(authPath));
+    
+    if (currentPassword !== saved.password) {
+      alert('Неправильний поточний пароль!');
+      return;
+    }
+
+    const newPassword = prompt('Введіть новий пароль:');
+    if (!newPassword) return;
+
+    const confirmPassword = prompt('Підтвердіть новий пароль:');
+    if (newPassword !== confirmPassword) {
+      alert('Паролі не співпадають!');
+      return;
+    }
+
+    // Оновлюємо пароль
+    saved.password = newPassword;
+    fs.writeFileSync(authPath, JSON.stringify(saved, null, 2));
+    
+    alert('Пароль успішно змінено! Перезапустіть додаток для застосування змін.');
+    
+  } catch (error) {
+    console.error('Помилка зміни пароля:', error);
+    alert('Помилка зміни пароля: ' + error.message);
+  }
+}

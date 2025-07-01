@@ -2520,6 +2520,28 @@ select, .tab-button {
   transform: rotate(180deg);
 }
 
+.btn-password {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.btn-password:hover {
+  background: var(--bg-hover);
+  border-color: var(--emerald-500);
+  transform: translateY(-1px);
+}
+
 .app-version {
   background: rgba(16, 185, 129, 0.1);
   color: var(--text-secondary);
@@ -2751,6 +2773,14 @@ select, .tab-button {
           <path d="M3 21v-5h5"/>
         </svg>
         <span class="update-text">Оновити</span>
+      </button>
+      <button class="btn-password" onclick="changePassword()" title="Змінити пароль">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <circle cx="12" cy="16" r="1"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>Пароль</span>
       </button>
       <div class="app-version">
         <span id="app-version">v1.0.0</span>
