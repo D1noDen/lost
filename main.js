@@ -120,10 +120,40 @@ function createWindow() {
   // Створюємо необхідні директорії перед запуском
   ensureDataDirectories();
   
+  // Визначаємо шлях до іконки більш надійно
+  let iconPath;
+  if (app.isPackaged) {
+    // У збудованому додатку спробуємо різні шляхи
+    const possiblePaths = [
+      path.join(process.resourcesPath, 'LOST_icon.ico'),
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'LOST_icon.ico'),
+      path.join(__dirname, 'LOST_icon.ico'),
+      path.join(path.dirname(process.execPath), 'resources', 'LOST_icon.ico')
+    ];
+    
+    console.log('=== ICON PATH DEBUGGING ===');
+    console.log('process.resourcesPath:', process.resourcesPath);
+    console.log('__dirname:', __dirname);
+    console.log('process.execPath:', process.execPath);
+    console.log('process.cwd():', process.cwd());
+    
+    iconPath = possiblePaths.find(p => {
+      const exists = fs.existsSync(p);
+      console.log(`Checking icon path: ${p} - ${exists ? 'EXISTS' : 'NOT FOUND'}`);
+      return exists;
+    });
+    
+    console.log('Final selected icon path:', iconPath);
+    console.log('=== END ICON DEBUGGING ===');
+  } else {
+    iconPath = path.join(__dirname, 'LOST_icon.ico');
+    console.log('Development icon path:', iconPath);
+  }
+  
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
-    icon: path.join(__dirname, 'icon.ico'),
+    icon: iconPath,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

@@ -31,7 +31,7 @@
       "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
     ],
     "win": {
-      "icon": "icon.ico",
+      "icon": "LOST_icon.ico",
       "target": [
         {
           "target": "nsis",

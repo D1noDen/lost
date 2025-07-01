@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.15",
+  "version": "1.0.19",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
@@ -19,10 +19,11 @@
     },
     "generateUpdatesFilesForAllChannels": true,
     "extraResources": [
-      
+      "LOST_icon.ico"
     ],
     "files": [
       "**/*",
+      "LOST_icon.ico",
       "!trade_history.json",
       "!auth.json",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
@@ -57,14 +58,17 @@
       ],
       "forceCodeSigning": false,
       "verifyUpdateCodeSignature": false,
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "allowElevation": true
+      "allowElevation": true,
+      "installerIcon": "LOST_icon.ico",
+      "uninstallerIcon": "LOST_icon.ico"
     },
     "publish": {
       "provider": "github",
