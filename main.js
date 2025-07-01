@@ -266,6 +266,36 @@ ipcMain.handle('get-accounts-file-path', () => {
   return path.join(app.getPath('userData'), 'accounts.json');
 });
 
+// IPC обробник для отримання даних акаунтів
+ipcMain.handle('get-accounts-data', () => {
+  const accountsPath = path.join(app.getPath('userData'), 'accounts.json');
+  
+  if (!fs.existsSync(accountsPath)) {
+    return { accounts: [] };
+  }
+  
+  try {
+    const fileContent = fs.readFileSync(accountsPath, 'utf8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error('Помилка читання accounts.json:', error);
+    return { accounts: [] };
+  }
+});
+
+// IPC обробник для збереження даних акаунтів
+ipcMain.handle('save-accounts-data', (event, data) => {
+  const accountsPath = path.join(app.getPath('userData'), 'accounts.json');
+  
+  try {
+    fs.writeFileSync(accountsPath, JSON.stringify(data, null, 2), 'utf8');
+    return { success: true };
+  } catch (error) {
+    console.error('Помилка збереження accounts.json:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('get-mafiles-path', () => {
   return path.join(app.getPath('userData'), 'maFiles');
 });

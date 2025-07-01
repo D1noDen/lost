@@ -98,35 +98,41 @@ function renderHistory(history) {
     });
 }
 
-function loadAccountsManually() {
-    const accountsPath = path.join(__dirname, 'accounts.json');
-    if (!fs.existsSync(accountsPath)) {
-        alert('accounts.json not found!');
-        return;
-    }
-    
-    const accounts = JSON.parse(fs.readFileSync(accountsPath)).accounts;
-    const accountSelect = document.getElementById('account-select');
-    
-    // Очищуємо попередні опції
-    accountSelect.innerHTML = '';
-    
-    accounts.forEach(account => {
-        const option = document.createElement('option');
-        option.value = account.login;
-        option.textContent = account.name || account.login;
-        accountSelect.appendChild(option);
-    });
+async function loadAccountsManually() {
+    try {
+        const data = await ipcRenderer.invoke('get-accounts-data');
+        const accounts = data.accounts;
+        
+        if (!accounts || accounts.length === 0) {
+            alert('Акаунти не знайдено!');
+            return;
+        }
+        
+        const accountSelect = document.getElementById('account-select');
+        
+        // Очищуємо попередні опції
+        accountSelect.innerHTML = '';
+        
+        accounts.forEach(account => {
+            const option = document.createElement('option');
+            option.value = account.login;
+            option.textContent = account.name || account.login;
+            accountSelect.appendChild(option);
+        });
 
-    // Показуємо селект та кнопку логіну
-    accountSelect.style.display = 'block';
-    document.getElementById('login-btn').style.display = 'inline-block';
-    
-    // Ховаємо кнопку завантаження
-    event.target.style.display = 'none';
+        // Показуємо селект та кнопку логіну
+        accountSelect.style.display = 'block';
+        document.getElementById('login-btn').style.display = 'inline-block';
+        
+        // Ховаємо кнопку завантаження
+        event.target.style.display = 'none';
+    } catch (error) {
+        console.error('Помилка завантаження акаунтів:', error);
+        alert('Помилка завантаження акаунтів!');
+    }
 }
 
-function login() {
+async function login() {
     const selectedLogin = document.getElementById('account-select').value;
     const accountSelect = document.getElementById('account-select');
     
@@ -144,34 +150,40 @@ function login() {
         return;
     }
     
-    const accounts = JSON.parse(fs.readFileSync(path.join(__dirname, 'accounts.json'))).accounts;
-    const selectedAccount = accounts.find(acc => acc.login === selectedLogin);
-    
-    if (!selectedAccount) {
-        showMessage('❌ Акаунт не знайдено!', 'error');
-        return;
+    try {
+        const data = await ipcRenderer.invoke('get-accounts-data');
+        const accounts = data.accounts;
+        const selectedAccount = accounts.find(acc => acc.login === selectedLogin);
+        
+        if (!selectedAccount) {
+            showMessage('❌ Акаунт не знайдено!', 'error');
+            return;
+        }
+        
+        // Показуємо стан завантаження
+        showMessage('🔐 Входимо в акаунт...', 'loading');
+        
+        // Ховаємо контейнер логіну та показуємо інформацію про акаунт
+        document.getElementById('login-container').style.display = 'none';
+        const accountInfoDiv = document.getElementById('account-info');
+        accountInfoDiv.style.display = 'block';
+        
+        // Красиво форматуємо ім'я акаунта
+        const accountDisplayName = selectedAccount.name || selectedAccount.login;
+        const primeIcon = selectedAccount.prime ? '👑' : '⚡';
+        const farmingIcon = selectedAccount.farming ? '🌱' : '💤';
+        
+        document.getElementById('current-account-name').innerHTML = 
+            `${primeIcon} ${farmingIcon} ${accountDisplayName} <small style="color: #888;">(${selectedAccount.login})</small>`;
+        
+        selectedAccountName = selectedAccount.login;
+        
+        // Логінимось тільки в один обраний акаунт
+        loginToNextAccount([selectedAccount], 0);
+    } catch (error) {
+        console.error('Помилка входу в акаунт:', error);
+        showMessage('❌ Помилка входу в акаунт!', 'error');
     }
-    
-    // Показуємо стан завантаження
-    showMessage('🔐 Входимо в акаунт...', 'loading');
-    
-    // Ховаємо контейнер логіну та показуємо інформацію про акаунт
-    document.getElementById('login-container').style.display = 'none';
-    const accountInfoDiv = document.getElementById('account-info');
-    accountInfoDiv.style.display = 'block';
-    
-    // Красиво форматуємо ім'я акаунта
-    const accountDisplayName = selectedAccount.name || selectedAccount.login;
-    const primeIcon = selectedAccount.prime ? '👑' : '⚡';
-    const farmingIcon = selectedAccount.farming ? '🌱' : '💤';
-    
-    document.getElementById('current-account-name').innerHTML = 
-        `${primeIcon} ${farmingIcon} ${accountDisplayName} <small style="color: #888;">(${selectedAccount.login})</small>`;
-    
-    selectedAccountName = selectedAccount.login;
-    
-    // Логінимось тільки в один обраний акаунт
-    loginToNextAccount([selectedAccount], 0);
 }
 
 function logout() {
@@ -474,62 +486,56 @@ async function loginToNextAccount(accounts, index = 0) {
 }
 
 // Завантажуємо акаунти і налаштовуємо інтерфейс, але НЕ логінимось автоматично
-window.onload = () => {
+window.onload = async () => {
     // Завантажуємо список акаунтів у селект
-    const accountsPath = path.join(__dirname, 'accounts.json');
     const accountSelect = document.getElementById('account-select');
     
     // Встановлюємо стан завантаження
     accountSelect.className = 'with-icon loading';
     accountSelect.innerHTML = '<option value="">⏳ Завантаження акаунтів...</option>';
     
-    if (fs.existsSync(accountsPath)) {
-        try {
-            const accounts = JSON.parse(fs.readFileSync(accountsPath)).accounts;
+    try {
+        const data = await ipcRenderer.invoke('get-accounts-data');
+        const accounts = data.accounts;
+        
+        // Очищуємо селект
+        accountSelect.innerHTML = '';
+        
+        if (accounts && accounts.length > 0) {
+            // Додаємо опцію "Оберіть акаунт"
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '🎯 Оберіть акаунт для логіну';
+            accountSelect.appendChild(defaultOption);
             
-            // Очищуємо селект
-            accountSelect.innerHTML = '';
+            // Додаємо всі акаунти з красивими емодзі
+            accounts.forEach((account, index) => {
+                const option = document.createElement('option');
+                option.value = account.login;
+                
+                // Додаємо емодзі та форматуємо текст
+                const accountNumber = `#${index + 1}`;
+                const accountName = account.name || account.login;
+                const primeStatus = account.prime ? '👑' : '⚡';
+                const farmingStatus = account.farming ? '🌱' : '💤';
+                
+                option.textContent = `${primeStatus} ${farmingStatus} ${accountNumber} ${accountName}`;
+                option.title = `Login: ${account.login} | Prime: ${account.prime ? 'Так' : 'Ні'} | Farming: ${account.farming ? 'Так' : 'Ні'}`;
+                
+                accountSelect.appendChild(option);
+            });
             
-            if (accounts && accounts.length > 0) {
-                // Додаємо опцію "Оберіть акаунт"
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = '🎯 Оберіть акаунт для логіну';
-                accountSelect.appendChild(defaultOption);
-                
-                // Додаємо всі акаунти з красивими емодзі
-                accounts.forEach((account, index) => {
-                    const option = document.createElement('option');
-                    option.value = account.login;
-                    
-                    // Додаємо емодзі та форматуємо текст
-                    const accountNumber = `#${index + 1}`;
-                    const accountName = account.name || account.login;
-                    const primeStatus = account.prime ? '👑' : '⚡';
-                    const farmingStatus = account.farming ? '🌱' : '💤';
-                    
-                    option.textContent = `${primeStatus} ${farmingStatus} ${accountNumber} ${accountName}`;
-                    option.title = `Login: ${account.login} | Prime: ${account.prime ? 'Так' : 'Ні'} | Farming: ${account.farming ? 'Так' : 'Ні'}`;
-                    
-                    accountSelect.appendChild(option);
-                });
-                
-                // Встановлюємо готовий стан
-                accountSelect.className = 'with-icon ready';
-                console.log(`Завантажено ${accounts.length} акаунтів у селект`);
-            } else {
-                // Немає акаунтів
-                accountSelect.innerHTML = '<option value="">❌ Акаунти не знайдено</option>';
-                accountSelect.className = 'with-icon empty';
-            }
-        } catch (error) {
-            console.error('Помилка при завантаженні акаунтів:', error);
-            accountSelect.innerHTML = '<option value="">🚫 Помилка завантаження</option>';
-            accountSelect.className = 'with-icon error';
+            // Встановлюємо готовий стан
+            accountSelect.className = 'with-icon ready';
+            console.log(`Завантажено ${accounts.length} акаунтів у селект`);
+        } else {
+            // Немає акаунтів
+            accountSelect.innerHTML = '<option value="">❌ Акаунти не знайдено</option>';
+            accountSelect.className = 'with-icon empty';
         }
-    } else {
-        // Файл не існує
-        accountSelect.innerHTML = '<option value="">📂 Файл accounts.json не знайдено</option>';
+    } catch (error) {
+        console.error('Помилка при завантаженні акаунтів:', error);
+        accountSelect.innerHTML = '<option value="">🚫 Помилка завантаження</option>';
         accountSelect.className = 'with-icon error';
     }
     
@@ -543,31 +549,32 @@ window.onload = () => {
     });
 };
 
-function saveAccounts() {
-    const accountsPath = path.join(__dirname, 'accounts.json');
-    fs.writeFileSync(accountsPath, JSON.stringify({ accounts }, null, 2));
-}
+async function updateLastDropInfo(accountLogin) {
+    try {
+        const data = await ipcRenderer.invoke('get-accounts-data');
+        const accounts = data.accounts;
+        const inventory = JSON.parse(fs.readFileSync(path.join(__dirname, 'inventories', `${accountLogin}_730.json`)));
 
-function updateLastDropInfo(accountLogin) {
-    const accounts = JSON.parse(fs.readFileSync(path.join(__dirname, 'accounts.json'))).accounts;
-    const inventory = JSON.parse(fs.readFileSync(path.join(__dirname, 'inventories', `${accountLogin}_730.json`)));
+        inventory.sort((a, b) => new Date(b.acquired_date) - new Date(a.acquired_date));
+        const lastDrop = inventory[0];
+        const imageUrl = lastDrop.getImageURL ? lastDrop.getImageURL() : `https://community.cloudflare.steamstatic.com/economy/image/${lastDrop.icon_url}`;
 
-    inventory.sort((a, b) => new Date(b.acquired_date) - new Date(a.acquired_date));
-    const lastDrop = inventory[0];
-    const imageUrl = lastDrop.getImageURL ? lastDrop.getImageURL() : `https://community.cloudflare.steamstatic.com/economy/image/${lastDrop.icon_url}`;
-
-    tradeManager.getItemPrice(730, lastDrop.market_hash_name)
-        .then(price => {
-            const accountIndex = accounts.findIndex(acc => acc.login === accountLogin);
-            if (accountIndex !== -1) {
-                accounts[accountIndex].lastDrop = lastDrop.market_hash_name;
-                accounts[accountIndex].lastDropPrice = price.lowest_price;
-                accounts[accountIndex].lastDropImageUrl = imageUrl;
-                saveAccounts();
-                render();
-            }
-        })
-        .catch(err => {
-            console.error('Failed to get item price:', err);
-        });
+        tradeManager.getItemPrice(730, lastDrop.market_hash_name)
+            .then(price => {
+                const accountIndex = accounts.findIndex(acc => acc.login === accountLogin);
+                if (accountIndex !== -1) {
+                    accounts[accountIndex].lastDrop = lastDrop.market_hash_name;
+                    accounts[accountIndex].lastDropPrice = price.lowest_price;
+                    accounts[accountIndex].lastDropImageUrl = imageUrl;
+                    // Зберігаємо через IPC (потрібно додати обробник)
+                    ipcRenderer.invoke('save-accounts-data', { accounts });
+                    render();
+                }
+            })
+            .catch(err => {
+                console.error('Failed to get item price:', err);
+            });
+    } catch (error) {
+        console.error('Помилка оновлення інформації про дроп:', error);
+    }
 }
