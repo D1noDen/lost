@@ -1139,7 +1139,11 @@ async function changePassword() {
   if (!currentPassword) return;
 
   try {
-    const authPath = path.join(__dirname, 'auth.json');
+    // Отримуємо шлях до userData директорії
+    const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+    const authPath = path.join(userDataPath, 'auth.json');
+    
+    console.log('Auth path for password change:', authPath);
     
     // Перевіряємо, чи існує файл
     if (!fs.existsSync(authPath)) {

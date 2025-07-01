@@ -328,21 +328,26 @@
   <script>
     const fs = require('fs');
     const path = require('path');
+    const { ipcRenderer } = require('electron');
 
-    function login() {
+    async function login() {
       const passwordInput = document.getElementById('password');
       const entered = passwordInput.value.trim();
       const errorBox = document.getElementById('error');
 
       try {
-        const authPath = path.join(__dirname, 'auth.json');
+        // Отримуємо шлях до userData директорії
+        const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+        const authPath = path.join(userDataPath, 'auth.json');
+        
+        console.log('Auth path:', authPath);
         
         // Перевіряємо, чи існує файл auth.json
         if (!fs.existsSync(authPath)) {
           // Якщо файл не існує, створюємо його з дефолтним паролем
           const defaultAuth = { password: 'admin' };
           fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
-          console.log('Created default auth.json with password: admin');
+          console.log('Created default auth.json with password: admin at:', authPath);
         }
         
         const saved = JSON.parse(fs.readFileSync(authPath));
@@ -358,10 +363,11 @@
           }, 2500);
         }
       } catch (err) {
-        console.error("Error reading auth file:", err);
+        console.error("Error with auth file:", err);
         // Якщо виникла помилка, також створюємо дефолтний файл
         try {
-          const authPath = path.join(__dirname, 'auth.json');
+          const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+          const authPath = path.join(userDataPath, 'auth.json');
           const defaultAuth = { password: 'admin' };
           fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
           
@@ -387,9 +393,10 @@
     });
 
     // Перевіряємо при завантаженні сторінки, чи існує auth.json
-    window.addEventListener('load', function() {
+    window.addEventListener('load', async function() {
       try {
-        const authPath = path.join(__dirname, 'auth.json');
+        const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+        const authPath = path.join(userDataPath, 'auth.json');
         const hintElement = document.getElementById('default-hint');
         
         if (fs.existsSync(authPath)) {
