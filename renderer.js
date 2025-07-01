@@ -1260,26 +1260,173 @@ window.saveNewPassword = async function() {
   }
 }
 
-// Функція для показу сповіщень
-function showNotification(message, type = 'info') {
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  
-  document.body.appendChild(notification);
-  
-  // Показуємо сповіщення
-  setTimeout(() => {
-    notification.classList.add('show');
-  }, 100);
-  
-  // Приховуємо через 5 секунд
-  setTimeout(() => {
-    notification.classList.remove('show');
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 300);
-  }, 5000);
+// Функції для імпорту/експорту
+async function importAccounts() {
+  try {
+    showNotification('Виберіть файл з акаунтами для імпорту...', 'info');
+    const result = await ipcRenderer.invoke('import-accounts');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+      // Перезавантажуємо список акаунтів
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка імпорту акаунтів:', error);
+    showNotification('Помилка імпорту акаунтів: ' + error.message, 'error');
+  }
 }
+
+async function importTradeHistory() {
+  try {
+    showNotification('Виберіть файл з історією торгівлі для імпорту...', 'info');
+    const result = await ipcRenderer.invoke('import-trade-history');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка імпорту історії:', error);
+    showNotification('Помилка імпорту історії: ' + error.message, 'error');
+  }
+}
+
+async function importMaFiles() {
+  try {
+    showNotification('Виберіть папку з .maFile файлами для імпорту...', 'info');
+    const result = await ipcRenderer.invoke('import-mafiles-folder');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+      // Перезавантажуємо список акаунтів
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка імпорту maFiles:', error);
+    showNotification('Помилка імпорту maFiles: ' + error.message, 'error');
+  }
+}
+
+async function exportAccounts() {
+  try {
+    showNotification('Виберіть місце для збереження файлу...', 'info');
+    const result = await ipcRenderer.invoke('export-accounts');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка експорту акаунтів:', error);
+    showNotification('Помилка експорту акаунтів: ' + error.message, 'error');
+  }
+}
+
+// Функція для показу модального вікна імпорту/експорту
+function showImportExportModal() {
+  const modal = document.createElement('div');
+  modal.className = 'import-export-modal';
+  modal.innerHTML = `
+    <div class="import-export-modal-content">
+      <div class="import-export-modal-header">
+        <h3>Імпорт / Експорт даних</h3>
+        <button class="modal-close" onclick="closeImportExportModal()">&times;</button>
+      </div>
+      <div class="import-export-modal-body">
+        <div class="import-export-section">
+          <h4>📥 Імпорт</h4>
+          <div class="import-export-buttons">
+            <button class="import-export-btn import-btn" onclick="importAccounts()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Імпорт акаунтів
+            </button>
+            <button class="import-export-btn import-btn" onclick="importTradeHistory()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3h18v18H3zM12 8v8m-4-4h8"/>
+              </svg>
+              Імпорт історії торгівлі
+            </button>
+            <button class="import-export-btn import-btn" onclick="importMaFiles()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+              </svg>
+              Імпорт .maFile папки
+            </button>
+          </div>
+        </div>
+        
+        <div class="import-export-section">
+          <h4>📤 Експорт</h4>
+          <div class="import-export-buttons">
+            <button class="import-export-btn export-btn" onclick="exportAccounts()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Експорт акаунтів
+            </button>
+          </div>
+        </div>
+        
+        <div class="import-export-info">
+          <h4>ℹ️ Інформація</h4>
+          <ul>
+            <li><strong>Імпорт акаунтів:</strong> Додає нові акаунти до існуючих (дублікати пропускаються)</li>
+            <li><strong>Імпорт історії:</strong> Замінює поточну історію торгівлі</li>
+            <li><strong>Імпорт .maFile:</strong> Копіює .maFile файли до папки програми</li>
+            <li><strong>Експорт акаунтів:</strong> Зберігає всі акаунти у JSON файл</li>
+          </ul>
+        </div>
+      </div>
+      <div class="import-export-modal-footer">
+        <button class="import-export-btn cancel-btn" onclick="closeImportExportModal()">Закрити</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Закриття по кліку поза модальним вікном
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeImportExportModal();
+    }
+  });
+}
+
+// Функція для закриття модального вікна імпорту/експорту
+window.closeImportExportModal = function() {
+  const modal = document.querySelector('.import-export-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Робимо функції глобальними
+window.importAccounts = importAccounts;
+window.importTradeHistory = importTradeHistory;
+window.importMaFiles = importMaFiles;
+window.exportAccounts = exportAccounts;
+window.showImportExportModal = showImportExportModal;

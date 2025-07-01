@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
@@ -44,7 +44,8 @@
       "!UPDATER_README.md",
       "!AUTO_UPDATE_TEST.md",
       "!SECURITY_BUILD.md",
-      "!FIXES_V106.md"
+      "!FIXES_V106.md",
+      "!IMPORT_EXPORT_V107.md"
     ],
     "win": {
       "icon": "icon.ico",

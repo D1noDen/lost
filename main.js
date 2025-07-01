@@ -339,3 +339,183 @@ ipcMain.handle('write-auth-file', (event, authData) => {
     throw error;
   }
 });
+
+// IPC обробники для імпорту/експорту
+ipcMain.handle('import-accounts', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Імпорт акаунтів',
+      filters: [
+        { name: 'JSON файли', extensions: ['json'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (result.canceled) {
+      return { success: false, message: 'Імпорт скасовано' };
+    }
+
+    const filePath = result.filePaths[0];
+    const importData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    
+    // Перевіряємо структуру файлу
+    if (!importData.accounts || !Array.isArray(importData.accounts)) {
+      return { success: false, message: 'Некоректний формат файлу акаунтів' };
+    }
+
+    const userAccountsPath = path.join(app.getPath('userData'), 'accounts.json');
+    let currentData = { accounts: [] };
+    
+    // Читаємо поточні акаунти якщо є
+    if (fs.existsSync(userAccountsPath)) {
+      currentData = JSON.parse(fs.readFileSync(userAccountsPath, 'utf8'));
+    }
+
+    // Додаємо імпортовані акаунти (уникаємо дублікатів по логіну)
+    const existingLogins = new Set(currentData.accounts.map(acc => acc.login));
+    let addedCount = 0;
+    
+    importData.accounts.forEach(account => {
+      if (!existingLogins.has(account.login)) {
+        currentData.accounts.push(account);
+        addedCount++;
+      }
+    });
+
+    // Зберігаємо оновлені дані
+    fs.writeFileSync(userAccountsPath, JSON.stringify(currentData, null, 2));
+    
+    return { 
+      success: true, 
+      message: `Імпортовано ${addedCount} акаунтів. Дублікати пропущено: ${importData.accounts.length - addedCount}`,
+      addedCount,
+      duplicatesCount: importData.accounts.length - addedCount
+    };
+
+  } catch (error) {
+    console.error('Помилка імпорту акаунтів:', error);
+    return { success: false, message: 'Помилка імпорту акаунтів: ' + error.message };
+  }
+});
+
+ipcMain.handle('import-trade-history', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Імпорт історії торгівлі',
+      filters: [
+        { name: 'JSON файли', extensions: ['json'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (result.canceled) {
+      return { success: false, message: 'Імпорт скасовано' };
+    }
+
+    const filePath = result.filePaths[0];
+    const importData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    
+    const userHistoryPath = path.join(app.getPath('userData'), 'trade_history.json');
+    
+    // Зберігаємо історію (перезаписуємо)
+    fs.writeFileSync(userHistoryPath, JSON.stringify(importData, null, 2));
+    
+    return { success: true, message: 'Історію торгівлі успішно імпортовано' };
+
+  } catch (error) {
+    console.error('Помилка імпорту історії:', error);
+    return { success: false, message: 'Помилка імпорту історії: ' + error.message };
+  }
+});
+
+ipcMain.handle('import-mafiles-folder', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Виберіть папку з .maFile файлами',
+      properties: ['openDirectory']
+    });
+
+    if (result.canceled) {
+      return { success: false, message: 'Імпорт скасовано' };
+    }
+
+    const selectedFolderPath = result.filePaths[0];
+    const userMaFilesPath = path.join(app.getPath('userData'), 'maFiles');
+    
+    // Створюємо папку maFiles якщо не існує
+    if (!fs.existsSync(userMaFilesPath)) {
+      fs.mkdirSync(userMaFilesPath, { recursive: true });
+    }
+
+    // Читаємо файли з вибраної папки
+    const files = fs.readdirSync(selectedFolderPath);
+    const maFiles = files.filter(file => file.endsWith('.maFile'));
+    
+    if (maFiles.length === 0) {
+      return { success: false, message: 'У вибраній папці не знайдено .maFile файлів' };
+    }
+
+    let copiedCount = 0;
+    let skippedCount = 0;
+
+    // Копіюємо кожен .maFile
+    maFiles.forEach(file => {
+      const sourcePath = path.join(selectedFolderPath, file);
+      const destPath = path.join(userMaFilesPath, file);
+      
+      try {
+        if (!fs.existsSync(destPath)) {
+          fs.copyFileSync(sourcePath, destPath);
+          copiedCount++;
+        } else {
+          skippedCount++;
+        }
+      } catch (error) {
+        console.error(`Помилка копіювання ${file}:`, error);
+      }
+    });
+
+    return { 
+      success: true, 
+      message: `Імпортовано ${copiedCount} .maFile файлів. Пропущено (вже існують): ${skippedCount}`,
+      copiedCount,
+      skippedCount,
+      totalFound: maFiles.length
+    };
+
+  } catch (error) {
+    console.error('Помилка імпорту maFiles:', error);
+    return { success: false, message: 'Помилка імпорту maFiles: ' + error.message };
+  }
+});
+
+ipcMain.handle('export-accounts', async () => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Експорт акаунтів',
+      defaultPath: 'accounts-backup.json',
+      filters: [
+        { name: 'JSON файли', extensions: ['json'] }
+      ]
+    });
+
+    if (result.canceled) {
+      return { success: false, message: 'Експорт скасовано' };
+    }
+
+    const userAccountsPath = path.join(app.getPath('userData'), 'accounts.json');
+    
+    if (!fs.existsSync(userAccountsPath)) {
+      return { success: false, message: 'Файл акаунтів не знайдено' };
+    }
+
+    const accountsData = fs.readFileSync(userAccountsPath, 'utf8');
+    fs.writeFileSync(result.filePath, accountsData);
+    
+    return { success: true, message: 'Акаунти успішно експортовано' };
+
+  } catch (error) {
+    console.error('Помилка експорту акаунтів:', error);
+    return { success: false, message: 'Помилка експорту акаунтів: ' + error.message };
+  }
+});
