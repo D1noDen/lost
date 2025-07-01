@@ -1135,47 +1135,151 @@ window.onload = async () => {
 
 // Функція для зміни пароля
 async function changePassword() {
-  const currentPassword = prompt('Введіть поточний пароль:');
-  if (!currentPassword) return;
+  showPasswordChangeModal();
+}
 
+// Функція для показу модального вікна зміни пароля
+function showPasswordChangeModal() {
+  // Створюємо модальне вікно
+  const modal = document.createElement('div');
+  modal.className = 'password-modal';
+  modal.innerHTML = `
+    <div class="password-modal-content">
+      <div class="password-modal-header">
+        <h3>Зміна пароля</h3>
+        <button class="password-modal-close" onclick="closePasswordModal()">&times;</button>
+      </div>
+      <div class="password-modal-body">
+        <div class="password-field">
+          <label for="current-password">Поточний пароль:</label>
+          <input type="password" id="current-password" placeholder="Введіть поточний пароль">
+        </div>
+        <div class="password-field">
+          <label for="new-password">Новий пароль:</label>
+          <input type="password" id="new-password" placeholder="Введіть новий пароль">
+        </div>
+        <div class="password-field">
+          <label for="confirm-password">Підтвердження:</label>
+          <input type="password" id="confirm-password" placeholder="Підтвердіть новий пароль">
+        </div>
+        <div class="password-error" id="password-error"></div>
+      </div>
+      <div class="password-modal-footer">
+        <button class="password-btn password-btn-cancel" onclick="closePasswordModal()">Скасувати</button>
+        <button class="password-btn password-btn-save" onclick="saveNewPassword()">Зберегти</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Фокус на першому полі
+  setTimeout(() => {
+    document.getElementById('current-password').focus();
+  }, 100);
+  
+  // Додаємо обробку Enter для полів вводу
+  const inputs = modal.querySelectorAll('input[type="password"]');
+  inputs.forEach((input, index) => {
+    input.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (index < inputs.length - 1) {
+          // Переходимо до наступного поля
+          inputs[index + 1].focus();
+        } else {
+          // На останньому полі - зберігаємо
+          saveNewPassword();
+        }
+      }
+    });
+  });
+  
+  // Закриття по кліку поза модальним вікном
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closePasswordModal();
+    }
+  });
+}
+
+// Функція для закриття модального вікна
+window.closePasswordModal = function() {
+  const modal = document.querySelector('.password-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Функція для збереження нового пароля
+window.saveNewPassword = async function() {
+  const currentPassword = document.getElementById('current-password').value;
+  const newPassword = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  const errorDiv = document.getElementById('password-error');
+  
+  // Очищаємо попередні помилки
+  errorDiv.textContent = '';
+  
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    errorDiv.textContent = 'Будь ласка, заповніть всі поля!';
+    return;
+  }
+  
+  if (newPassword !== confirmPassword) {
+    errorDiv.textContent = 'Паролі не співпадають!';
+    return;
+  }
+  
+  if (newPassword.length < 3) {
+    errorDiv.textContent = 'Пароль повинен містити принаймні 3 символи!';
+    return;
+  }
+  
   try {
-    // Отримуємо шлях до userData директорії
-    const userDataPath = await ipcRenderer.invoke('get-user-data-path');
-    const authPath = path.join(userDataPath, 'auth.json');
+    // Читаємо поточний auth.json через IPC
+    const authData = await ipcRenderer.invoke('read-auth-file');
     
-    console.log('Auth path for password change:', authPath);
-    
-    // Перевіряємо, чи існує файл
-    if (!fs.existsSync(authPath)) {
-      alert('Файл авторизації не знайдено! Буде створено новий з поточним паролем.');
-      const defaultAuth = { password: 'admin' };
-      fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
-    }
-
-    const saved = JSON.parse(fs.readFileSync(authPath));
-    
-    if (currentPassword !== saved.password) {
-      alert('Неправильний поточний пароль!');
+    if (currentPassword !== authData.password) {
+      errorDiv.textContent = 'Неправильний поточний пароль!';
       return;
     }
-
-    const newPassword = prompt('Введіть новий пароль:');
-    if (!newPassword) return;
-
-    const confirmPassword = prompt('Підтвердіть новий пароль:');
-    if (newPassword !== confirmPassword) {
-      alert('Паролі не співпадають!');
-      return;
-    }
-
-    // Оновлюємо пароль
-    saved.password = newPassword;
-    fs.writeFileSync(authPath, JSON.stringify(saved, null, 2));
     
-    alert('Пароль успішно змінено! Перезапустіть додаток для застосування змін.');
+    // Оновлюємо пароль через IPC
+    authData.password = newPassword;
+    await ipcRenderer.invoke('write-auth-file', authData);
+    
+    closePasswordModal();
+    
+    // Показуємо повідомлення про успіх
+    showNotification('Пароль успішно змінено! Перезапустіть додаток для застосування змін.', 'success');
     
   } catch (error) {
     console.error('Помилка зміни пароля:', error);
-    alert('Помилка зміни пароля: ' + error.message);
+    errorDiv.textContent = 'Помилка зміни пароля: ' + error.message;
   }
+}
+
+// Функція для показу сповіщень
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  // Показуємо сповіщення
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 100);
+  
+  // Приховуємо через 5 секунд
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 5000);
 }

@@ -449,7 +449,9 @@ select, .tab-button {
 .add-account-section {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin: 30px 0;
+  gap: 15px;
 }
 
 .btn-add-account {
@@ -2232,6 +2234,8 @@ select, .tab-button {
 
 
 
+
+
 .btn-clear-search {
   background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
   color: var(--emerald-50);
@@ -2634,6 +2638,225 @@ select, .tab-button {
     opacity: 1;
   }
 }
+
+.btn-change-password {
+  background: linear-gradient(135deg, var(--emerald-700), var(--emerald-600));
+  color: var(--text-primary);
+  border: 2px solid var(--emerald-500);
+  border-radius: 16px;
+  padding: 16px 32px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-emerald);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.btn-change-password::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-change-password:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+  border-color: var(--emerald-400);
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+}
+
+.btn-change-password:hover::before {
+  left: 100%;
+}
+
+.btn-change-password:active {
+  transform: translateY(0);
+}
+
+/* Модальне вікно зміни пароля */
+.password-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.password-modal-content {
+  background: var(--bg-card);
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90vw;
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.password-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.password-modal-header h3 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.password-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.password-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.password-modal-body {
+  padding: 20px;
+}
+
+.password-field {
+  margin-bottom: 15px;
+}
+
+.password-field label {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.password-field input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.password-field input:focus {
+  outline: none;
+  border-color: var(--emerald-500);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.password-error {
+  color: #ef4444;
+  font-size: 0.85em;
+  margin-top: 10px;
+  min-height: 20px;
+}
+
+.password-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid var(--border-primary);
+  justify-content: flex-end;
+}
+
+.password-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.password-btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+.password-btn-cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.password-btn-save {
+  background: var(--emerald-600);
+  color: white;
+}
+
+.password-btn-save:hover {
+  background: var(--emerald-700);
+}
+
+/* Сповіщення */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  z-index: 1001;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification-success {
+  background: var(--emerald-600);
+  border-left: 4px solid var(--emerald-400);
+}
+
+.notification-error {
+  background: #dc2626;
+  border-left: 4px solid #f87171;
+}
+
+.notification-info {
+  background: #2563eb;
+  border-left: 4px solid #60a5fa;
+}
 </style>
 
 </head>
@@ -2700,6 +2923,16 @@ select, .tab-button {
         <line x1="8" y1="12" x2="16" y2="12"/>
       </svg>
       <span class="btn-add-text">Додати акаунт</span>
+    </button>
+    
+    <!-- Кнопка зміни пароля -->
+    <button class="btn-change-password" onclick="changePassword()">
+      <svg class="btn-add-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <circle cx="12" cy="16" r="1"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span class="btn-add-text">Змінити пароль</span>
     </button>
   </div>
 

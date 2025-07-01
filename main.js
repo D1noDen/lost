@@ -98,8 +98,15 @@ function ensureDataDirectories() {
     } catch (error) {
       console.error('Помилка копіювання accounts.json:', error);
     }
-  } else if (!fs.existsSync(appAccountsPath)) {
-    console.log('accounts.json не знайдено в ресурсах');
+  } else if (!fs.existsSync(userAccountsPath)) {
+    // Створюємо початковий accounts.json, якщо його немає
+    try {
+      const initialAccounts = { accounts: [] };
+      fs.writeFileSync(userAccountsPath, JSON.stringify(initialAccounts, null, 2));
+      console.log('Створено початковий accounts.json в userData');
+    } catch (error) {
+      console.error('Помилка створення accounts.json:', error);
+    }
   } else {
     console.log('accounts.json вже існує в userData');
   }
@@ -288,6 +295,47 @@ ipcMain.handle('copy-mafile', async (event, fileData, fileName) => {
     
   } catch (error) {
     console.error('IPC: Помилка копіювання файлу:', error);
+    throw error;
+  }
+});
+
+// IPC обробники для auth.json
+ipcMain.handle('get-auth-file-path', () => {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'auth.json');
+});
+
+ipcMain.handle('read-auth-file', () => {
+  try {
+    const userDataPath = app.getPath('userData');
+    const authPath = path.join(userDataPath, 'auth.json');
+    
+    if (fs.existsSync(authPath)) {
+      const data = fs.readFileSync(authPath, 'utf8');
+      return JSON.parse(data);
+    } else {
+      // Створюємо auth.json з дефолтним паролем, якщо його немає
+      const defaultAuth = { password: 'admin' };
+      fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
+      console.log('Створено auth.json з дефолтним паролем');
+      return defaultAuth;
+    }
+  } catch (error) {
+    console.error('Помилка читання auth.json:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('write-auth-file', (event, authData) => {
+  try {
+    const userDataPath = app.getPath('userData');
+    const authPath = path.join(userDataPath, 'auth.json');
+    
+    fs.writeFileSync(authPath, JSON.stringify(authData, null, 2));
+    console.log('auth.json збережено');
+    return true;
+  } catch (error) {
+    console.error('Помилка запису auth.json:', error);
     throw error;
   }
 });

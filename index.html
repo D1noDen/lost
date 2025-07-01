@@ -336,23 +336,10 @@
       const errorBox = document.getElementById('error');
 
       try {
-        // Отримуємо шлях до userData директорії
-        const userDataPath = await ipcRenderer.invoke('get-user-data-path');
-        const authPath = path.join(userDataPath, 'auth.json');
+        // Читаємо auth.json через IPC
+        const authData = await ipcRenderer.invoke('read-auth-file');
         
-        console.log('Auth path:', authPath);
-        
-        // Перевіряємо, чи існує файл auth.json
-        if (!fs.existsSync(authPath)) {
-          // Якщо файл не існує, створюємо його з дефолтним паролем
-          const defaultAuth = { password: 'admin' };
-          fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
-          console.log('Created default auth.json with password: admin at:', authPath);
-        }
-        
-        const saved = JSON.parse(fs.readFileSync(authPath));
-        
-        if (entered === saved.password) {
+        if (entered === authData.password) {
           window.location.href = 'main.html';
         } else {
           errorBox.textContent = 'Невірний пароль!';
@@ -364,24 +351,8 @@
         }
       } catch (err) {
         console.error("Error with auth file:", err);
-        // Якщо виникла помилка, також створюємо дефолтний файл
-        try {
-          const userDataPath = await ipcRenderer.invoke('get-user-data-path');
-          const authPath = path.join(userDataPath, 'auth.json');
-          const defaultAuth = { password: 'admin' };
-          fs.writeFileSync(authPath, JSON.stringify(defaultAuth, null, 2));
-          
-          if (entered === 'admin') {
-            window.location.href = 'main.html';
-          } else {
-            errorBox.textContent = 'Використайте пароль: admin';
-            errorBox.classList.add('show');
-          }
-        } catch (createErr) {
-          console.error("Error creating auth file:", createErr);
-          errorBox.textContent = 'Помилка конфігурації!';
-          errorBox.classList.add('show');
-        }
+        errorBox.textContent = 'Помилка конфігурації!';
+        errorBox.classList.add('show');
       }
     }
 
@@ -395,16 +366,15 @@
     // Перевіряємо при завантаженні сторінки, чи існує auth.json
     window.addEventListener('load', async function() {
       try {
-        const userDataPath = await ipcRenderer.invoke('get-user-data-path');
-        const authPath = path.join(userDataPath, 'auth.json');
+        await ipcRenderer.invoke('read-auth-file');
+        // Якщо файл прочитався успішно, приховуємо підказку
         const hintElement = document.getElementById('default-hint');
-        
-        if (fs.existsSync(authPath)) {
-          // Якщо файл існує, приховуємо підказку
+        if (hintElement) {
           hintElement.style.display = 'none';
         }
       } catch (err) {
-        console.log('Could not check auth file existence:', err);
+        console.log('Could not read auth file:', err);
+        // Якщо файл не існує, залишаємо підказку видимою
       }
     });
 
