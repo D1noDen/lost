@@ -1,14 +1,15 @@
 {
   "name": "lost",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
+    "build": "electron-builder --publish=never",
     "dist": "electron-builder --publish=never",
-    "publish": "electron-builder --publish=always"
+    "publish": "electron-builder --publish=always",
+    "release": "electron-builder --publish=always"
   },
   "build": {
     "appId": "com.yourcompany.lost",
@@ -16,13 +17,12 @@
     "directories": {
       "output": "dist"
     },
+    "generateUpdatesFilesForAllChannels": true,
     "extraResources": [
       
     ],
     "files": [
       "**/*",
-      "!maFiles/**/*",
-      "!accounts.json",
       "!trade_history.json",
       "!auth.json",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
@@ -59,12 +59,15 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "allowElevation": true
     },
     "publish": {
       "provider": "github",
       "owner": "D1noDen",
-      "repo": "lost"
+      "repo": "lost",
+      "releaseType": "release",
+      "publishAutoUpdate": true
     }
   },
   "devDependencies": {

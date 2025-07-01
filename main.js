@@ -6,6 +6,15 @@ const fs = require('fs');
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 
 // Налаштування автоматичного оновлення
+if (app.isPackaged) {
+  // Налаштовуємо URL для оновлень
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'D1noDen',
+    repo: 'lost'
+  });
+}
+
 autoUpdater.checkForUpdatesAndNotify();
 
 // Логування для автоматичного оновлення (тільки в production)
