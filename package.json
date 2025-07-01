@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
