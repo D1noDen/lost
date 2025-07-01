@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
@@ -48,7 +48,7 @@
       "!IMPORT_EXPORT_V107.md"
     ],
     "win": {
-      "icon": "icon.ico",
+      "icon": "LOST_icon.ico",
       "target": [
         {
           "target": "nsis",
