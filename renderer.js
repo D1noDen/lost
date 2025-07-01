@@ -24,11 +24,9 @@ function loadAccounts() {
     const raw = fs.readFileSync(filePath);
     try {
       const loaded = JSON.parse(raw).accounts || [];
-      accounts = loaded.map(acc => {
-        // Додаємо ID для існуючих акаунтів, якщо вони його не мають
-        if (!acc.id) {
-          acc.id = 'acc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
+      accounts = loaded.map((acc, index) => {
+        // Встановлюємо ID як порядковий номер (починаючи з 1)
+        acc.id = index + 1;
         return {
           ...acc,
           open: acc.open || false,
@@ -102,6 +100,12 @@ function addWeeklyIncome(index) {
 function deleteAccount(index) {
   if (confirm('Видалити акаунт?')) {
     accounts.splice(index, 1);
+    
+    // Перенумеровуємо ID всіх акаунтів після видалення
+    accounts.forEach((acc, i) => {
+      acc.id = i + 1;
+    });
+    
     saveAccounts();
     // Оновлюємо відфільтровані акаунти
     if (searchQuery && searchQuery !== '') {
@@ -114,9 +118,11 @@ function deleteAccount(index) {
 }
 
 function addAccount() {
-  const accountId = 'acc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  // Визначаємо наступний ID як максимальний існуючий ID + 1
+  const nextId = accounts.length > 0 ? Math.max(...accounts.map(acc => acc.id || 0)) + 1 : 1;
+  
   accounts.push({
-    id: accountId,
+    id: nextId,
     login: '',
     password: '',
     name: '',
@@ -247,7 +253,7 @@ function searchAccounts(query) {
       const login = (acc.login || '').toLowerCase();
       const name = (acc.name || '').toLowerCase();
       const lastDrop = (acc.lastDrop || '').toLowerCase();
-      const id = (acc.id || '').toLowerCase();
+      const id = (acc.id || '').toString().toLowerCase();
       
       return login.includes(searchQuery) || 
              name.includes(searchQuery) || 
@@ -453,7 +459,7 @@ function render() {
       <div class="account-title">
         <b>#${i + 1}</b>
         <span>${acc.name || acc.login || 'Без імені'}</span>
-        <small class="account-id">ID: ${acc.id || 'Невідомо'}</small>
+        <small class="account-id">ID: ${acc.id}</small>
       </div>
 
       <!-- Завжди показуємо секцію дропу -->
@@ -876,6 +882,14 @@ function ResetFarm() {
     saveAccounts();
     render();
   }
+}
+
+// Функція для перенумерації ID акаунтів
+function renumberAccountIds() {
+  accounts.forEach((acc, index) => {
+    acc.id = index + 1;
+  });
+  saveAccounts();
 }
 
 window.onload = loadAccounts;
