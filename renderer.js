@@ -1424,9 +1424,31 @@ window.closeImportExportModal = function() {
   }
 }
 
+// Функція для автоматичного зіставлення всіх maFiles
+async function autoLinkAllMaFiles() {
+  try {
+    showNotification('Автоматично з\'язую .maFile файли з акаунтами...', 'info');
+    const result = await ipcRenderer.invoke('auto-link-mafiles');
+    
+    if (result.success) {
+      showNotification(result.message, 'success');
+      // Перезавантажуємо дані через деякий час
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка автоматичного зв\'язування всіх maFiles:', error);
+    showNotification('Помилка автоматичного зв\'язування: ' + error.message, 'error');
+  }
+}
+
 // Робимо функції глобальними
 window.importAccounts = importAccounts;
 window.importTradeHistory = importTradeHistory;
 window.importMaFiles = importMaFiles;
 window.exportAccounts = exportAccounts;
 window.showImportExportModal = showImportExportModal;
+window.autoLinkAllMaFiles = autoLinkAllMaFiles;

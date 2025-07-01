@@ -340,6 +340,74 @@ ipcMain.handle('write-auth-file', (event, authData) => {
   }
 });
 
+// Функція для автоматичного зв'язування maFiles з акаунтами
+async function autoLinkMaFiles() {
+  try {
+    const userDataPath = app.getPath('userData');
+    const userAccountsPath = path.join(userDataPath, 'accounts.json');
+    const maFilesPath = path.join(userDataPath, 'maFiles');
+    
+    if (!fs.existsSync(userAccountsPath) || !fs.existsSync(maFilesPath)) {
+      return { success: false, linkedCount: 0, notFoundCount: 0, alreadyLinkedCount: 0 };
+    }
+
+    const accountsData = JSON.parse(fs.readFileSync(userAccountsPath, 'utf8'));
+    const maFiles = fs.readdirSync(maFilesPath).filter(file => file.endsWith('.maFile'));
+    
+    let linkedCount = 0, notFoundCount = 0, alreadyLinkedCount = 0;
+
+    accountsData.accounts.forEach(account => {
+      if (!account.login) return;
+      
+      if (account.maFilePath && fs.existsSync(account.maFilePath)) {
+        alreadyLinkedCount++;
+        return;
+      }
+      
+      function calculateSimilarity(str1, str2) {
+        const s1 = str1.toLowerCase();
+        const s2 = str2.toLowerCase();
+        if (s1 === s2) return 100;
+        if (s1.includes(s2) || s2.includes(s1)) return 80;
+        
+        const maxLength = Math.max(s1.length, s2.length);
+        let matches = 0;
+        for (let i = 0; i < Math.min(s1.length, s2.length); i++) {
+          if (s1[i] === s2[i]) matches++;
+        }
+        return (matches / maxLength) * 60;
+      }
+      
+      let bestMatch = null;
+      let bestSimilarity = 0;
+      
+      maFiles.forEach(maFile => {
+        const fileNameWithoutExt = maFile.replace('.maFile', '');
+        const similarity = calculateSimilarity(account.login, fileNameWithoutExt);
+        
+        if (similarity > bestSimilarity && similarity >= 50) {
+          bestMatch = maFile;
+          bestSimilarity = similarity;
+        }
+      });
+      
+      if (bestMatch) {
+        account.maFilePath = path.join(maFilesPath, bestMatch);
+        linkedCount++;
+        console.log(`✓ Автоматично пов'язано "${account.login}" з "${bestMatch}"`);
+      } else {
+        notFoundCount++;
+      }
+    });
+
+    fs.writeFileSync(userAccountsPath, JSON.stringify(accountsData, null, 2));
+    return { success: true, linkedCount, notFoundCount, alreadyLinkedCount };
+  } catch (error) {
+    console.log('Помилка автоматичного зв\'язування:', error);
+    return { success: false, linkedCount: 0, notFoundCount: 0, alreadyLinkedCount: 0 };
+  }
+}
+
 // IPC обробники для імпорту/експорту
 ipcMain.handle('import-accounts', async () => {
   try {
@@ -385,11 +453,24 @@ ipcMain.handle('import-accounts', async () => {
     // Зберігаємо оновлені дані
     fs.writeFileSync(userAccountsPath, JSON.stringify(currentData, null, 2));
     
+    // Автоматично пов'язуємо .maFile файли після імпорту акаунтів
+    let linkResult = { linkedCount: 0, notFoundCount: 0, alreadyLinkedCount: 0 };
+    try {
+      const autoLinkResult = await autoLinkMaFiles();
+      if (autoLinkResult && autoLinkResult.success) {
+        linkResult = autoLinkResult;
+      }
+    } catch (linkError) {
+      console.log('Помилка автоматичного зв\'язування:', linkError);
+    }
+    
     return { 
       success: true, 
-      message: `Імпортовано ${addedCount} акаунтів. Дублікати пропущено: ${importData.accounts.length - addedCount}`,
+      message: `Імпортовано ${addedCount} акаунтів. Дублікати пропущено: ${importData.accounts.length - addedCount}. Автоматично пов'язано ${linkResult.linkedCount} .maFile файлів.`,
       addedCount,
-      duplicatesCount: importData.accounts.length - addedCount
+      duplicatesCount: importData.accounts.length - addedCount,
+      linkedCount: linkResult.linkedCount,
+      notLinkedCount: linkResult.notFoundCount
     };
 
   } catch (error) {
@@ -475,12 +556,24 @@ ipcMain.handle('import-mafiles-folder', async () => {
       }
     });
 
+    // Автоматично пов'язуємо .maFile файли після імпорту
+    let linkResult = { linkedCount: 0, notFoundCount: 0, alreadyLinkedCount: 0 };
+    try {
+      const autoLinkResult = await autoLinkMaFiles();
+      if (autoLinkResult && autoLinkResult.success) {
+        linkResult = autoLinkResult;
+      }
+    } catch (linkError) {
+      console.log('Помилка автоматичного зв\'язування після імпорту maFiles:', linkError);
+    }
+
     return { 
       success: true, 
-      message: `Імпортовано ${copiedCount} .maFile файлів. Пропущено (вже існують): ${skippedCount}`,
+      message: `Імпортовано ${copiedCount} .maFile файлів. Пропущено (вже існують): ${skippedCount}. Автоматично пов'язано ${linkResult.linkedCount} з акаунтами.`,
       copiedCount,
       skippedCount,
-      totalFound: maFiles.length
+      totalFound: maFiles.length,
+      linkedCount: linkResult.linkedCount
     };
 
   } catch (error) {
@@ -517,5 +610,101 @@ ipcMain.handle('export-accounts', async () => {
   } catch (error) {
     console.error('Помилка експорту акаунтів:', error);
     return { success: false, message: 'Помилка експорту акаунтів: ' + error.message };
+  }
+});
+
+// Новий обробник для автоматичного зіставлення .maFile файлів з акаунтами
+ipcMain.handle('auto-link-mafiles', async () => {
+  try {
+    const result = await autoLinkMaFiles();
+    
+    const message = `Результат автоматичного зв'язування:
+• Пов'язано: ${result.linkedCount} акаунтів
+• Вже були пов'язані: ${result.alreadyLinkedCount} акаунтів  
+• Не знайдено .maFile: ${result.notFoundCount} акаунтів`;
+
+    console.log(message);
+    
+    return {
+      success: result.success,
+      message,
+      linkedCount: result.linkedCount,
+      notFoundCount: result.notFoundCount,
+      alreadyLinkedCount: result.alreadyLinkedCount
+    };
+
+  } catch (error) {
+    console.error('Помилка автоматичного зв\'язування maFiles:', error);
+    return { success: false, message: 'Помилка автоматичного зв\'язування: ' + error.message };
+  }
+});
+
+// Обробник для ручного зіставлення .maFile з акаунтом
+ipcMain.handle('manual-link-mafile', async (event, accountLogin) => {
+  try {
+    const userDataPath = app.getPath('userData');
+    const userAccountsPath = path.join(userDataPath, 'accounts.json');
+    const maFilesPath = path.join(userDataPath, 'maFiles');
+    
+    if (!fs.existsSync(userAccountsPath)) {
+      return { success: false, message: 'Файл акаунтів не знайдено' };
+    }
+    
+    if (!fs.existsSync(maFilesPath)) {
+      return { success: false, message: 'Папка maFiles не знайдена' };
+    }
+
+    // Показуємо діалог вибору файлу
+    const result = await dialog.showOpenDialog({
+      title: `Виберіть .maFile для акаунта "${accountLogin}"`,
+      defaultPath: maFilesPath,
+      filters: [
+        { name: 'maFile файли', extensions: ['maFile'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (result.canceled || !result.filePaths.length) {
+      return { success: false, message: 'Вибір скасовано' };
+    }
+
+    const selectedFilePath = result.filePaths[0];
+    
+    // Перевіряємо, що вибраний файл знаходиться в папці maFiles
+    if (!selectedFilePath.startsWith(maFilesPath)) {
+      return { success: false, message: 'Вибраний файл має знаходитися в папці maFiles' };
+    }
+
+    // Читаємо акаунти
+    const accountsData = JSON.parse(fs.readFileSync(userAccountsPath, 'utf8'));
+    
+    if (!accountsData.accounts || !Array.isArray(accountsData.accounts)) {
+      return { success: false, message: 'Некоректна структура файлу акаунтів' };
+    }
+
+    // Знаходимо акаунт і оновлюємо його maFilePath
+    const account = accountsData.accounts.find(acc => acc.login === accountLogin);
+    
+    if (!account) {
+      return { success: false, message: `Акаунт "${accountLogin}" не знайдено` };
+    }
+
+    account.maFilePath = selectedFilePath;
+
+    // Зберігаємо оновлені дані
+    fs.writeFileSync(userAccountsPath, JSON.stringify(accountsData, null, 2));
+    
+    const fileName = path.basename(selectedFilePath);
+    console.log(`Вручну пов'язано "${accountLogin}" з "${fileName}"`);
+    
+    return {
+      success: true,
+      message: `Акаунт "${accountLogin}" успішно пов'язано з "${fileName}"`,
+      filePath: selectedFilePath
+    };
+
+  } catch (error) {
+    console.error('Помилка ручного зв\'язування maFile:', error);
+    return { success: false, message: 'Помилка ручного зв\'язування: ' + error.message };
   }
 });
