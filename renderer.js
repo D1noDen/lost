@@ -740,6 +740,7 @@ function render() {
 
    div.innerHTML = `
   <div class="account-card">
+    ${acc.prime ? '<span class="prime-badge" title="Prime">🔒</span>' : ''}
     <div class="account-header" onclick="toggleDetails(${originalIndex})">
       <div class="account-title">
         <b>#${i + 1}</b>

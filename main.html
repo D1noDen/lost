@@ -66,17 +66,17 @@ button {
 .account-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  padding: 24px;
+  gap: 16px;
+  padding: 16px;
   justify-content: flex-start;
 }
 
 .account-card {
   background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 0;
-  width: 480px;
-  min-height: 220px;
+  width: 420px;
+  min-height: 170px;
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
@@ -115,12 +115,12 @@ button {
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   font-weight: bold;
   color: var(--text-primary);
   font-size: 14px;
-  padding: 24px 28px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -140,14 +140,14 @@ button {
 }
 
 .account-title b {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--emerald-300);
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .account-title span {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   font-weight: 500;
   margin-top: 2px;
@@ -165,7 +165,7 @@ button {
 .account-meta {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -173,10 +173,10 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 12px;
   border: 2px solid var(--border-primary);
   transition: all 0.3s ease;
 }
@@ -190,10 +190,10 @@ button {
   background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
   color: var(--emerald-50);
   border: none;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   transition: all 0.3s ease;
   margin-left: auto;
@@ -3127,6 +3127,83 @@ select, .tab-button {
 .notification-info {
   background: #2563eb;
   border-left: 4px solid #60a5fa;
+}
+
+/* === Compact Account Card Adjustments === */
+.account-grid {
+  gap: 16px;
+  padding: 16px;
+}
+
+.account-card {
+  width: 420px;
+  min-height: 170px;
+  border-radius: 16px;
+}
+
+.account-header {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.account-title b {
+  font-size: 16px;
+}
+
+.account-title span {
+  font-size: 14px;
+}
+
+.account-meta {
+  gap: 8px;
+}
+
+.account-meta span {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.account-meta button,
+.btn-2fa,
+.buttonFarm,
+.btn-farming {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.prime-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 18px;
+  color: #facc15;
+  pointer-events: none;
+}
+
+/* === Compact Drop Preview === */
+.drop-preview-image {
+  width: 40px;
+  height: 40px;
+}
+
+.drop-preview-image.large {
+  width: 36px;
+  height: 36px;
+}
+
+.drop-preview-image.small {
+  width: 30px;
+  height: 30px;
+}
+
+.drop-item {
+  gap: 10px;
+  padding: 8px 12px;
+  min-width: 260px;
+}
+
+.drops-container {
+  min-width: 280px;
 }
 </style>
 
