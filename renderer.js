@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, clipboard } = require('electron');
 const SteamTotp = require('steam-totp');
 const TradeManager = require('./trade_manager.js');
 
@@ -8,6 +8,7 @@ let accounts = [];
 let tradeManager = null;
 let filteredAccounts = []; // Для збереження відфільтрованих акаунтів
 let searchQuery = ''; // Поточний запит пошуку
+let starFilter = 'all'; // Фільтр по стану відфармлення: all | starred | unstarred
 
 // Глобальні шляхи (будуть отримані від main процесу)
 let accountsFilePath = '';
@@ -453,8 +454,9 @@ function toggleStar(index) {
   if (searchQuery && searchQuery !== '') {
     searchAccounts(searchQuery);
   } else {
-    filteredAccounts = [...accounts];
+    filteredAccounts = applyStarFilter([...accounts]);
     render();
+    updateSearchResultCount();
   }
 }
 
@@ -477,15 +479,25 @@ function generate2FA(index) {
 }
 
 function copyToClipboard(text, message = null) {
-  navigator.clipboard.writeText(text);
-  
-  // Показуємо сповіщення про копіювання
+  try {
+    if (clipboard && typeof clipboard.writeText === 'function') {
+      clipboard.writeText(String(text));
+    } else if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(String(text));
+    } else {
+      console.warn('Clipboard API not available');
+    }
+  } catch (e) {
+    console.error('Clipboard write failed:', e);
+  }
+
+  // Повідомлення
   if (message) {
     showNotification(message, 'success');
-  } else if (text && text.trim() !== '') {
-    showNotification(`📋 Скопійовано в буфер обміну`, 'success');
+  } else if (text && text.toString().trim() !== '') {
+    showNotification('📋 Скопійовано в буфер обміну', 'success');
   } else {
-    showNotification(`❌ Нічого копіювати`, 'warning');
+    showNotification('❌ Нічого копіювати', 'warning');
   }
 }
 
@@ -504,8 +516,8 @@ function copyTotalDropPrice(index) {
 // Функція пошуку акаунтів
 function searchAccounts(query) {
   searchQuery = query.toLowerCase().trim();
-  
-  if (!searchQuery || searchQuery === '') {
+
+  if (!searchQuery) {
     filteredAccounts = [...accounts];
   } else {
     filteredAccounts = accounts.filter(acc => {
@@ -513,14 +525,12 @@ function searchAccounts(query) {
       const name = (acc.name || '').toLowerCase();
       const lastDrop = (acc.lastDrop || '').toLowerCase();
       const id = (acc.id || '').toString().toLowerCase();
-      
-      return login.includes(searchQuery) || 
-             name.includes(searchQuery) || 
-             lastDrop.includes(searchQuery) ||
-             id.includes(searchQuery);
+      return login.includes(searchQuery) || name.includes(searchQuery) || lastDrop.includes(searchQuery) || id.includes(searchQuery);
     });
   }
-  
+
+  filteredAccounts = applyStarFilter(filteredAccounts);
+
   render();
   updateSearchResultCount();
 }
@@ -534,15 +544,14 @@ function handleSearchInput(event) {
 // Оновлення лічильника результатів пошуку
 function updateSearchResultCount() {
   const searchInfo = document.getElementById('search-info');
-  if (searchInfo) {
-    if (searchQuery && searchQuery !== '') {
-      const total = accounts.length;
-      const found = filteredAccounts.length;
-      searchInfo.textContent = `Знайдено ${found} з ${total} акаунтів`;
-      searchInfo.style.display = 'block';
-    } else {
-      searchInfo.style.display = 'none';
-    }
+  if (!searchInfo) return;
+
+  const currentList = applyStarFilter((!searchQuery ? accounts : filteredAccounts));
+  if (searchQuery || starFilter !== 'all') {
+    searchInfo.textContent = `Знайдено ${currentList.length} з ${accounts.length} акаунтів`;
+    searchInfo.style.display = 'block';
+  } else {
+    searchInfo.style.display = 'none';
   }
 }
 
@@ -702,11 +711,11 @@ async function fetchLastDrop(index) {
 function render() {
   const container = document.getElementById('accounts');
   container.innerHTML = '';
- 
-  const accountsToRender = (!searchQuery || searchQuery === '') ? accounts : filteredAccounts;
 
-  // Показуємо повідомлення, якщо нічого не знайдено (тільки при активному пошуку)
-  if (searchQuery && searchQuery !== '' && accountsToRender.length === 0) {
+  const accountsToRender = applyStarFilter((!searchQuery ? accounts : filteredAccounts));
+
+  // Повідомлення про відсутність результатів
+  if (((searchQuery && searchQuery !== '') || starFilter !== 'all') && accountsToRender.length === 0) {
     container.innerHTML = `
       <div class="no-results">
         <div class="no-results-icon">🔍</div>
@@ -750,6 +759,7 @@ function render() {
                   <div class="drop-price-container">
                     <span class="drop-preview-price">💰 ${drop.priceUAH} грн</span>
                     <span class="drop-preview-price-usd">(${drop.originalPrice})</span>
+                    <button onclick="event.stopPropagation(); copyDropPrice(${originalIndex}, ${dropIndex})" class="btn-copy-drop" title="Копіювати ціну">📋</button>
                   </div>
                 </div>
               </div>
@@ -768,6 +778,7 @@ function render() {
           <div class="drop-preview-info">
             <span class="drop-preview-name">${acc.lastDrop}</span>
             <span class="drop-preview-price">💰 ${acc.lastDropPrice} грн</span>
+            <button onclick="event.stopPropagation(); copyLastDropPrice(${originalIndex})" class="btn-copy-drop" title="Копіювати ціну">📋</button>
           </div>
           <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дроп">🔄</button>
         ` : `
@@ -1568,3 +1579,29 @@ window.importMaFilesIndividual = importMaFilesIndividual;
 window.exportAccounts = exportAccounts;
 window.showImportExportModal = showImportExportModal;
 window.autoLinkAllMaFiles = autoLinkAllMaFiles;
+
+function applyStarFilter(list) {
+  if (starFilter === 'starred') return list.filter(acc => acc.starred);
+  if (starFilter === 'unstarred') return list.filter(acc => !acc.starred);
+  return list;
+}
+
+function setStarFilter(filter) {
+  starFilter = filter;
+  ['filter-all','filter-starred','filter-unstarred'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.remove('active');
+  });
+  const activeBtn = document.getElementById(`filter-${filter}`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  if (searchQuery) {
+    searchAccounts(searchQuery);
+  } else {
+    filteredAccounts = applyStarFilter([...accounts]);
+    render();
+    updateSearchResultCount();
+  }
+}
+
+window.setStarFilter = setStarFilter;

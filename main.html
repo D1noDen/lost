@@ -2208,9 +2208,50 @@ select, .tab-button {
   opacity: 0.7;
 }
 
+/* Кнопка копіювання ціни дропу */
+.btn-copy-drop {
+  background: transparent;
+  border: none;
+  color: var(--emerald-300);
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 6px;
+  transition: transform 0.2s;
+}
 
+.btn-copy-drop:hover {
+  transform: scale(1.1);
+}
 
+/* Фільтр відфармлених акаунтів */
+.star-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
 
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
+}
+
+.filter-btn.active {
+  background: var(--emerald-600);
+  border-color: var(--emerald-500);
+  color: var(--emerald-50);
+}
 
 .btn-clear-search {
   background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
@@ -3267,6 +3308,11 @@ select, .tab-button {
     <button onclick="clearSearch()" class="btn-clear-search" title="Очистити пошук">✖️</button>
   </div>
   <div id="search-info" class="search-info" style="display: none;"></div>
+  <div class="star-filter">
+    <button id="filter-all" class="filter-btn active" onclick="setStarFilter('all')">Усі</button>
+    <button id="filter-starred" class="filter-btn" onclick="setStarFilter('starred')">Відфармлені</button>
+    <button id="filter-unstarred" class="filter-btn" onclick="setStarFilter('unstarred')">Не відфармлені</button>
+  </div>
 </div>
 
 <div id="accounts-tab" class="tab active" style="display: block;">
@@ -3296,8 +3342,8 @@ select, .tab-button {
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14,2 14,8 20,8"/>
             <line x1="12" y1="18" x2="12" y2="12"/>
-            <line x1="15" y1="15" x2="12" y2="12"/>
             <line x1="9" y1="15" x2="12" y2="12"/>
+            <line x1="15" y1="15" x2="12" y2="12"/>
           </svg>
           Експортувати акаунти
         </button>
