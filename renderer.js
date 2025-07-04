@@ -375,6 +375,12 @@ function selectMaFile(event, index) {
         // Показуємо повідомлення про успіх
         showNotification(`✅ Файл ${fileName} успішно завантажено`, 'success');
         
+        // Автоматично перейменовуємо файл після завантаження
+        setTimeout(async () => {
+          console.log('[selectMaFile] Запускаємо автоматичне перейменування...');
+          await renameMaFilesToAccountNames();
+        }, 500);
+        
       } catch (error) {
         console.error('Помилка копіювання файлу через fs:', error);
         console.log('Fallback: trying to copy via IPC...');
@@ -425,6 +431,12 @@ async function copyMaFileViaIPC(arrayBuffer, fileName, index) {
     
     // Показуємо повідомлення про успіх
     showNotification(`✅ Файл ${fileName} успішно завантажено через IPC`, 'success');
+    
+    // Автоматично перейменовуємо файл після завантаження через IPC
+    setTimeout(async () => {
+      console.log('[copyMaFileViaIPC] Запускаємо автоматичне перейменування...');
+      await renameMaFilesToAccountNames();
+    }, 500);
     
   } catch (error) {
     console.error('Помилка копіювання через IPC:', error);
@@ -572,7 +584,7 @@ async function fetchLastDrop(index) {
   console.log(`[fetchLastDrop] Початок для акаунту ${acc.login}, index: ${index}`);
   
   if (!acc.login || !acc.password) {
-    alert('Потрібно вказати логін та пароль для акаунту');
+    showNotification('Потрібно вказати логін та пароль для акаунту', 'warning');
     return;
   }
 
@@ -584,7 +596,7 @@ async function fetchLastDrop(index) {
       maFilePath = path.join(maFilesPath, `${acc.login}.maFile`);
     }
     if (!maFilePath || !fs.existsSync(maFilePath)) {
-      alert(`maFile не знайдено для акаунту ${acc.login}.\nПеревірено:\n- ${acc.maFilePath}\n- ${maFilePath}`);
+      showNotification(`maFile не знайдено для акаунту ${acc.login}.<br>Перевірено:<br>- ${acc.maFilePath}<br>- ${maFilePath}`, 'error');
       return;
     }
   }
@@ -669,19 +681,19 @@ async function fetchLastDrop(index) {
       
       const dropsText = convertedDrops.map((drop, i) => 
         `${i + 1}. ${drop.name} - ${drop.priceUAH} грн (${drop.originalPrice})`
-      ).join('\n');
+      ).join('<br>');
       
-      alert(`Дропи оновлено!\n\n${dropsText}`);
+      showNotification(`Дропи оновлено!<br><br>${dropsText}`, 'success');
     } else {
       console.log('[fetchLastDrop] dropsInfo is null, undefined або порожній');
-      alert('Не вдалося знайти інформацію про дропи або інвентар порожній');
+      showNotification('Не вдалося знайти інформацію про дропи або інвентар порожній', 'warning');
     }
 
     tradeManager.disconnect();
     
   } catch (e) {
     console.error(`[fetchLastDrop] Помилка при отриманні дропу для ${acc.login}:`, e);
-    alert(`Помилка: ${e.message}`);
+    showNotification(`Помилка: ${e.message}`, 'error');
   } finally {
     // Ховаємо глобальний індикатор завантаження
     hideLoadingIndicator();
@@ -740,7 +752,7 @@ function render() {
 
    div.innerHTML = `
   <div class="account-card">
-    ${acc.prime ? '<span class="prime-badge" title="Prime">🔒</span>' : ''}
+    ${acc.prime ? '<span class="prime-badge" title="Prime"><img style="width:50px; height:50px" src="./Prime.png" /></span>' : ''}
     <div class="account-header" onclick="toggleDetails(${originalIndex})">
       <div class="account-title">
         <b>#${i + 1}</b>
@@ -842,7 +854,7 @@ function render() {
                <span title="До Prime">
                  До Prime: через ${daysUntil(acc.unlockDate)} днів
                </span>
-               <input type="date" value="${acc.unlockDate || ''}" onchange="updateUnlockDate(${originalIndex}, this.value)" />
+               <input type="date" value="${acc.unlockDate || ''}" onchange="updateField(${originalIndex}, 'unlockDate', this.value)" />
                <button class="btn-prime-add" onclick="event.stopPropagation(); togglePrime(${originalIndex})">✅ Встановити Prime</button>
              </div>`}
 
@@ -1388,10 +1400,15 @@ async function importMaFiles() {
     
     if (result.success) {
       showNotification(result.message, 'success');
-      // Перезавантажуємо список акаунтів
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      
+      // Автоматично перейменовуємо файли після імпорту
+      setTimeout(async () => {
+        await renameMaFilesToAccountNames();
+        // Перезавантажуємо список акаунтів
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }, 1000);
     } else {
       showNotification(result.message, 'error');
     }
@@ -1409,10 +1426,15 @@ async function importMaFilesFolder() {
     
     if (result.success) {
       showNotification(result.message, 'success');
-      // Перезавантажуємо список акаунтів
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      
+      // Автоматично перейменовуємо файли після імпорту
+      setTimeout(async () => {
+        await renameMaFilesToAccountNames();
+        // Перезавантажуємо список акаунтів
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }, 1000);
     } else {
       showNotification(result.message, 'error');
     }
@@ -1430,10 +1452,15 @@ async function importMaFilesIndividual() {
     
     if (result.success) {
       showNotification(result.message, 'success');
-      // Перезавантажуємо список акаунтів
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      
+      // Автоматично перейменовуємо файли після імпорту
+      setTimeout(async () => {
+        await renameMaFilesToAccountNames();
+        // Перезавантажуємо список акаунтів
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }, 1000);
     } else {
       showNotification(result.message, 'error');
     }
@@ -1550,6 +1577,59 @@ window.closeImportExportModal = function() {
   }
 }
 
+// Функція для примусового закриття всіх модальних вікон та екранів завантаження
+function forceCloseAllModals() {
+  const modals = document.querySelectorAll('.password-modal, .import-export-modal, .drop-info-modal, .loading-backdrop');
+  modals.forEach(modal => {
+    modal.remove();
+  });
+  showNotification('Всі модальні вікна та екрани завантаження закрито.', 'info');
+}
+
+// Робимо функцію глобальною
+window.forceCloseAllModals = forceCloseAllModals;
+
+// Тестові функції для DevTools
+window.testRenameFiles = async function() {
+  console.log('=== ТЕСТ: Запуск перейменування файлів ===');
+  console.log('Кількість акаунтів:', accounts.length);
+  console.log('Шлях до maFiles:', maFilesPath);
+  
+  if (accounts.length > 0) {
+    console.log('Перші 3 акаунти:');
+    accounts.slice(0, 3).forEach((acc, i) => {
+      console.log(`${i+1}. Login: "${acc.login}", maFilePath: "${acc.maFilePath}"`);
+    });
+  }
+  
+  await renameMaFilesToAccountNames();
+};
+
+window.debugAccounts = function() {
+  console.log('=== ДЕБАГ: Інформація про акаунти ===');
+  console.log('Всього акаунтів:', accounts.length);
+  
+  accounts.forEach((acc, i) => {
+    console.log(`Акаунт ${i+1}:`);
+    console.log(`  Login: "${acc.login}"`);
+    console.log(`  maFilePath: "${acc.maFilePath}"`);
+    console.log(`  Файл існує: ${acc.maFilePath ? require('fs').existsSync(acc.maFilePath) : 'немає шляху'}`);
+  });
+  
+  console.log('Шлях до папки maFiles:', maFilesPath);
+  
+  if (maFilesPath && require('fs').existsSync(maFilesPath)) {
+    try {
+      const files = require('fs').readdirSync(maFilesPath);
+      console.log('Файли в папці maFiles:', files);
+    } catch (e) {
+      console.error('Помилка читання папки:', e);
+    }
+  } else {
+    console.log('Папка maFiles не існує або шлях не визначений');
+  }
+};
+
 // Функція для автоматичного зіставлення всіх maFiles
 async function autoLinkAllMaFiles() {
   try {
@@ -1580,6 +1660,7 @@ window.importMaFilesIndividual = importMaFilesIndividual;
 window.exportAccounts = exportAccounts;
 window.showImportExportModal = showImportExportModal;
 window.autoLinkAllMaFiles = autoLinkAllMaFiles;
+window.renameMaFilesToAccountNames = renameMaFilesToAccountNames;
 
 function applyStarFilter(list) {
   if (starFilter === 'starred') return list.filter(acc => acc.starred);
@@ -1606,3 +1687,163 @@ function setStarFilter(filter) {
 }
 
 window.setStarFilter = setStarFilter;
+
+// Функція для перейменування .maFile файлів на основі логіну акаунта
+async function renameMaFilesToAccountNames() {
+  try {
+    console.log('[renameMaFiles] Початок виконання функції');
+    showNotification('Перейменовуємо .maFile файли...', 'info');
+    
+    if (!maFilesPath) {
+      console.error('[renameMaFiles] maFilesPath не визначений');
+      showNotification('Шлях до папки maFiles не ініціалізований', 'error');
+      return;
+    }
+
+    console.log('[renameMaFiles] Шлях до maFiles:', maFilesPath);
+    console.log('[renameMaFiles] Кількість облікових записів:', accounts.length);
+
+    // Перевіряємо, чи існує папка
+    if (!fs.existsSync(maFilesPath)) {
+      console.error('[renameMaFiles] Папка не існує:', maFilesPath);
+      showNotification(`Папка maFiles не існує: ${maFilesPath}`, 'error');
+      return;
+    }
+
+    if (accounts.length === 0) {
+      console.log('[renameMaFiles] Немає облікових записів для обробки');
+      showNotification('Немає облікових записів для перейменування файлів', 'warning');
+      return;
+    }
+    
+    let renamedCount = 0;
+    let skippedCount = 0;
+    let errors = [];
+
+    // Проходимо по кожному обліковому запису
+    for (const account of accounts) {
+      console.log(`\n[renameMaFiles] === Обробляємо обліковий запис: ${account.login} ===`);
+      
+      try {
+        if (!account.maFilePath) {
+          console.log(`[renameMaFiles] У акаунту ${account.login} відсутній maFilePath`);
+          continue;
+        }
+
+        console.log(`[renameMaFiles] Поточний maFilePath: ${account.maFilePath}`);
+        
+        // Перевіряємо, чи існує файл
+        if (!fs.existsSync(account.maFilePath)) {
+          console.error(`[renameMaFiles] Файл не існує: ${account.maFilePath}`);
+          errors.push(`Файл не існує для акаунту ${account.login}: ${account.maFilePath}`);
+          continue;
+        }
+
+        // Отримуємо поточну назву файлу
+        const currentFileName = path.basename(account.maFilePath);
+        console.log(`[renameMaFiles] Поточна назва файлу: ${currentFileName}`);
+        
+        // Створюємо нову назву файлу на основі логіну акаунту
+        const newFileName = `${account.login}.maFile`;
+        console.log(`[renameMaFiles] Нова назва файлу: ${newFileName}`);
+        
+        // Перевіряємо, чи потрібно перейменувати
+        if (currentFileName === newFileName) {
+          console.log(`[renameMaFiles] Файл для акаунту ${account.login} вже має правильну назву`);
+          skippedCount++;
+          continue;
+        }
+        
+        const newFilePath = path.join(maFilesPath, newFileName);
+        console.log(`[renameMaFiles] Новий повний шлях: ${newFilePath}`);
+        
+        // Перевіряємо, чи не існує файл з такою назвою
+        if (fs.existsSync(newFilePath) && newFilePath !== account.maFilePath) {
+          console.error(`[renameMaFiles] Файл з назвою ${newFileName} вже існує`);
+          errors.push(`Файл з назвою ${newFileName} вже існує`);
+          continue;
+        }
+        
+        // Виконуємо перейменування
+        try {
+          console.log(`[renameMaFiles] Перейменовуємо файл з ${account.maFilePath} на ${newFilePath}`);
+          fs.renameSync(account.maFilePath, newFilePath);
+          console.log(`[renameMaFiles] ✅ УСПІШНО перейменовано: ${currentFileName} -> ${newFileName}`);
+          
+          // Оновлюємо шлях в акаунті
+          account.maFilePath = newFilePath;
+          console.log(`[renameMaFiles] Оновлено maFilePath для акаунту ${account.login}`);
+          
+          renamedCount++;
+          
+        } catch (renameError) {
+          console.error(`[renameMaFiles] Помилка перейменування файлу для акаунту ${account.login}:`, renameError);
+          errors.push(`Помилка перейменування файлу для ${account.login}: ${renameError.message}`);
+        }
+        
+      } catch (error) {
+        console.error(`[renameMaFiles] Загальна помилка обробки акаунту ${account.login}:`, error);
+        errors.push(`Помилка обробки акаунту ${account.login}: ${error.message}`);
+      }
+    }
+
+    // Зберігаємо зміни
+    if (renamedCount > 0) {
+      console.log(`[renameMaFiles] Зберігаємо дані після ${renamedCount} перейменувань`);
+      try {
+        saveAccounts();
+        console.log(`[renameMaFiles] Дані збережено успішно`);
+      } catch (saveError) {
+        console.error(`[renameMaFiles] Помилка збереження:`, saveError);
+        errors.push(`Помилка збереження даних: ${saveError.message}`);
+      }
+    }
+
+    // Показуємо результат
+    console.log(`\n[renameMaFiles] === ПІДСУМОК ===`);
+    console.log(`[renameMaFiles] Перейменовано: ${renamedCount}`);
+    console.log(`[renameMaFiles] Пропущено (вже правильні назви): ${skippedCount}`);
+    console.log(`[renameMaFiles] Помилок: ${errors.length}`);
+    
+    let message = `Перейменування завершено!<br>• Перейменовано: ${renamedCount} файлів<br>• Пропущено: ${skippedCount} файлів`;
+    
+    if (errors.length > 0) {
+      message += `<br>• Помилки (${errors.length}):<br>${errors.slice(0, 3).join('<br>')}`;
+      if (errors.length > 3) {
+        message += `<br>... та ще ${errors.length - 3} помилок`;
+      }
+      console.log(`[renameMaFiles] Помилки:`, errors);
+    }
+    
+    const notificationType = errors.length > 0 ? 'warning' : (renamedCount > 0 ? 'success' : 'info');
+    showNotification(message, notificationType);
+    
+  } catch (error) {
+    console.error('[renameMaFiles] Критична помилка:', error);
+    showNotification('Критична помилка перейменування: ' + error.message, 'error');
+  }
+}
+
+// Функція для ручного перейменування файлів (кнопка в інтерфейсі)
+async function manualRenameFiles() {
+  console.log('[manualRenameFiles] Ручний запуск перейменування...');
+  showNotification('🔄 Запускається перейменування .maFile файлів...', 'info');
+  
+  try {
+    await renameMaFilesToAccountNames();
+    
+    // Оновлюємо відображення після перейменування
+    setTimeout(() => {
+      if (searchQuery && searchQuery !== '') {
+        searchAccounts(searchQuery);
+      } else {
+        filteredAccounts = [...accounts];
+        render();
+      }
+    }, 1000);
+    
+  } catch (error) {
+    console.error('[manualRenameFiles] Помилка:', error);
+    showNotification('❌ Помилка перейменування: ' + error.message, 'error');
+  }
+}
