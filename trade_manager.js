@@ -306,5 +306,129 @@ class TradeManager extends EventEmitter {
             return [];
         }
     }
+
+    // Новий метод для отримання повного інвентарю CS:GO та TF2
+    async getFullInventory(accountLogin, maxItems = 50) {
+        try {
+            console.log(`[getFullInventory] Початок для ${accountLogin}, максимум ${maxItems} предметів на гру`);
+            
+            // Отримуємо інвентар з CS:GO (730) та Team Fortress 2 (440)
+            const [csgoInventory, tf2Inventory] = await Promise.allSettled([
+                this.getInventory(730, 2), // CS:GO
+                this.getInventory(440, 2)  // Team Fortress 2
+            ]);
+            
+            let allItems = [];
+            
+            // Додаємо CS:GO предмети
+            if (csgoInventory.status === 'fulfilled' && csgoInventory.value && csgoInventory.value.length > 0) {
+                const csgoItems = csgoInventory.value.slice(0, maxItems).map(item => ({...item, gameApp: 'CS:GO', appId: 730}));
+                allItems = allItems.concat(csgoItems);
+                console.log(`[getFullInventory] CS:GO: ${csgoItems.length} предметів`);
+            } else {
+                console.log(`[getFullInventory] CS:GO: інвентар порожній або недоступний`);
+            }
+            
+            // Додаємо TF2 предмети
+            if (tf2Inventory.status === 'fulfilled' && tf2Inventory.value && tf2Inventory.value.length > 0) {
+                const tf2Items = tf2Inventory.value.slice(0, maxItems).map(item => ({...item, gameApp: 'TF2', appId: 440}));
+                allItems = allItems.concat(tf2Items);
+                console.log(`[getFullInventory] TF2: ${tf2Items.length} предметів`);
+            } else {
+                console.log(`[getFullInventory] TF2: інвентар порожній або недоступний`);
+            }
+            
+            console.log(`[getFullInventory] Загалом предметів: ${allItems.length}`);
+            
+            if (allItems.length === 0) {
+                console.log(`[getFullInventory] Inventory is empty for ${accountLogin}`);
+                return [];
+            }
+
+            // Беремо максимум предметів для оптимізації
+            const itemsToProcess = allItems.slice(0, maxItems * 2); // збільшуємо ліміт для двох ігор
+            console.log(`[getFullInventory] Обробляємо ${itemsToProcess.length} предметів`);
+
+            const results = [];
+            for (let i = 0; i < itemsToProcess.length; i++) {
+                const item = itemsToProcess[i];
+                console.log(`[getFullInventory] Обробка предмету ${i + 1}/${itemsToProcess.length}:`, {
+                    name: item.market_hash_name,
+                    id: item.assetid || item.id,
+                    game: item.gameApp,
+                    type: item.type
+                });
+
+                try {
+                    const result = {
+                        name: item.market_hash_name || item.name || 'Unknown Item',
+                        imageUrl: item.getImageURL ? item.getImageURL() : (item.icon_url ? `https://steamcommunity-a.akamaihd.net/economy/image/${item.icon_url}` : ''),
+                        assetId: item.assetid || item.id,
+                        type: item.type || '',
+                        rarity: item.rarity || '',
+                        tradeable: item.tradable !== false,
+                        marketable: item.marketable !== false,
+                        game: item.gameApp || 'Unknown',
+                        appId: item.appId || 0,
+                        price: '$0.00',
+                        priceUAH: '0.00',
+                        originalPrice: '$0.00'
+                    };
+
+                    // Отримуємо ціну тільки для предметів, що можна продати на ринку
+                    if (item.marketable !== false && item.market_hash_name) {
+                        try {
+                            console.log(`[getFullInventory] Отримуємо ціну для ${item.market_hash_name} (${item.gameApp})`);
+                            const priceInfo = await this.getItemPrice(item.appId, item.market_hash_name);
+                            console.log(`[getFullInventory] Отримано ціну:`, priceInfo);
+                            
+                            if (priceInfo && priceInfo.lowest_price) {
+                                result.price = priceInfo.lowest_price;
+                                result.originalPrice = priceInfo.lowest_price;
+                                // Конвертуємо в гривні (приблизний курс 1$ = 41.5 грн)
+                                const priceValue = parseFloat(priceInfo.lowest_price.replace(/[$,]/g, '')) || 0;
+                                result.priceUAH = (priceValue * 41.5).toFixed(2);
+                            }
+                            console.log(`[getFullInventory] Додано предмет ${i + 1}:`, result);
+                        } catch (priceErr) {
+                            console.error(`[getFullInventory] Failed to get price for ${item.market_hash_name}:`, priceErr);
+                            // Продовжуємо без ціни
+                        }
+                    }
+
+                    results.push(result);
+                    
+                    // Невелика затримка між запитами цін для уникнення rate limiting
+                    if (item.marketable !== false && i < itemsToProcess.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
+                    
+                } catch (itemErr) {
+                    console.error(`[getFullInventory] Error processing item ${i + 1}:`, itemErr);
+                    // Додаємо предмет без додаткової інформації
+                    results.push({
+                        name: item.market_hash_name || item.name || `Unknown Item ${i + 1}`,
+                        imageUrl: '',
+                        assetId: item.assetid || item.id,
+                        type: item.type || '',
+                        rarity: item.rarity || '',
+                        tradeable: false,
+                        marketable: false,
+                        game: item.gameApp || 'Unknown',
+                        appId: item.appId || 0,
+                        price: '$0.00',
+                        priceUAH: '0.00',
+                        originalPrice: '$0.00'
+                    });
+                }
+            }
+            
+            console.log(`[getFullInventory] Фінальний результат для ${accountLogin}: ${results.length} предметів`);
+            return results;
+        } catch (err) {
+            console.error(`[getFullInventory] Failed to get full inventory for ${accountLogin}:`, err);
+            return [];
+        }
+    }
 }
 module.exports = TradeManager;

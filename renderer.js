@@ -579,6 +579,74 @@ function clearSearch() {
   updateSearchResultCount();
 }
 
+// Функція для оновлення стану завантаження дропів в інтерфейсі
+function updateDropLoadingState(index, isLoading) {
+  const acc = accounts[index];
+  
+  // Знаходимо всі елементи, що стосуються цього акаунту
+  const accountCard = document.querySelector(`[data-account-index="${index}"]`);
+  if (accountCard) {
+    if (isLoading) {
+      accountCard.classList.add('loading-drop');
+    } else {
+      accountCard.classList.remove('loading-drop');
+    }
+  }
+  
+  // Оновлюємо кнопки в інтерфейсі
+  const buttons = [
+    document.getElementById(`fetch-drop-${index}`),
+    document.querySelector(`[onclick="fetchLastDrop(${index})"]`),
+    document.querySelector(`[onclick*="fetchLastDrop(${index})"]`)
+  ];
+  
+  buttons.forEach(button => {
+    if (button) {
+      if (isLoading) {
+        button.classList.add('loading');
+        button.disabled = true;
+        if (button.classList.contains('btn-refresh-drop')) {
+          button.innerHTML = '<span class="spinner">🔄</span>';
+        } else if (button.classList.contains('btn-fetch-drop-mini')) {
+          button.innerHTML = '<span class="spinner">🔄</span>';
+        } else {
+          button.innerHTML = '<span class="spinner">🔄</span> Завантаження...';
+        }
+      } else {
+        button.classList.remove('loading');
+        button.disabled = false;
+        if (button.classList.contains('btn-refresh-drop')) {
+          button.innerHTML = '🔄';
+        } else if (button.classList.contains('btn-fetch-drop-mini')) {
+          button.innerHTML = '🎁';
+        } else {
+          button.innerHTML = '🎁 Отримати дропи зі Steam';
+        }
+      }
+    }
+  });
+  
+  // Додаємо індикатор завантаження поруч з дропами
+  const dropSection = document.querySelector(`.account:nth-child(${index + 1}) .drop-info`);
+  if (dropSection) {
+    let loadingIndicator = dropSection.querySelector('.drop-loading-indicator');
+    
+    if (isLoading && !loadingIndicator) {
+      loadingIndicator = document.createElement('div');
+      loadingIndicator.className = 'drop-loading-indicator';
+      loadingIndicator.innerHTML = `
+        <div class="loading-drop-spinner">
+          <span class="spinner-icon">🔄</span>
+          <span class="loading-text">Завантаження дропів...</span>
+        </div>
+      `;
+      dropSection.appendChild(loadingIndicator);
+    } else if (!isLoading && loadingIndicator) {
+      loadingIndicator.remove();
+    }
+  }
+}
+
 async function fetchLastDrop(index) {
   const acc = accounts[index];
   console.log(`[fetchLastDrop] Початок для акаунту ${acc.login}, index: ${index}`);
@@ -601,6 +669,12 @@ async function fetchLastDrop(index) {
     }
   }
 
+  // Встановлюємо стан завантаження
+  accounts[index].loadingDrop = true;
+  
+  // Оновлюємо інтерфейс з індикатором завантаження
+  updateDropLoadingState(index, true);
+
   try {
     console.log(`[fetchLastDrop] Читаємо maFile: ${maFilePath}`);
     const maFile = JSON.parse(fs.readFileSync(maFilePath));
@@ -617,17 +691,19 @@ async function fetchLastDrop(index) {
     // Показуємо статус завантаження на всіх можливих кнопках
     const buttons = [
       document.getElementById(`fetch-drop-${index}`),
-      document.querySelector(`[onclick="fetchLastDrop(${index})"]`)
+      document.querySelector(`[onclick="fetchLastDrop(${index})"]`),
+      document.querySelector(`[onclick*="fetchLastDrop(${index})"]`)
     ];
     
     // Зберігаємо оригінальний текст кнопок
     const originalTexts = [];
     buttons.forEach((button, i) => {
       if (button) {
-        originalTexts[i] = button.textContent;
-        button.innerHTML = '<span class="spinner">⏳</span> Завантаження...';
+        originalTexts[i] = button.innerHTML;
+        button.innerHTML = '<span class="spinner">🔄</span> Завантаження дропів...';
         button.disabled = true;
         button.style.opacity = '0.7';
+        button.classList.add('loading');
       }
     });
 
@@ -644,10 +720,12 @@ async function fetchLastDrop(index) {
     const dropsInfo = await tradeManager.getLastDrops(acc.login, 2); // Отримуємо 2 останні дропи
     console.log(`[fetchLastDrop] Результат getLastDrops:`, dropsInfo);
     
+    updateLoadingMessage(`Обробка даних для ${acc.login}...`);
+    
     if (dropsInfo && dropsInfo.length > 0) {
       console.log('[fetchLastDrop] Отримано інформацію про дропи:', dropsInfo);
       
-      updateLoadingMessage(`Обробка дропів для ${acc.login}...`);
+      updateLoadingMessage(`Конвертація цін для ${acc.login}...`);
       // Конвертуємо ціни в гривні та оновлюємо дані
       const convertedDrops = dropsInfo.map(drop => ({
         ...drop,
@@ -669,6 +747,7 @@ async function fetchLastDrop(index) {
       
       // Зберігаємо та перерендеруємо
       console.log('[fetchLastDrop] Зберігаємо дані...');
+      updateLoadingMessage(`Збереження даних для ${acc.login}...`);
       saveAccounts();
       console.log('[fetchLastDrop] Перерендеруємо...');
       // Оновлюємо відфільтровані акаунти після зміни
@@ -683,7 +762,7 @@ async function fetchLastDrop(index) {
         `${i + 1}. ${drop.name} - ${drop.priceUAH} грн (${drop.originalPrice})`
       ).join('<br>');
       
-      showNotification(`Дропи оновлено!<br><br>${dropsText}`, 'success');
+      showNotification(`✅ Дропи оновлено для ${acc.login}!<br><br>${dropsText}`, 'success');
     } else {
       console.log('[fetchLastDrop] dropsInfo is null, undefined або порожній');
       showNotification('Не вдалося знайти інформацію про дропи або інвентар порожній', 'warning');
@@ -693,15 +772,19 @@ async function fetchLastDrop(index) {
     
   } catch (e) {
     console.error(`[fetchLastDrop] Помилка при отриманні дропу для ${acc.login}:`, e);
-    showNotification(`Помилка: ${e.message}`, 'error');
+    showNotification(`❌ Помилка для ${acc.login}: ${e.message}`, 'error');
   } finally {
+    // Знімаємо стан завантаження
+    accounts[index].loadingDrop = false;
+    
     // Ховаємо глобальний індикатор завантаження
     hideLoadingIndicator();
     
     // Відновлюємо кнопки
     const buttons = [
       document.getElementById(`fetch-drop-${index}`),
-      document.querySelector(`[onclick="fetchLastDrop(${index})"]`)
+      document.querySelector(`[onclick="fetchLastDrop(${index})"]`),
+      document.querySelector(`[onclick*="fetchLastDrop(${index})"]`)
     ];
     
     buttons.forEach((button, i) => {
@@ -709,14 +792,163 @@ async function fetchLastDrop(index) {
         // Відновлюємо оригінальний текст або встановлюємо стандартний
         if (button.id && button.id.includes('fetch-drop')) {
           button.innerHTML = '🎁 Отримати дропи зі Steam';
+        } else if (button.classList.contains('btn-refresh-drop')) {
+          button.innerHTML = '🔄';
+        } else if (button.classList.contains('btn-fetch-drop-mini')) {
+          button.innerHTML = '🎁';
         } else {
           button.innerHTML = '🎁';
         }
         button.disabled = false;
         button.style.opacity = '1';
+        button.classList.remove('loading');
       }
     });
+    
+    // Оновлюємо інтерфейс після завершення завантаження
+    updateDropLoadingState(index, false);
+    
     console.log(`[fetchLastDrop] Завершено для акаунту ${acc.login}`);
+  }
+}
+
+// Нова функція для отримання повного інвентарю
+async function fetchFullInventory(index) {
+  const acc = accounts[index];
+  console.log(`[fetchFullInventory] Початок для акаунту ${acc.login}, index: ${index}`);
+  
+  if (!acc.login || !acc.password) {
+    showNotification('Потрібно вказати логін та пароль для акаунту', 'warning');
+    return;
+  }
+
+  // Спочатку перевіряємо, чи є maFile в заданому шляху
+  let maFilePath = acc.maFilePath;
+  if (!maFilePath || !fs.existsSync(maFilePath)) {
+    // Якщо шлях не вказаний або файл не існує, шукаємо в папці userData
+    if (maFilesPath) {
+      maFilePath = path.join(maFilesPath, `${acc.login}.maFile`);
+    }
+    if (!maFilePath || !fs.existsSync(maFilePath)) {
+      showNotification(`maFile не знайдено для акаунту ${acc.login}.<br>Перевірено:<br>- ${acc.maFilePath}<br>- ${maFilePath}`, 'error');
+      return;
+    }
+  }
+
+  try {
+    console.log(`[fetchFullInventory] Читаємо maFile: ${maFilePath}`);
+    const maFile = JSON.parse(fs.readFileSync(maFilePath));
+    const identitySecret = maFile.identity_secret;
+    const sharedSecret = maFile.shared_secret;
+
+    if (!identitySecret || !sharedSecret) {
+      throw new Error('maFile не містить необхідних секретів');
+    }
+
+    // Створюємо новий instance TradeManager для цього акаунту
+    tradeManager = new TradeManager();
+    
+    // Показуємо статус завантаження на всіх можливих кнопках
+    const buttons = [
+      document.getElementById(`fetch-inventory-${index}`),
+      document.querySelector(`[onclick="fetchFullInventory(${index})"]`)
+    ];
+    
+    // Зберігаємо оригінальний текст кнопок
+    const originalTexts = [];
+    buttons.forEach((button, i) => {
+      if (button) {
+        originalTexts[i] = button.textContent;
+        button.innerHTML = '<span class="spinner">⏳</span> Завантаження інвентарю...';
+        button.disabled = true;
+        button.style.opacity = '0.7';
+      }
+    });
+
+    // Показуємо глобальний індикатор завантаження
+    showLoadingIndicator(`Отримання повного інвентарю для ${acc.login}...`);
+
+    console.log(`[fetchFullInventory] Намагаємося увійти в акаунт ${acc.login}...`);
+    updateLoadingMessage(`Вхід в акаунт ${acc.login}...`);
+    await tradeManager.login(acc.login, acc.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
+    console.log(`[fetchFullInventory] Увійшли в акаунт ${acc.login}`);
+
+    console.log(`[fetchFullInventory] Отримуємо повний інвентар...`);
+    updateLoadingMessage(`Завантаження повного інвентарю ${acc.login}...`);
+    const inventoryInfo = await tradeManager.getFullInventory(acc.login, 50); // Максимум 50 предметів
+    console.log(`[fetchFullInventory] Результат getFullInventory:`, inventoryInfo);
+    
+    if (inventoryInfo && inventoryInfo.length > 0) {
+      console.log('[fetchFullInventory] Отримано інформацію про інвентар:', inventoryInfo);
+      
+      updateLoadingMessage(`Обробка інвентарю для ${acc.login}...`);
+      
+      // Оновлюємо дані акаунту
+      accounts[index].fullInventory = inventoryInfo;
+      
+      // Зберігаємо загальну кількість та вартість
+      const totalValue = inventoryInfo.reduce((sum, item) => sum + parseFloat(item.priceUAH || 0), 0);
+      accounts[index].inventoryValue = totalValue.toFixed(2);
+      accounts[index].inventoryCount = inventoryInfo.length;
+      
+      console.log('[fetchFullInventory] Оновлений інвентар:', {
+        count: inventoryInfo.length,
+        totalValue: totalValue.toFixed(2)
+      });
+      
+      // Зберігаємо та перерендеруємо
+      console.log('[fetchFullInventory] Зберігаємо дані...');
+      saveAccounts();
+      console.log('[fetchFullInventory] Перерендеруємо...');
+      // Оновлюємо відфільтровані акаунти після зміни
+      if (searchQuery && searchQuery !== '') {
+        searchAccounts(searchQuery);
+      } else {
+        filteredAccounts = [...accounts];
+        render();
+      }
+      
+      // Оновлюємо портфоліо якщо вкладка активна
+      const portfolioTab = document.getElementById('portfolio-tab');
+      if (portfolioTab && portfolioTab.style.display === 'block') {
+        setTimeout(calculateAndDisplayPortfolio, 500);
+      }
+      
+      const inventoryText = `Завантажено ${inventoryInfo.length} предметів<br>Загальна вартість: ${totalValue.toFixed(2)} грн`;
+      showNotification(`Інвентар оновлено!<br><br>${inventoryText}`, 'success');
+    } else {
+      console.log('[fetchFullInventory] inventoryInfo is null, undefined або порожній');
+      showNotification('Не вдалося знайти інформацію про інвентар або інвентар порожній', 'warning');
+    }
+
+    tradeManager.disconnect();
+    
+  } catch (e) {
+    console.error(`[fetchFullInventory] Помилка при отриманні інвентарю для ${acc.login}:`, e);
+    showNotification(`Помилка: ${e.message}`, 'error');
+  } finally {
+    // Ховаємо глобальний індикатор завантаження
+    hideLoadingIndicator();
+    
+    // Відновлюємо кнопки
+    const buttons = [
+      document.getElementById(`fetch-inventory-${index}`),
+      document.querySelector(`[onclick="fetchFullInventory(${index})"]`)
+    ];
+    
+    buttons.forEach((button, i) => {
+      if (button) {
+        // Відновлюємо оригінальний текст або встановлюємо стандартний
+        if (button.id && button.id.includes('fetch-inventory')) {
+          button.innerHTML = '📦 Завантажити повний інвентар';
+        } else {
+          button.innerHTML = '📦';
+        }
+        button.disabled = false;
+        button.style.opacity = '1';
+      }
+    });
+    console.log(`[fetchFullInventory] Завершено для акаунту ${acc.login}`);
   }
 }
 
@@ -748,10 +980,12 @@ function render() {
 
     const div = document.createElement('div');
     div.className = 'account';
+    div.setAttribute('data-account-index', originalIndex);
     const isOpen = acc.open;
 
    div.innerHTML = `
-  <div class="account-card">
+  <div class="account-card ${acc.loadingDrop ? 'loading-drop' : ''}"
+    data-account-index="${originalIndex}">
     ${acc.prime ? '<span class="prime-badge" title="Prime"><img style="width:50px; height:50px" src="./Prime.png" /></span>' : ''}
     <div class="account-header" onclick="toggleDetails(${originalIndex})">
       <div class="account-title">
@@ -925,6 +1159,44 @@ function render() {
           ` : '<div class="no-drop">Немає інформації про дропи</div>'}
         </div>
 
+        <div class="full-inventory">
+          <label>📦 Повний інвентар:</label>
+          <div class="inventory-controls">
+            <button id="fetch-inventory-${originalIndex}" onclick="fetchFullInventory(${originalIndex})" class="btn-fetch-inventory">📦 Завантажити повний інвентар</button>
+            ${acc.fullInventory && acc.fullInventory.length > 0 ? `
+              <div class="inventory-summary">
+                <span class="inventory-count">Предметів: ${acc.inventoryCount || acc.fullInventory.length}</span>
+                <span class="inventory-value">Вартість: ${acc.inventoryValue || '0.00'} грн</span>
+              </div>
+            ` : ''}
+          </div>
+          
+          ${acc.fullInventory && acc.fullInventory.length > 0 ? `
+            <div class="inventory-grid">
+              ${acc.fullInventory.slice(0, 12).map((item, itemIndex) => `
+                <div class="inventory-item" title="${escapeHtml(item.name)}">
+                  ${item.imageUrl ? 
+                    `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}" class="inventory-item-image" onerror="this.style.display='none'">` : 
+                    '<div class="inventory-item-placeholder">📦</div>'
+                  }
+                  <div class="inventory-item-info">
+                    <div class="inventory-item-name">${escapeHtml(item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name)}</div>
+                    <div class="inventory-item-price">${item.priceUAH !== '0.00' ? item.priceUAH + ' грн' : 'Без ціни'}</div>
+                  </div>
+                </div>
+              `).join('')}
+              ${acc.fullInventory.length > 12 ? `
+                <div class="inventory-item more-items">
+                  <div class="more-items-content">
+                    <div class="more-items-count">+${acc.fullInventory.length - 12}</div>
+                    <div class="more-items-text">ще предметів</div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          ` : '<div class="no-inventory">Інвентар не завантажено</div>'}
+        </div>
+
         <button class="delete-btn" onclick="deleteAccount(${originalIndex})">🗑️ Видалити</button>
       </div>
     </div>
@@ -973,6 +1245,12 @@ function saveAccounts() {
         console.log(`[saveAccounts] Акаунт ${i} (${acc.login}): lastDrop="${acc.lastDrop}", price="${acc.lastDropPrice}"`);
       }
     });
+    
+    // Оновлюємо портфоліо якщо вкладка активна
+    const portfolioTab = document.getElementById('portfolio-tab');
+    if (portfolioTab && portfolioTab.style.display === 'block') {
+      setTimeout(calculateAndDisplayPortfolio, 100);
+    }
   } catch (error) {
     console.error('[saveAccounts] Помилка при збереженні акаунтів:', error);
   }
@@ -1026,6 +1304,11 @@ function showTab(tabId, buttonElement) {
   // Якщо це таб історії, рендеримо історію
   if (tabId === 'history-tab') {
     renderHistory();
+  }
+  
+  // Якщо це таб портфоліо, показуємо портфоліо
+  if (tabId === 'portfolio-tab') {
+    setTimeout(showPortfolio, 100); // Невелика затримка для завершення анімації табу
   }
 }
 
@@ -1845,5 +2128,575 @@ async function manualRenameFiles() {
   } catch (error) {
     console.error('[manualRenameFiles] Помилка:', error);
     showNotification('❌ Помилка перейменування: ' + error.message, 'error');
+  }
+}
+
+// ===============================
+// ФУНКЦІОНАЛ ПОРТФОЛІО
+// ===============================
+
+let portfolioChart = null;
+let valueChart = null;
+
+// Функція для показу портфоліо
+function showPortfolio() {
+  console.log('[Portfolio] Показ портфоліо...');
+  calculateAndDisplayPortfolio();
+  
+  // Перевіряємо чи потрібно автоматично завантажувати інвентарі
+  if (shouldAutoLoadInventories()) {
+    setTimeout(() => {
+      const shouldLoad = confirm('🎮 Портфоліо: Виявлено мало завантажених інвентарів.\n\n📦 Завантажити інвентарі CS:GO та TF2 для всіх акаунтів автоматично?\n\n⏱️ Це може зайняти кілька хвилин...');
+      
+      if (shouldLoad) {
+        autoLoadAllInventories();
+      }
+    }, 1000);
+  }
+}
+
+// Функція для оновлення портфоліо
+function refreshPortfolio() {
+  console.log('[Portfolio] Оновлення портфоліо...');
+  showNotification('🔄 Оновлення портфоліо...', 'info');
+  calculateAndDisplayPortfolio();
+}
+
+// Функція автоматичного завантаження інвентаря для всіх акаунтів
+async function autoLoadAllInventories() {
+  console.log('[Portfolio] Початок автоматичного завантаження інвентарів...');
+  
+  showNotification('🔄 Завантаження інвентарів для всіх акаунтів...', 'info');
+  
+  const accountsWithCredentials = accounts.filter(acc => 
+    acc.login && acc.password && acc.login.trim() !== '' && acc.password.trim() !== ''
+  );
+  
+  if (accountsWithCredentials.length === 0) {
+    showNotification('❌ Немає акаунтів з налаштованими даними для входу', 'warning');
+    return;
+  }
+  
+  console.log(`[Portfolio] Знайдено ${accountsWithCredentials.length} акаунтів для завантаження`);
+  
+  let successCount = 0;
+  let errorCount = 0;
+  
+  // Завантажуємо по черзі щоб не перевантажувати Steam API
+  for (let i = 0; i < accountsWithCredentials.length; i++) {
+    const account = accountsWithCredentials[i];
+    const originalIndex = accounts.indexOf(account);
+    
+    try {
+      console.log(`[Portfolio] Завантаження інвентаря ${i + 1}/${accountsWithCredentials.length}: ${account.login}`);
+      
+      showNotification(`🔄 Завантаження інвентаря ${account.login || account.name} (${i + 1}/${accountsWithCredentials.length})`, 'info');
+      
+      // Викликаємо існуючу функцію завантаження інвентаря
+      await fetchFullInventory(originalIndex);
+      
+      successCount++;
+      console.log(`[Portfolio] ✅ Успішно завантажено інвентар для ${account.login}`);
+      
+      // Пауза між завантаженнями щоб не перевантажувати API
+      if (i < accountsWithCredentials.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 секунди між акаунтами
+      }
+      
+    } catch (error) {
+      errorCount++;
+      console.error(`[Portfolio] ❌ Помилка завантаження для ${account.login}:`, error);
+    }
+  }
+  
+  console.log(`[Portfolio] Завершено автозавантаження. Успішно: ${successCount}, Помилок: ${errorCount}`);
+  
+  // Зберігаємо час завершення завантаження
+  localStorage.setItem('lastAutoInventoryLoad', Date.now().toString());
+  
+  if (successCount > 0) {
+    showNotification(`✅ Завантажено інвентарі для ${successCount} акаунтів!${errorCount > 0 ? ` (${errorCount} помилок)` : ''}`, 'success');
+    
+    // Оновлюємо портфоліо після завантаження
+    setTimeout(() => {
+      calculateAndDisplayPortfolio();
+    }, 1000);
+  } else {
+    showNotification(`❌ Не вдалося завантажити жоден інвентар (${errorCount} помилок)`, 'error');
+  }
+}
+
+// Функція для перевірки чи потрібно автоматично завантажувати інвентарі
+function shouldAutoLoadInventories() {
+  const accountsWithInventory = accounts.filter(acc => 
+    acc.fullInventory && acc.fullInventory.length > 0
+  );
+  
+  const accountsWithCredentials = accounts.filter(acc => 
+    acc.login && acc.password && acc.login.trim() !== '' && acc.password.trim() !== ''
+  );
+  
+  // Якщо менше 50% акаунтів мають завантажений інвентар, пропонуємо автозавантаження
+  const loadedPercentage = accountsWithCredentials.length > 0 ? 
+    (accountsWithInventory.length / accountsWithCredentials.length) * 100 : 0;
+  
+  console.log(`[Portfolio] Завантажено інвентарів: ${accountsWithInventory.length}/${accountsWithCredentials.length} (${loadedPercentage.toFixed(1)}%)`);
+  
+  // Перевіряємо час останнього завантаження (не частіше ніж раз на годину)
+  const lastAutoLoad = localStorage.getItem('lastAutoInventoryLoad');
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000; // 1 година в мілісекундах
+  
+  if (lastAutoLoad && (now - parseInt(lastAutoLoad)) < oneHour) {
+    console.log('[Portfolio] Автозавантаження пропущено - завантажували менше години тому');
+    return false;
+  }
+  
+  return loadedPercentage < 50;
+}
+
+// Основна функція для розрахунку та відображення портфоліо
+function calculateAndDisplayPortfolio() {
+  try {
+    const portfolioData = calculatePortfolioStats();
+    updatePortfolioSummary(portfolioData);
+    renderPortfolioAccounts(portfolioData.accountsWithInventory);
+    renderPortfolioCharts(portfolioData);
+    
+    console.log('[Portfolio] Портфоліо оновлено:', portfolioData);
+  } catch (error) {
+    console.error('[Portfolio] Помилка розрахунку портфоліо:', error);
+    showNotification('❌ Помилка завантаження портфоліо: ' + error.message, 'error');
+  }
+}
+
+// Функція для розрахунку статистики портфоліо
+function calculatePortfolioStats() {
+  const stats = {
+    totalInventoryValue: 0,
+    totalInventoryItems: 0,
+    activeAccounts: 0,
+    averageValue: 0,
+    accountsWithInventory: [],
+    inventoryByAccount: {}
+  };
+
+  accounts.forEach(account => {
+    let hasInventory = false;
+    const accountStats = {
+      login: account.login,
+      name: account.name || account.login,
+      inventory: [],
+      totalInventoryValue: 0,
+      inventoryCount: 0
+    };
+
+    // Обробляємо повний інвентар CS:GO та TF2
+    if (account.fullInventory && account.fullInventory.length > 0) {
+      hasInventory = true;
+      
+      account.fullInventory.forEach(item => {
+        if (item && item.priceUAH) {
+          const price = parseFloat(item.priceUAH) || 0;
+          stats.totalInventoryValue += price;
+          stats.totalInventoryItems++;
+          accountStats.totalInventoryValue += price;
+          accountStats.inventoryCount++;
+          
+          accountStats.inventory.push({
+            name: item.name || 'Невідомий предмет',
+            imageUrl: item.imageUrl || '',
+            price: item.priceUAH || '0',
+            originalPrice: item.originalPrice || item.price || '$0.00',
+            type: item.type || '',
+            rarity: item.rarity || '',
+            tradeable: item.tradeable || false,
+            marketable: item.marketable || false,
+            game: item.game || 'Unknown'
+          });
+        }
+      });
+    }
+
+    if (hasInventory) {
+      stats.activeAccounts++;
+      stats.accountsWithInventory.push(accountStats);
+      stats.inventoryByAccount[account.login] = accountStats.inventoryCount;
+    }
+  });
+
+  // Загальна статистика
+  stats.averageValue = stats.totalInventoryItems > 0 ? stats.totalInventoryValue / stats.totalInventoryItems : 0;
+  
+  // Сортуємо акаунти за вартістю інвентаря
+  stats.accountsWithInventory.sort((a, b) => b.totalInventoryValue - a.totalInventoryValue);
+
+  return stats;
+}
+
+// Функція для оновлення загальної статистики
+function updatePortfolioSummary(portfolioData) {
+  const totalValueEl = document.getElementById('total-portfolio-value');
+  const totalDropsEl = document.getElementById('total-drops-count');
+  const activeAccountsEl = document.getElementById('active-accounts-count');
+  const averageDropValueEl = document.getElementById('average-drop-value');
+
+  if (totalValueEl) {
+    totalValueEl.textContent = `₴${portfolioData.totalInventoryValue.toFixed(2)}`;
+  }
+  
+  if (totalDropsEl) {
+    totalDropsEl.textContent = portfolioData.totalInventoryItems.toString();
+  }
+  
+  if (activeAccountsEl) {
+    activeAccountsEl.textContent = portfolioData.activeAccounts.toString();
+  }
+  
+  if (averageDropValueEl) {
+    averageDropValueEl.textContent = `₴${portfolioData.averageValue.toFixed(2)}`;
+  }
+}
+
+// Функція для відображення акаунтів з інвентарем
+function renderPortfolioAccounts(accountsWithInventory) {
+  const container = document.getElementById('portfolio-accounts');
+  if (!container) return;
+
+  if (accountsWithInventory.length === 0) {
+    container.innerHTML = `
+      <div class="no-drops-message">
+        <p>📭 Немає інвентаря для відображення</p>
+        <p>Завантажте інвентар CS:GO та Team Fortress 2 для перегляду предметів</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = accountsWithInventory.map(account => `
+    <div class="portfolio-account-card">
+      <div class="portfolio-account-header">
+        <div class="portfolio-account-name">${escapeHtml(account.name)}</div>
+        <div class="portfolio-account-stats">
+          <span>📦 Предметів: ${account.inventoryCount}</span>
+          <span>💰 Вартість інвентаря: ₴${account.totalInventoryValue.toFixed(2)}</span>
+        </div>
+      </div>
+      
+      ${account.inventory.length > 0 ? `
+        <div class="portfolio-section">
+          <h4 class="portfolio-section-title">� Інвентар CS:GO та Team Fortress 2</h4>
+          
+          ${(() => {
+            // Групуємо предмети по іграх
+            const csgoItems = account.inventory.filter(item => item.game === 'CS:GO');
+            const tf2Items = account.inventory.filter(item => item.game === 'TF2');
+            
+            let html = '';
+            
+            if (csgoItems.length > 0) {
+              html += `
+                <div class="game-section">
+                  <h5 class="game-title">🔫 CS:GO (${csgoItems.length} предметів)</h5>
+                  <div class="portfolio-drops-grid">
+                    ${csgoItems.slice(0, 12).map(item => `
+                      <div class="portfolio-drop-item">
+                        ${item.imageUrl ? 
+                          `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}" class="drop-image" onerror="this.style.display='none'">` : 
+                          '<div class="drop-image" style="background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-size: 20px;">�</div>'
+                        }
+                        <div class="drop-info">
+                          <div class="drop-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name)}</div>
+                          <div class="drop-price">₴${item.price} ${item.tradeable ? '(🔄)' : '(🔒)'}</div>
+                          ${item.type ? `<div class="item-type">${escapeHtml(item.type)}</div>` : ''}
+                        </div>
+                      </div>
+                    `).join('')}
+                    ${csgoItems.length > 12 ? `
+                      <div class="portfolio-drop-item more-items-indicator">
+                        <div class="drop-image" style="background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--emerald-400);">+${csgoItems.length - 12}</div>
+                        <div class="drop-info">
+                          <div class="drop-name">Ще CS:GO предметів</div>
+                          <div class="drop-price">...</div>
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `;
+            }
+            
+            if (tf2Items.length > 0) {
+              html += `
+                <div class="game-section">
+                  <h5 class="game-title">� Team Fortress 2 (${tf2Items.length} предметів)</h5>
+                  <div class="portfolio-drops-grid">
+                    ${tf2Items.slice(0, 12).map(item => `
+                      <div class="portfolio-drop-item">
+                        ${item.imageUrl ? 
+                          `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}" class="drop-image" onerror="this.style.display='none'">` : 
+                          '<div class="drop-image" style="background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-size: 20px;">�</div>'
+                        }
+                        <div class="drop-info">
+                          <div class="drop-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name)}</div>
+                          <div class="drop-price">₴${item.price} ${item.tradeable ? '(🔄)' : '(🔒)'}</div>
+                          ${item.type ? `<div class="item-type">${escapeHtml(item.type)}</div>` : ''}
+                        </div>
+                      </div>
+                    `).join('')}
+                    ${tf2Items.length > 12 ? `
+                      <div class="portfolio-drop-item more-items-indicator">
+                        <div class="drop-image" style="background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--emerald-400);">+${tf2Items.length - 12}</div>
+                        <div class="drop-info">
+                          <div class="drop-name">Ще TF2 предметів</div>
+                          <div class="drop-price">...</div>
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `;
+            }
+            
+            return html;
+          })()}
+        </div>
+      ` : `
+        <div class="no-data-message">
+          <p>📭 Інвентар порожній або не завантажений</p>
+          <p>Натисніть "📦 Завантажити повний інвентар" для завантаження</p>
+        </div>
+      `}
+    </div>
+  `).join('');
+}
+
+// Функція для відображення графіків
+function renderPortfolioCharts(portfolioData) {
+  // Знищуємо попередні графіки якщо є
+  if (portfolioChart) {
+    portfolioChart.destroy();
+    portfolioChart = null;
+  }
+  if (valueChart) {
+    valueChart.destroy();
+    valueChart = null;
+  }
+
+  const dropsCanvas = document.getElementById('dropsChart');
+  const valueCanvas = document.getElementById('valueChart');
+  
+  if (!dropsCanvas || !valueCanvas) return;
+
+  const accounts = portfolioData.accountsWithInventory.slice(0, 10); // Показуємо топ 10 акаунтів
+  
+  if (accounts.length === 0) return;
+
+  const labels = accounts.map(acc => acc.name);
+  const inventoryData = accounts.map(acc => acc.inventoryCount);
+  const valueData = accounts.map(acc => acc.totalInventoryValue);
+
+  // Графік кількості предметів в інвентарі
+  const dropsCtx = dropsCanvas.getContext('2d');
+  portfolioChart = new Chart(dropsCtx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Кількість предметів',
+        data: inventoryData,
+        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#a7f3d0'
+          }
+        },
+        title: {
+          display: true,
+          text: 'Кількість предметів в інвентарі по акаунтах',
+          color: '#6ee7b7',
+          font: {
+            size: 16,
+            weight: 'bold'
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#6ee7b7',
+            stepSize: 1
+          },
+          grid: {
+            color: 'rgba(110, 231, 183, 0.1)'
+          }
+        },
+        x: {
+          ticks: {
+            color: '#6ee7b7',
+            maxRotation: 45
+          },
+          grid: {
+            color: 'rgba(110, 231, 183, 0.1)'
+          }
+        }
+      }
+    }
+  });
+
+  // Графік вартості інвентаря
+  const valueCtx = valueCanvas.getContext('2d');
+  valueChart = new Chart(valueCtx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Вартість інвентаря (₴)',
+        data: valueData,
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(52, 211, 153, 0.8)',
+          'rgba(110, 231, 183, 0.8)',
+          'rgba(167, 243, 208, 0.8)',
+          'rgba(209, 250, 229, 0.8)',
+          'rgba(5, 150, 105, 0.8)',
+          'rgba(4, 120, 87, 0.8)',
+          'rgba(6, 95, 70, 0.8)',
+          'rgba(6, 78, 59, 0.8)',
+          'rgba(2, 44, 34, 0.8)'
+        ],
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#a7f3d0',
+            usePointStyle: true,
+            padding: 15
+          }
+        },
+        title: {
+          display: true,
+          text: 'Розподіл вартості інвентаря',
+          color: '#6ee7b7',
+          font: {
+            size: 16,
+            weight: 'bold'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${context.label}: ₴${value.toFixed(2)} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Функція для екранування HTML
+function escapeHtml(unsafe) {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Ініціалізація портфоліо при завантаженні
+document.addEventListener('DOMContentLoaded', function() {
+  // Додаємо обробник для автоматичного оновлення портфоліо при зміні табу
+  const portfolioTab = document.querySelector('[onclick*="portfolio-tab"]');
+  if (portfolioTab) {
+    portfolioTab.addEventListener('click', function() {
+      setTimeout(() => {
+        showPortfolio();
+        updateAutoLoadButtonText(); // Оновлюємо текст кнопки при відкритті портфоліо
+      }, 100);
+    });
+  }
+  
+  // Перевіряємо налаштування автозавантаження при старті
+  checkAutoLoadOnStartup();
+  
+  // Оновлюємо текст кнопки при завантаженні
+  setTimeout(updateAutoLoadButtonText, 500);
+});
+
+// Функція для перевірки автозавантаження при старті
+function checkAutoLoadOnStartup() {
+  const autoLoadSetting = localStorage.getItem('autoLoadInventoryOnStartup');
+  
+  if (autoLoadSetting === 'true') {
+    console.log('[Portfolio] Автозавантаження при старті активне');
+    
+    // Затримка для повного завантаження інтерфейсу
+    setTimeout(() => {
+      if (shouldAutoLoadInventories()) {
+        console.log('[Portfolio] Запуск автозавантаження при старті...');
+        autoLoadAllInventories();
+      }
+    }, 5000); // 5 секунд після старту
+  }
+}
+
+// Функція для увімкнення/вимкнення автозавантаження при старті
+function toggleAutoLoadOnStartup() {
+  const currentSetting = localStorage.getItem('autoLoadInventoryOnStartup') === 'true';
+  const newSetting = !currentSetting;
+  
+  localStorage.setItem('autoLoadInventoryOnStartup', newSetting.toString());
+  
+  const status = newSetting ? 'увімкнено' : 'вимкнено';
+  showNotification(`⚙️ Автозавантаження при старті ${status}`, newSetting ? 'success' : 'info');
+  
+  console.log(`[Portfolio] Автозавантаження при старті ${status}`);
+  
+  // Оновлюємо текст кнопки
+  updateAutoLoadButtonText();
+}
+
+// Функція для оновлення тексту кнопки автозавантаження
+function updateAutoLoadButtonText() {
+  const autoLoadButton = document.querySelector('.auto-setting-btn');
+  if (autoLoadButton) {
+    const isEnabled = localStorage.getItem('autoLoadInventoryOnStartup') === 'true';
+    const textElement = autoLoadButton.childNodes[autoLoadButton.childNodes.length - 1];
+    if (textElement && textElement.nodeType === Node.TEXT_NODE) {
+      textElement.textContent = isEnabled ? ' Авто: ВКЛ' : ' Авто при старті';
+    }
+    
+    // Змінюємо стиль кнопки залежно від стану
+    if (isEnabled) {
+      autoLoadButton.style.background = 'linear-gradient(135deg, var(--emerald-600), var(--emerald-700))';
+      autoLoadButton.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.25)';
+    } else {
+      autoLoadButton.style.background = 'linear-gradient(135deg, var(--emerald-400), var(--emerald-500))';
+      autoLoadButton.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.1)';
+    }
   }
 }
