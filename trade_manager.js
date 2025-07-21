@@ -32,10 +32,64 @@ class TradeManager extends EventEmitter {
                 console.log('Got API key:', this.manager.apiKey);
 
                 this.community.setCookies(cookies);
+                console.log(`[TradeManager] Starting confirmation checker with identitySecret: ${this.identitySecret ? '******' : 'N/A'}`);
                 this.community.startConfirmationChecker(10000, this.identitySecret);
+
+                // Спроба підтвердження захисту від обміну (одноразова дія)
+                try {
+                    console.log(`[TradeManager] Attempting to acknowledge trade protection...`);
+                    this.community.acknowledgeTradeProtection((err) => {
+                        if (err) {
+                            console.warn(`[TradeManager] Failed to acknowledge trade protection: ${err.message}`);
+                        } else {
+                            console.log(`[TradeManager] Successfully acknowledged trade protection.`);
+                        }
+                    });
+                } catch (e) {
+                    console.error(`[TradeManager] Error calling acknowledgeTradeProtection: ${e.message}`);
+                }
 
                 this.manager.on('newOffer', offer => {
                     this.emit('newOffer', offer);
+                });
+
+                // Додаємо обробник для зміни статусу відправлених обмінів
+                this.manager.on('sentOfferChanged', (offer, oldState) => {
+                    console.log(`[TradeManager] Sent offer #${offer.id} changed from ${oldState} to ${offer.state}`);
+                    if (this.pendingConfirmationPromises && this.pendingConfirmationPromises[offer.id]) {
+                        const { resolve, reject } = this.pendingConfirmationPromises[offer.id];
+                        
+                        if (offer.state === TradeOfferManager.ETradeOfferState.Accepted) {
+                            console.log(`[TradeManager] Offer #${offer.id} confirmed and accepted.`);
+                            resolve({ confirmed: true, offerId: offer.id, status: 'accepted' });
+                            delete this.pendingConfirmationPromises[offer.id];
+                        } else if (offer.state === TradeOfferManager.ETradeOfferState.Declined || offer.state === TradeOfferManager.ETradeOfferState.Canceled) {
+                            console.log(`[TradeManager] Offer #${offer.id} declined/canceled.`);
+                            reject(new Error(`Обмін #${offer.id} було відхилено або скасовано.`));
+                            delete this.pendingConfirmationPromises[offer.id];
+                        } else if (offer.state === TradeOfferManager.ETradeOfferState.InvalidItems || offer.state === TradeOfferManager.ETradeOfferState.Expired) {
+                             console.log(`[TradeManager] Offer #${offer.id} failed due to invalid items or expiry.`);
+                            reject(new Error(`Обмін #${offer.id} недійсний або прострочений.`));
+                            delete this.pendingConfirmationPromises[offer.id];
+                        }
+                    }
+                });
+
+                // Додаємо обробник для виявлення нових підтверджень
+                this.community.on('newConfirmation', (confirmation) => {
+                    console.log(`[TradeManager][Confirmation] Detected new confirmation: ID ${confirmation.id}, Type ${confirmation.type}, Creator ${confirmation.creator}`);
+                    // SteamCommunity's confirmation checker should automatically try to accept it
+                });
+
+                // Додаємо обробник для відладкових повідомлень SteamCommunity
+                this.community.on('debug', (message) => {
+                    console.log(`[TradeManager][Community Debug] ${message}`);
+                });
+
+                // Додаємо обробник для помилок SteamCommunity
+                this.community.on('error', (err) => {
+                    console.error(`[TradeManager][Community Error] ${err.message}`);
+                    // Це вже обробляється загальним client.on('error'), але корисно для дебагу конкретно підтверджень
                 });
 
                 if (this.loginResolve) this.loginResolve();
@@ -313,7 +367,7 @@ class TradeManager extends EventEmitter {
             console.log(`[getFullInventory] Початок для ${accountLogin}, максимум ${maxItems} предметів на гру`);
             
             // Отримуємо інвентар з CS:GO (730) та Team Fortress 2 (440)
-            const [csgoInventory, tf2Inventory] = await Promise.allSettled([
+            const [csgoInventoryResult, tf2InventoryResult] = await Promise.allSettled([
                 this.getInventory(730, 2), // CS:GO
                 this.getInventory(440, 2)  // Team Fortress 2
             ]);
@@ -321,8 +375,8 @@ class TradeManager extends EventEmitter {
             let allItems = [];
             
             // Додаємо CS:GO предмети
-            if (csgoInventory.status === 'fulfilled' && csgoInventory.value && csgoInventory.value.length > 0) {
-                const csgoItems = csgoInventory.value.slice(0, maxItems).map(item => ({...item, gameApp: 'CS:GO', appId: 730}));
+            if (csgoInventoryResult.status === 'fulfilled' && csgoInventoryResult.value && csgoInventoryResult.value.length > 0) {
+                const csgoItems = csgoInventoryResult.value.slice(0, maxItems).map(item => ({...item, gameApp: 'CS:GO', appId: 730}));
                 allItems = allItems.concat(csgoItems);
                 console.log(`[getFullInventory] CS:GO: ${csgoItems.length} предметів`);
             } else {
@@ -330,8 +384,8 @@ class TradeManager extends EventEmitter {
             }
             
             // Додаємо TF2 предмети
-            if (tf2Inventory.status === 'fulfilled' && tf2Inventory.value && tf2Inventory.value.length > 0) {
-                const tf2Items = tf2Inventory.value.slice(0, maxItems).map(item => ({...item, gameApp: 'TF2', appId: 440}));
+            if (tf2InventoryResult.status === 'fulfilled' && tf2InventoryResult.value && tf2InventoryResult.value.length > 0) {
+                const tf2Items = tf2InventoryResult.value.slice(0, maxItems).map(item => ({...item, gameApp: 'TF2', appId: 440}));
                 allItems = allItems.concat(tf2Items);
                 console.log(`[getFullInventory] TF2: ${tf2Items.length} предметів`);
             } else {
@@ -429,6 +483,56 @@ class TradeManager extends EventEmitter {
             console.error(`[getFullInventory] Failed to get full inventory for ${accountLogin}:`, err);
             return [];
         }
+    }
+
+    async sendAllTradeableItems(partnerTradeUrl, gameAppIDs = [{ appid: 730, contextid: 2 }, { appid: 440, contextid: 2 }]) {
+        if (!this.client.steamID) { throw new Error("Не виконано вхід у Steam акаунт."); }
+        if (!partnerTradeUrl) { throw new Error("Трейд-лінка партнера не вказана."); }
+        console.log(`[sendAllTradeableItems] Початок відправки предметів на трейд-лінку: ${partnerTradeUrl} з ігор: ${JSON.stringify(gameAppIDs)}`);
+        try {
+            const inventoryPromises = gameAppIDs.map(game => this.getInventory(game.appid, game.contextid));
+            const inventoryResults = await Promise.allSettled(inventoryPromises);
+
+            let itemsToSend = [];
+
+            inventoryResults.forEach((result, index) => {
+                const gameInfo = gameAppIDs[index];
+                if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
+                    const gameItems = result.value.filter(item => item.tradable !== false);
+                    itemsToSend = itemsToSend.concat(gameItems);
+                    console.log(`[sendAllTradeableItems] Зібрано ${gameItems.length} обмінюваних предметів з AppID ${gameInfo.appid}`);
+                } else {
+                    console.warn(`[sendAllTradeableItems] Не вдалося завантажити інвентар для AppID ${gameInfo.appid} або він порожній:`, result.reason || 'Немає даних');
+                }
+            });
+
+            if (itemsToSend.length === 0) {
+                return { success: true, message: "Не знайдено обмінюваних предметів для відправки з обраних ігор." };
+            }
+
+            const offer = this.manager.createOffer(partnerTradeUrl);
+            itemsToSend.forEach(item => { offer.addMyItem(item); });
+            console.log(`[sendAllTradeableItems] Відправка обміну з ${itemsToSend.length} предметами...`);
+            return new Promise((resolveSend, rejectSend) => {
+                offer.send((err, status) => {
+                    if (err) { console.error("[sendAllTradeableItems] Помилка відправки обміну:", err); return rejectSend(err); }
+                    console.log(`[sendAllTradeableItems] Обмін відправлено зі статусом: ${status}. ID: ${offer.id}`);
+                    if (status === TradeOfferManager.ETradeOfferState.PendingConfirmation) {
+                        console.log(`[sendAllTradeableItems] Обмін #${offer.id} очікує підтвердження. Запускаємо перевірку після затримки...`);
+                        if (!this.pendingConfirmationPromises) { this.pendingConfirmationPromises = {}; }
+                        this.pendingConfirmationPromises[offer.id] = { resolve: resolveSend, reject: rejectSend };
+                        setTimeout(() => { this.community.checkConfirmations(); }, 2000); // 2 seconds delay
+                        setTimeout(() => { // 60 seconds timeout for confirmation
+                            if (this.pendingConfirmationPromises[offer.id]) {
+                                console.warn(`[TradeManager] Offer #${offer.id} timed out waiting for confirmation.`);
+                                rejectSend(new Error(`Час очікування підтвердження обміну #${offer.id} вичерпано.`));
+                                delete this.pendingConfirmationPromises[offer.id];
+                            }
+                        }, 60000);
+                    } else { resolveSend({ success: true, message: `Обмін успішно відправлено. Статус: ${status}`, offerId: offer.id, status: status }); }
+                });
+            });
+        } catch (error) { console.error("[sendAllTradeableItems] Загальна помилка при відправці предметів:", error); throw error; }
     }
 }
 module.exports = TradeManager;

@@ -3,6 +3,7 @@ const path = require('path');
 const { ipcRenderer } = require('electron');
 const TradeManager = require('./trade_manager.js');
 const SteamTotp = require('steam-totp');
+const TradeOfferManager = require('steam-tradeoffer-manager'); // Додано прямий імпорт
 
 const tradeManager = new TradeManager();
 let activeOffers = [];
@@ -213,9 +214,9 @@ function logout() {
 
 function loadTrades() {
     const statesToFetch = [
-        1, // Active
-        8, // CreatedNeedsConfirmation
-        10 // InEscrow
+        TradeOfferManager.ETradeOfferState.Active, // Active
+        TradeOfferManager.ETradeOfferState.CreatedNeedsConfirmation, // CreatedNeedsConfirmation
+        TradeOfferManager.ETradeOfferState.InEscrow // InEscrow
     ];
 
     const offerPromises = statesToFetch.map(state => tradeManager.getOffers(state));
@@ -226,7 +227,17 @@ function loadTrades() {
             hideLoadingMessages();
             
             // Flatten the array of arrays and remove duplicates
-            const allOffers = [].concat(...offerGroups);
+            let allOffers = [].concat(...offerGroups);
+
+            // Фільтруємо прийняті, відхилені, скасовані та недійсні трейди
+            allOffers = allOffers.filter(offer => 
+                offer.state !== TradeOfferManager.ETradeOfferState.Accepted &&
+                offer.state !== TradeOfferManager.ETradeOfferState.Declined &&
+                offer.state !== TradeOfferManager.ETradeOfferState.Canceled &&
+                offer.state !== TradeOfferManager.ETradeOfferState.InvalidItems &&
+                offer.state !== TradeOfferManager.ETradeOfferState.Expired
+            );
+
             const uniqueOffers = allOffers.filter((offer, index, self) =>
                 index === self.findIndex((o) => o.id === offer.id)
             );
@@ -344,7 +355,11 @@ function acceptTrade(offerId) {
                 itemsReceived: offer.itemsToReceive
             };
             saveToHistory(historyEntry);
-            loadTrades();
+
+            // Видаляємо прийнятий трейд з активного списку та оновлюємо відображення
+            activeOffers = activeOffers.filter(o => o.id !== offerId);
+            renderTrades(activeOffers);
+
         })
         .catch(err => {
             hideLoadingMessages();

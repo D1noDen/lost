@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
@@ -92,6 +92,6 @@
     "steam-totp": "^2.1.2",
     "steam-tradeoffer-manager": "^2.12.1",
     "steam-user": "^4.29.3",
-    "steamcommunity": "^3.48.6"
+    "steamcommunity": "^3.49.0"
   }
 }
