@@ -1,3 +1,4 @@
+let globalTradeLink = localStorage.getItem('globalTradeLink') || '';
 const fs = require('fs');
 const path = require('path');
 const { ipcRenderer, clipboard } = require('electron');
@@ -993,6 +994,7 @@ function render() {
         <span>${acc.name || acc.login || 'Без імені'}</span>
         <small class="account-id">ID: ${acc.id}</small>
       </div>
+      <button class="btn-global-trade" onclick="event.stopPropagation(); openGlobalTradeModal(${originalIndex})">🌐 Перекинути скіни на глобальну трейд-лінку</button>
 
       <!-- Завжди показуємо секцію дропу -->
       <div class="drop-preview ${(acc.lastDrops && acc.lastDrops.length > 0) || acc.lastDrop ? 'has-drop' : 'no-drop-yet'}">
@@ -2681,6 +2683,94 @@ function toggleAutoLoadOnStartup() {
 }
 
 // Функція для оновлення тексту кнопки автозавантаження
+// Set global trade link from input
+window.setGlobalTradeLink = function() {
+  const input = document.getElementById('globalTradeLinkInput');
+  if (input) {
+    globalTradeLink = input.value.trim();
+    localStorage.setItem('globalTradeLink', globalTradeLink);
+    showNotification('Глобальна трейд-лінка збережена!', 'success');
+  }
+};
+
+// Modal logic for global trade link skin transfer
+globalThis.openGlobalTradeModal = function(accountIndex) {
+  const acc = accounts[accountIndex];
+  // Check if there is inventory to transfer
+  const hasCS2 = acc.fullInventory && acc.fullInventory.some(item => item.gameApp === 'CS:GO' || item.game === 'CS:GO');
+  const hasTF2 = acc.fullInventory && acc.fullInventory.some(item => item.gameApp === 'TF2' || item.game === 'TF2');
+  if (!hasCS2 && !hasTF2) {
+    showNotification('У акаунта немає інвентаря CS2 або TF2 для перекидання!', 'warning');
+    return;
+  }
+  const modal = document.createElement('div');
+  modal.className = 'global-trade-modal';
+  modal.innerHTML = `
+    <div class="global-trade-modal-content">
+      <h3><span class="modal-icon">🌐</span> Виберіть гру для перекидання скінів</h3>
+      <div class="game-select">
+        <button class="game-btn" onclick="window.sendGlobalTrade(${accountIndex}, 'CS2')" ${!hasCS2 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+          <span class="game-icon">🔫</span> CS2
+        </button>
+        <button class="game-btn" onclick="window.sendGlobalTrade(${accountIndex}, 'TF2')" ${!hasTF2 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+          <span class="game-icon">🛡️</span> Team Fortress 2
+        </button>
+      </div>
+      <button onclick="window.closeGlobalTradeModal()" class="close-modal">Закрити</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+globalThis.closeGlobalTradeModal = function() {
+  const modal = document.querySelector('.global-trade-modal');
+  if (modal) modal.remove();
+};
+
+globalThis.sendGlobalTrade = async function(accountIndex, game) {
+  const acc = accounts[accountIndex];
+  if (!globalTradeLink || globalTradeLink.trim() === '') {
+    showNotification('Глобальна трейд-лінка не вказана!', 'error');
+    return;
+  }
+  // Inventory check for CS2
+  if (game === 'CS2') {
+    const hasCS2 = acc.fullInventory && acc.fullInventory.some(item => item.gameApp === 'CS:GO' || item.game === 'CS:GO');
+    if (!hasCS2) {
+      showNotification('У акаунта немає інвентаря CS2 для перекидання!', 'warning');
+      return;
+    }
+  }
+  showLoadingIndicator(`Відправка всіх скінів з ${game} на глобальну трейд-лінку...`);
+  try {
+    let appIDs = [];
+    if (game === 'CS2') appIDs = [{ appid: 730, contextid: 2 }];
+    else if (game === 'TF2') appIDs = [{ appid: 440, contextid: 2 }];
+    else appIDs = [{ appid: 730, contextid: 2 }, { appid: 440, contextid: 2 }];
+
+    let maFilePath = acc.maFilePath;
+    if (!maFilePath || !fs.existsSync(maFilePath)) {
+      if (maFilesPath) maFilePath = path.join(maFilesPath, acc.login + '.maFile');
+      if (!maFilePath || !fs.existsSync(maFilePath)) throw new Error('maFile не знайдено для акаунта ' + acc.login);
+    }
+    const maFile = JSON.parse(fs.readFileSync(maFilePath));
+    const identitySecret = maFile.identity_secret;
+    const sharedSecret = maFile.shared_secret;
+    if (!identitySecret || !sharedSecret) throw new Error('maFile не містить необхідних секретів');
+
+    tradeManager = new TradeManager();
+    await tradeManager.login(acc.login, acc.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
+    const result = await tradeManager.sendAllTradeableItems(globalTradeLink, appIDs);
+    showNotification(result.message || '✅ Всі скіни відправлено!', 'success');
+    tradeManager.disconnect();
+  } catch (e) {
+    console.error('[sendGlobalTrade] Помилка:', e);
+    showNotification('❌ Помилка: ' + (e.message || e), 'error');
+  } finally {
+    hideLoadingIndicator();
+    window.closeGlobalTradeModal();
+  }
+};
 function updateAutoLoadButtonText() {
   const autoLoadButton = document.querySelector('.auto-setting-btn');
   if (autoLoadButton) {

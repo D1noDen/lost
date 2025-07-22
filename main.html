@@ -3,6 +3,185 @@
 <head>
   <meta charset="UTF-8" />
   <title>LOST - Steam Accounts</title>
+  <style>
+  /* Improved Modal styles for global trade */
+  .global-trade-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 15, 10, 0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInModal 0.3s;
+  }
+  @keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .global-trade-modal-content {
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+    padding: 40px 32px 32px 32px;
+    border-radius: 20px;
+    box-shadow: 0 16px 48px rgba(16,185,129,0.18), var(--shadow-card);
+    min-width: 340px;
+    max-width: 95vw;
+    color: var(--text-primary);
+    text-align: center;
+    position: relative;
+    border: 2px solid var(--emerald-400);
+    animation: popInModal 0.3s;
+  }
+  @keyframes popInModal {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .global-trade-modal-content h3 {
+    margin-bottom: 22px;
+    font-size: 22px;
+    color: var(--emerald-300);
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .global-trade-modal-content h3 .modal-icon {
+    font-size: 28px;
+    vertical-align: middle;
+  }
+  .global-trade-modal-content .game-select {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .global-trade-modal-content .game-btn {
+    padding: 18px 32px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.12);
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .global-trade-modal-content .game-btn:hover {
+    background: linear-gradient(135deg, var(--emerald-700), var(--emerald-600));
+    transform: translateY(-2px) scale(1.04);
+  }
+  .global-trade-modal-content .game-btn .game-icon {
+    font-size: 24px;
+    vertical-align: middle;
+  }
+  .global-trade-modal-content button.close-modal {
+    background: var(--emerald-400);
+    margin-top: 22px;
+    font-size: 16px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    box-shadow: none;
+    font-weight: 600;
+    color: #fff;
+    border: none;
+    transition: background 0.2s;
+  }
+  .global-trade-modal-content button.close-modal:hover {
+    background: var(--emerald-500);
+  }
+    .global-trade-link-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      background: var(--bg-card);
+      padding: 12px 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .global-trade-link-input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-primary);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 16px;
+    }
+    .global-trade-link-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      background: var(--emerald-600);
+      color: #fff;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .global-trade-link-btn:hover {
+      background: var(--emerald-700);
+    }
+  </style>
+</style>
+<style>
+/* Глобальний лоадінг-оверлей */
+#global-loading-indicator.global-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.loading-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(16, 185, 129, 0.12);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+.loading-content {
+  background: var(--bg-card, #1e332e);
+  border-radius: 16px;
+  padding: 32px 48px;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+  z-index: 10002;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.loading-spinner {
+  font-size: 48px;
+  animation: spin 1.2s linear infinite;
+  color: var(--emerald-400, #34d399);
+}
+.loading-text {
+  font-size: 20px;
+  color: var(--emerald-300, #6ee7b7);
+  font-weight: 600;
+  text-align: center;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
    <style>
 :root {
     --emerald-50: #ecfdf5;
@@ -3805,6 +3984,18 @@ select, .tab-button {
 
 </head>
 <body>
+  <div class="global-trade-link-bar">
+    <input id="globalTradeLinkInput" class="global-trade-link-input" type="text" placeholder="Глобальна трейд-лінка (Trade URL для всіх акаунтів)" />
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var input = document.getElementById('globalTradeLinkInput');
+        if (input) {
+          input.value = localStorage.getItem('globalTradeLink') || '';
+        }
+      });
+    </script>
+    <button class="global-trade-link-btn" onclick="setGlobalTradeLink()">Зберегти</button>
+  </div>
   <div class="created-by">
     <div class="creator-icon">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4145,5 +4336,7 @@ select, .tab-button {
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="renderer.js"></script>
+  <!-- Глобальний індикатор завантаження -->
+  <div id="global-loading-indicator" class="global-loading" style="display:none;"></div>
 </body>
 </html>
