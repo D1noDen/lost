@@ -909,17 +909,20 @@ async function fetchFullInventory(index) {
         render();
       }
       
-      // Оновлюємо портфоліо якщо вкладка активна
-      const portfolioTab = document.getElementById('portfolio-tab');
-      if (portfolioTab && portfolioTab.style.display === 'block') {
-        setTimeout(calculateAndDisplayPortfolio, 500);
-      }
+      // Оновлюємо портфоліо завжди після зміни інвентаря
+      setTimeout(calculateAndDisplayPortfolio, 500);
       
       const inventoryText = `Завантажено ${inventoryInfo.length} предметів<br>Загальна вартість: ${totalValue.toFixed(2)} грн`;
       showNotification(`Інвентар оновлено!<br><br>${inventoryText}`, 'success');
     } else {
       console.log('[fetchFullInventory] inventoryInfo is null, undefined або порожній');
       showNotification('Не вдалося знайти інформацію про інвентар або інвентар порожній', 'warning');
+      // Очищаємо інвентар акаунта, щоб видалити з портфоліо
+      acc.fullInventory = [];
+      acc.inventoryCount = 0;
+      acc.inventoryValue = 0;
+      saveAccounts();
+      setTimeout(calculateAndDisplayPortfolio, 500);
     }
 
     tradeManager.disconnect();
