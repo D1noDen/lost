@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
+const LicenseManager = require('./license_manager.js');
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 
@@ -30,6 +31,30 @@ if (!app.isPackaged) {
   } catch (e) {
     console.log('electron-log not available, using console');
     autoUpdater.logger = console;
+  }
+}
+
+// Ініціалізація ліцензійного менеджера
+let licenseManager;
+
+// Перевірка ліцензії при запуску
+async function checkLicenseOnStartup() {
+  try {
+    licenseManager = new LicenseManager();
+    const isLicensed = await licenseManager.isLicensed();
+    
+    if (!isLicensed) {
+      console.log('Ліцензія не активована або недійсна');
+      // Показуємо вікно активації ліцензії
+      await showLicenseWindow();
+      return false;
+    }
+    
+    console.log('Ліцензія активна');
+    return true;
+  } catch (error) {
+    console.error('Помилка перевірки ліцензії:', error);
+    return false;
   }
 }
 
@@ -115,61 +140,46 @@ function ensureDataDirectories() {
 }
 
 let mainWindow;
+let licenseWindow;
 
-function createWindow() {
-  // Створюємо необхідні директорії перед запуском
-  ensureDataDirectories();
-  
-  // Визначаємо шлях до іконки більш надійно
-  let iconPath;
-  if (app.isPackaged) {
-    // У збудованому додатку спробуємо різні шляхи
-    const possiblePaths = [
-      path.join(process.resourcesPath, 'LOST_icon.ico'),
-      path.join(process.resourcesPath, 'app.asar.unpacked', 'LOST_icon.ico'),
-      path.join(__dirname, 'LOST_icon.ico'),
-      path.join(path.dirname(process.execPath), 'resources', 'LOST_icon.ico')
-    ];
-    
-    console.log('=== ICON PATH DEBUGGING ===');
-    console.log('process.resourcesPath:', process.resourcesPath);
-    console.log('__dirname:', __dirname);
-    console.log('process.execPath:', process.execPath);
-    console.log('process.cwd():', process.cwd());
-    
-    iconPath = possiblePaths.find(p => {
-      const exists = fs.existsSync(p);
-      console.log(`Checking icon path: ${p} - ${exists ? 'EXISTS' : 'NOT FOUND'}`);
-      return exists;
-    });
-    
-    console.log('Final selected icon path:', iconPath);
-    console.log('=== END ICON DEBUGGING ===');
-  } else {
-    iconPath = path.join(__dirname, 'LOST_icon.ico');
-    console.log('Development icon path:', iconPath);
-  }
-  
-  mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
-    icon: iconPath,
+// Функція для показу вікна активації ліцензії
+function showLicenseWindow() {
+  licenseWindow = new BrowserWindow({
+    width: 600,
+    height: 700,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false,
+      contextIsolation: false
     },
+    icon: path.join(__dirname, 'LOST_icon.ico'),
+    title: 'Активація ліцензії - Lost Account Manager',
+    resizable: false,
+    autoHideMenuBar: true
   });
- 
-  mainWindow.setMenuBarVisibility(false);
-  mainWindow.loadFile('index.html'); 
-  
-  // More reliable way to open DevTools
- 
 
-  // Перевірка оновлень після запуску вікна
-  mainWindow.once('ready-to-show', () => {
-    autoUpdater.checkForUpdatesAndNotify();
+  licenseWindow.loadFile('license.html');
+
+  licenseWindow.on('closed', () => {
+    licenseWindow = null;
+    // Якщо головне вікно не створене і вікно ліцензування закрито, виходимо з додатка
+    if (!mainWindow) {
+      app.quit();
+    }
   });
+}
+
+async function createWindow() {
+  // Перевіряємо ліцензію перед створенням головного вікна
+  const isLicensed = await checkLicenseOnStartup();
+  
+  if (!isLicensed) {
+    // Якщо ліцензія не активована, показуємо тільки вікно ліцензування
+    showLicenseWindow();
+    return;
+  }
+
+  // Якщо ліцензія активна, створюємо головне вікно
+  createMainWindow();
 }
 
 app.whenReady().then(() => {
@@ -941,3 +951,160 @@ ipcMain.handle('save-settings', async (event, settings) => {
     return { success: false, message: 'Помилка збереження налаштувань: ' + error.message };
   }
 });
+
+// === IPC обробники для ліцензування ===
+
+// Отримання HWID
+ipcMain.handle('get-hwid', async () => {
+  try {
+    if (!licenseManager) {
+      licenseManager = new LicenseManager();
+    }
+    return licenseManager.getHWID();
+  } catch (error) {
+    console.error('Помилка отримання HWID:', error);
+    throw error;
+  }
+});
+
+// Активація ліцензії
+ipcMain.handle('activate-license', async (event, licenseKey) => {
+  try {
+    if (!licenseManager) {
+      licenseManager = new LicenseManager();
+    }
+    
+    const result = await licenseManager.activateLicense(licenseKey);
+    
+    if (result.success) {
+      // Якщо ліцензія активована успішно і головне вікно ще не створене, створюємо його
+      if (!mainWindow) {
+        setTimeout(() => {
+          createMainWindow();
+        }, 1000);
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Помилка активації ліцензії:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Перевірка ліцензії
+ipcMain.handle('check-license', async () => {
+  try {
+    if (!licenseManager) {
+      licenseManager = new LicenseManager();
+    }
+    
+    const validation = await licenseManager.validateLicense();
+    
+    if (validation.valid) {
+      const licenseInfo = licenseManager.getLicenseInfo();
+      return {
+        valid: true,
+        license: licenseInfo
+      };
+    } else {
+      return validation;
+    }
+  } catch (error) {
+    console.error('Помилка перевірки ліцензії:', error);
+    return { valid: false, error: error.message };
+  }
+});
+
+// Видалення ліцензії
+ipcMain.handle('remove-license', async () => {
+  try {
+    if (!licenseManager) {
+      licenseManager = new LicenseManager();
+    }
+    
+    const result = await licenseManager.removeLicense();
+    
+    if (result && mainWindow) {
+      // Закриваємо головне вікно після видалення ліцензії
+      mainWindow.close();
+      mainWindow = null;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Помилка видалення ліцензії:', error);
+    return false;
+  }
+});
+
+// Відкриття вікна ліцензування з головного інтерфейсу
+ipcMain.handle('open-license-window', async () => {
+  try {
+    showLicenseWindow();
+    return true;
+  } catch (error) {
+    console.error('Помилка відкриття вікна ліцензування:', error);
+    return false;
+  }
+});
+
+// Функція для створення головного вікна після успішної активації ліцензії
+function createMainWindow() {
+  // Створюємо необхідні директорії перед запуском
+  ensureDataDirectories();
+  
+  // Визначаємо шлях до іконки більш надійно
+  let iconPath;
+  if (app.isPackaged) {
+    // У збудованому додатку спробуємо різні шляхи
+    const possiblePaths = [
+      path.join(process.resourcesPath, 'LOST_icon.ico'),
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'LOST_icon.ico'),
+      path.join(__dirname, 'LOST_icon.ico'),
+      path.join(path.dirname(process.execPath), 'resources', 'LOST_icon.ico')
+    ];
+    
+    console.log('=== ICON PATH DEBUGGING ===');
+    console.log('process.resourcesPath:', process.resourcesPath);
+    console.log('__dirname:', __dirname);
+    console.log('process.execPath:', process.execPath);
+    console.log('process.cwd():', process.cwd());
+    
+    iconPath = possiblePaths.find(p => {
+      const exists = fs.existsSync(p);
+      console.log(`Checking icon path: ${p} - ${exists ? 'EXISTS' : 'NOT FOUND'}`);
+      return exists;
+    });
+    
+    console.log('Final selected icon path:', iconPath);
+    console.log('=== END ICON DEBUGGING ===');
+  } else {
+    iconPath = path.join(__dirname, 'LOST_icon.ico');
+    console.log('Development icon path:', iconPath);
+  }
+  
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+    icon: iconPath,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+ 
+  mainWindow.setMenuBarVisibility(false);
+  mainWindow.loadFile('index.html'); 
+  
+  // Перевірка оновлень після запуску вікна
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+  });
+  
+  // Закриваємо вікно ліцензування якщо воно відкрите
+  if (licenseWindow) {
+    licenseWindow.close();
+    licenseWindow = null;
+  }
+}

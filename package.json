@@ -1,6 +1,6 @@
 {
   "name": "lost",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "Steam accounts management application",
   "author": "Den",
   "main": "main.js",
@@ -46,14 +46,17 @@
       "!AUTO_UPDATE_TEST.md",
       "!SECURITY_BUILD.md",
       "!FIXES_V106.md",
-      "!IMPORT_EXPORT_V107.md"
+      "!IMPORT_EXPORT_V107.md",
+      "!licenses.json"
     ],
     "win": {
       "icon": "LOST_icon.ico",
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "forceCodeSigning": false,
@@ -84,6 +87,7 @@
     "electron-log": "^5.0.1"
   },
   "dependencies": {
+    "dotenv": "^17.2.1",
     "electron-updater": "^6.1.7",
     "fs": "^0.0.1-security",
     "path": "^0.12.7",

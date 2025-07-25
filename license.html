@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Активація ліцензії - Lost Account Manager</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .license-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: white;
+        }
+        
+        .license-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .license-header h1 {
+            margin: 0;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hwid-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+        
+        .license-form {
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .status-success {
+            background: rgba(76, 175, 80, 0.8);
+        }
+        
+        .status-error {
+            background: rgba(244, 67, 54, 0.8);
+        }
+        
+        .license-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="license-container">
+        <div class="license-header">
+            <h1>🔐 Активація ліцензії</h1>
+            <p>Lost Account Manager</p>
+        </div>
+        
+        <div class="hwid-info">
+            <strong>Ваш HWID:</strong><br>
+            <span id="hwid-display">Завантаження...</span>
+        </div>
+        
+        <div id="license-form" class="license-form">
+            <div class="form-group">
+                <label for="license-key">Ключ ліцензії:</label>
+                <input type="text" id="license-key" placeholder="Введіть ваш ключ ліцензії">
+            </div>
+            
+            <button class="btn btn-primary" onclick="activateLicense()">
+                Активувати ліцензію
+            </button>
+            
+            <button class="btn btn-secondary" onclick="checkLicense()">
+                Перевірити поточну ліцензію
+            </button>
+        </div>
+        
+        <div id="license-info" class="license-info hidden">
+            <h3>Інформація про ліцензію</h3>
+            <div id="license-details"></div>
+            <button class="btn btn-secondary" onclick="removeLicense()">
+                Видалити ліцензію
+            </button>
+        </div>
+        
+        <div id="status-message" class="status-message hidden"></div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="window.close()">
+                Закрити
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        // Завантаження HWID при ініціалізації
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const hwid = await ipcRenderer.invoke('get-hwid');
+                document.getElementById('hwid-display').textContent = hwid;
+                
+                // Перевіряємо поточну ліцензію
+                await checkLicense();
+            } catch (error) {
+                showMessage('Помилка завантаження HWID: ' + error.message, 'error');
+            }
+        });
+        
+        // Функція активації ліцензії
+        async function activateLicense() {
+            const licenseKey = document.getElementById('license-key').value.trim();
+            
+            if (!licenseKey) {
+                showMessage('Введіть ключ ліцензії', 'error');
+                return;
+            }
+            
+            try {
+                showMessage('Активація ліцензії...', 'info');
+                const result = await ipcRenderer.invoke('activate-license', licenseKey);
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    document.getElementById('license-key').value = '';
+                    setTimeout(() => checkLicense(), 1000);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Помилка активації: ' + error.message, 'error');
+            }
+        }
+        
+        // Функція перевірки ліцензії
+        async function checkLicense() {
+            try {
+                const result = await ipcRenderer.invoke('check-license');
+                
+                if (result.valid) {
+                    showLicenseInfo(result.license);
+                } else {
+                    hideLicenseInfo();
+                    if (result.error !== 'Ліцензія не знайдена') {
+                        showMessage('Статус ліцензії: ' + result.error, 'error');
+                    }
+                }
+            } catch (error) {
+                showMessage('Помилка перевірки ліцензії: ' + error.message, 'error');
+            }
+        }
+        
+        // Функція видалення ліцензії
+        async function removeLicense() {
+            if (confirm('Ви впевнені, що хочете видалити ліцензію?')) {
+                try {
+                    const result = await ipcRenderer.invoke('remove-license');
+                    if (result) {
+                        showMessage('Ліцензія успішно видалена', 'success');
+                        hideLicenseInfo();
+                    } else {
+                        showMessage('Помилка видалення ліцензії', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Помилка видалення ліцензії: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // Показати інформацію про ліцензію
+        function showLicenseInfo(license) {
+            const infoDiv = document.getElementById('license-info');
+            const detailsDiv = document.getElementById('license-details');
+            
+            let html = `
+                <p><strong>Ключ:</strong> ${license.licenseKey}</p>
+                <p><strong>Тип:</strong> ${license.type || 'N/A'}</p>
+                <p><strong>Статус:</strong> ${license.status}</p>
+                <p><strong>HWID:</strong> ${license.hwid || 'Не прив\'язаний'}</p>
+                <p><strong>Активовано:</strong> ${license.activatedAt ? new Date(license.activatedAt).toLocaleString() : 'N/A'}</p>
+            `;
+            
+            if (license.expiryDate) {
+                html += `<p><strong>Термін дії до:</strong> ${new Date(license.expiryDate).toLocaleString()}</p>`;
+            } else {
+                html += `<p><strong>Термін дії:</strong> Безстроково</p>`;
+            }
+            
+            detailsDiv.innerHTML = html;
+            infoDiv.classList.remove('hidden');
+        }
+        
+        // Сховати інформацію про ліцензію
+        function hideLicenseInfo() {
+            document.getElementById('license-info').classList.add('hidden');
+        }
+        
+        // Показати повідомлення
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('status-message');
+            messageDiv.textContent = message;
+            messageDiv.className = 'status-message';
+            
+            if (type === 'success') {
+                messageDiv.classList.add('status-success');
+            } else if (type === 'error') {
+                messageDiv.classList.add('status-error');
+            }
+            
+            messageDiv.classList.remove('hidden');
+            
+            if (type !== 'info') {
+                setTimeout(() => {
+                    messageDiv.classList.add('hidden');
+                }, 5000);
+            }
+        }
+        
+        // Обробка Enter для активації
+        document.getElementById('license-key').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                activateLicense();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -378,6 +378,7 @@
     <span data-translate="created_by">Created By</span> <span class="den">Den</span> 
     <span id="app-version" style="margin-left: 10px; opacity: 0.7;"></span>
     <button onclick="checkForUpdates()" data-translate="check_updates" style="margin-left: 10px; background: var(--bg-button); border: none; padding: 4px 8px; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">🔄 Оновлення</button>
+    <button onclick="openLicenseWindow()" data-translate="license_button" style="margin-left: 5px; background: #9333ea; border: none; padding: 4px 8px; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">🔐 Ліцензія</button>
   </div>
 
   <script src="js/translations.js"></script>
@@ -442,6 +443,38 @@
       } catch (error) {
         console.error('Error checking for updates:', error);
         showUpdateNotification(t('update_error'), 'error');
+      }
+    }
+
+    // Функція для відкриття вікна ліцензування
+    async function openLicenseWindow() {
+      try {
+        const { ipcRenderer } = require('electron');
+        const BrowserWindow = require('electron').remote?.BrowserWindow;
+        
+        // Створюємо нове вікно для ліцензування
+        if (BrowserWindow) {
+          const licenseWindow = new BrowserWindow({
+            width: 600,
+            height: 700,
+            modal: true,
+            webPreferences: {
+              nodeIntegration: true,
+              contextIsolation: false
+            },
+            title: 'Управління ліцензією',
+            resizable: false,
+            autoHideMenuBar: true
+          });
+
+          licenseWindow.loadFile('license.html');
+        } else {
+          // Альтернативний метод через IPC
+          await ipcRenderer.invoke('open-license-window');
+        }
+      } catch (error) {
+        console.error('Error opening license window:', error);
+        showUpdateNotification('Помилка відкриття вікна ліцензування', 'error');
       }
     }
 
