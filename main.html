@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8" />
-  <title>LOST - Steam Accounts</title>
+  <title data-translate="main_app_title">LOST - Steam Accounts</title>
   <style>
   /* Improved Modal styles for global trade */
   .global-trade-modal {
@@ -3980,12 +3980,13 @@ select, .tab-button {
     justify-content: center;
   }
 }
+
 </style>
 
 </head>
 <body>
   <div class="global-trade-link-bar">
-    <input id="globalTradeLinkInput" class="global-trade-link-input" type="text" placeholder="Глобальна трейд-лінка (Trade URL для всіх акаунтів)" />
+    <input id="globalTradeLinkInput" class="global-trade-link-input" type="text" data-translate="global_trade_link_placeholder" placeholder="Глобальна трейд-лінка (Trade URL для всіх акаунтів)" />
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         var input = document.getElementById('globalTradeLinkInput');
@@ -3994,7 +3995,7 @@ select, .tab-button {
         }
       });
     </script>
-    <button class="global-trade-link-btn" onclick="setGlobalTradeLink()">Зберегти</button>
+    <button class="global-trade-link-btn" onclick="setGlobalTradeLink()" data-translate="save">Зберегти</button>
   </div>
   <div class="created-by">
     <div class="creator-icon">
@@ -4003,7 +4004,7 @@ select, .tab-button {
         <circle cx="12" cy="7" r="4"/>
       </svg>
     </div>
-    <span class="created-text">Created By</span> 
+    <span class="created-text" data-translate="created_by">Created By</span> 
     <span class="den">Den</span>
     <div class="creator-badge">Developer</div>
   </div>
@@ -4013,7 +4014,7 @@ select, .tab-button {
       <div class="main-icon">
        <img style="width:100%; height: 100%;" src="./icon.png"/>
       </div>
-      <h1 class="main-title">LOST — Steam Accounts</h1>
+      <h1 class="main-title" data-translate="main_app_title">LOST — Steam Accounts</h1>
     </div>
     <div class="subtitle-group">
       <div class="feature-icons">
@@ -4039,7 +4040,7 @@ select, .tab-button {
           </svg>
         </div>
       </div>
-      <p class="main-sub">Управління, фарм і безпека акаунтів</p>
+      <p class="main-sub" data-translate="main_subtitle">Управління, фарм і безпека акаунтів</p>
     </div>
   </div>
   
@@ -4053,7 +4054,7 @@ select, .tab-button {
         <line x1="12" y1="8" x2="12" y2="16"/>
         <line x1="8" y1="12" x2="16" y2="12"/>
       </svg>
-      <span class="btn-add-text">Додати акаунт</span>
+      <span class="btn-add-text" data-translate="add_account">Додати акаунт</span>
     </button>
     
     <!-- Кнопка зміни пароля -->
@@ -4063,7 +4064,7 @@ select, .tab-button {
         <circle cx="12" cy="16" r="1"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
-      <span class="btn-add-text">Змінити пароль</span>
+      <span class="btn-add-text" data-translate="change_password">Змінити пароль</span>
     </button>
     
     <!-- Кнопка імпорту/експорту -->
@@ -4075,7 +4076,7 @@ select, .tab-button {
         <line x1="9" y1="15" x2="12" y2="12"/>
         <line x1="15" y1="15" x2="12" y2="12"/>
       </svg>
-      <span class="btn-add-text">Імпорт/Експорт</span>
+      <span class="btn-add-text" data-translate="import_export">Імпорт/Експорт</span>
     </button>
     
     <!-- Кнопка автоматичного з'єднання maFiles -->
@@ -4084,7 +4085,7 @@ select, .tab-button {
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
       </svg>
-      <span class="btn-add-text">Авто-з'єднання</span>
+      <span class="btn-add-text" data-translate="auto_link">Авто-з'єднання</span>
     </button>
   </div>
  <!-- Таби навігації -->
@@ -4095,7 +4096,7 @@ select, .tab-button {
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        <span class="tab-text">Акаунти</span>
+        <span class="tab-text" data-translate="accounts">Акаунти</span>
       </button>
       <button class="tab-button" onclick="window.location.href='trading.html'">
         <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4103,28 +4104,28 @@ select, .tab-button {
           <path d="M17 17h-10"/>
           <path d="M17 17V7"/>
         </svg>
-        <span class="tab-text">Трейди</span>
+        <span class="tab-text" data-translate="trading">Трейди</span>
       </button>
       <button class="tab-button" onclick="showTab('history-tab', this)">
         <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 3v5h5"/>
           <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
         </svg>
-        <span class="tab-text">Історія</span>
+        <span class="tab-text" data-translate="history">Історія</span>
       </button>
       <button class="tab-button" onclick="showTab('portfolio-tab', this)">
         <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <path d="M9 22V12h6v10"/>
         </svg>
-        <span class="tab-text">Портфоліо</span>
+        <span class="tab-text" data-translate="portfolio">Портфоліо</span>
       </button>
       <button class="tab-button" onclick="window.location.href='statistics.html'">
         <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 3v18h18"/>
           <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
         </svg>
-        <span class="tab-text">Статистика</span>
+        <span class="tab-text" data-translate="statistics">Статистика</span>
       </button>
       <button class="btn-reset" onclick="ResetFarm()">
         <svg class="reset-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4132,16 +4133,16 @@ select, .tab-button {
           <polyline points="1 20 1 14 7 14"/>
           <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
         </svg>
-        <span class="reset-text">Скинути</span>
+        <span class="reset-text" data-translate="reset">Скинути</span>
       </button>
-      <button class="btn-update" onclick="checkForUpdates()" title="Перевірити оновлення">
+      <button class="btn-update" onclick="checkForUpdates()" data-translate-title="check_updates">
         <svg class="update-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
           <path d="M21 3v5h-5"/>
           <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
           <path d="M3 21v-5h5"/>
         </svg>
-        <span class="update-text">Оновити</span>
+        <span class="update-text" data-translate="update_button">Оновити</span>
       </button>
     </div>
   </div>
@@ -4158,7 +4159,7 @@ select, .tab-button {
         </svg>
       </div>
       <div class="profit-info">
-        <div class="profit-label">Загальний прибуток</div>
+        <div class="profit-label" data-translate="total_profit">Загальний прибуток</div>
         <div id="total-profit" class="profit-amount">0 грн</div>
       </div>
       <div class="profit-badge">
@@ -4175,14 +4176,14 @@ select, .tab-button {
 <!-- Фільтр та пошук -->
 <div class="search-container" style="margin: 20px 0;">
   <div class="search-box">
-    <input type="text" id="search-input" placeholder="🔍 Пошук по логіну, імені, ID або дропу..." oninput="handleSearchInput(event)" autocomplete="off" />
-    <button onclick="clearSearch()" class="btn-clear-search" title="Очистити пошук">✖️</button>
+    <input type="text" id="search-input" data-translate="search_placeholder" placeholder="🔍 Пошук по логіну, імені, ID або дропу..." oninput="handleSearchInput(event)" autocomplete="off" />
+    <button onclick="clearSearch()" class="btn-clear-search" data-translate-title="clear_search">✖️</button>
   </div>
   <div id="search-info" class="search-info" style="display: none;"></div>
   <div class="star-filter">
-    <button id="filter-all" class="filter-btn active" onclick="setStarFilter('all')">Усі</button>
-    <button id="filter-starred" class="filter-btn" onclick="setStarFilter('starred')">Відфармлені</button>
-    <button id="filter-unstarred" class="filter-btn" onclick="setStarFilter('unstarred')">Не відфармлені</button>
+    <button id="filter-all" class="filter-btn active" onclick="setStarFilter('all')" data-translate="filter_all">Усі</button>
+    <button id="filter-starred" class="filter-btn" onclick="setStarFilter('starred')" data-translate="filter_farmed">Відфармлені</button>
+    <button id="filter-unstarred" class="filter-btn" onclick="setStarFilter('unstarred')" data-translate="filter_not_farmed">Не відфармлені</button>
   </div>
 </div>
 
@@ -4201,7 +4202,7 @@ select, .tab-button {
 <div id="portfolio-tab" class="tab" style="display: none;">
   <div class="portfolio-container">
     <div class="portfolio-header">
-      <h2>📊 Портфоліо Інвентарю</h2>
+      <h2 data-translate="portfolio_inventory_title">📊 Портфоліо Інвентарю</h2>
       <div class="portfolio-controls">
         <button onclick="autoLoadAllInventories()" class="auto-load-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4209,14 +4210,14 @@ select, .tab-button {
             <circle cx="12" cy="13" r="3"/>
             <path d="M3 12l3-3 3 3"/>
           </svg>
-          Завантажити всі інвентарі
+          <span data-translate="load_all_inventories">Завантажити всі інвентарі</span>
         </button>
-        <button onclick="toggleAutoLoadOnStartup()" class="auto-setting-btn" title="Увімкнути/вимкнути автозавантаження при старті">
+        <button onclick="toggleAutoLoadOnStartup()" class="auto-setting-btn" data-translate-title="toggle_auto_load_startup">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
             <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m11-7a4 4 0 0 0-8 0"/>
           </svg>
-          Авто при старті
+          <span data-translate="auto_on_startup">Авто при старті</span>
         </button>
         <button onclick="refreshPortfolio()" class="refresh-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4225,26 +4226,26 @@ select, .tab-button {
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
             <path d="M3 21v-5h5"/>
           </svg>
-          Оновити
+          <span data-translate="refresh">Оновити</span>
         </button>
       </div>
     </div>
     
     <div class="portfolio-summary">
       <div class="summary-card">
-        <div class="summary-title">Загальна вартість</div>
+        <div class="summary-title" data-translate="total_value">Загальна вартість</div>
         <div class="summary-value" id="total-portfolio-value">₴0.00</div>
       </div>
       <div class="summary-card">
-        <div class="summary-title">Всього предметів</div>
+        <div class="summary-title" data-translate="total_items">Всього предметів</div>
         <div class="summary-value" id="total-drops-count">0</div>
       </div>
       <div class="summary-card">
-        <div class="summary-title">Активних акаунтів</div>
+        <div class="summary-title" data-translate="active_accounts_count">Активних акаунтів</div>
         <div class="summary-value" id="active-accounts-count">0</div>
       </div>
       <div class="summary-card">
-        <div class="summary-title">Середня ціна предмету</div>
+        <div class="summary-title" data-translate="average_item_price">Середня ціна предмету</div>
         <div class="summary-value" id="average-drop-value">₴0.00</div>
       </div>
     </div>
@@ -4270,12 +4271,12 @@ select, .tab-button {
 <div id="importExportModal" class="import-export-modal" style="display: none;">
   <div class="import-export-modal-content">
     <div class="import-export-modal-header">
-      <h3>📁 Імпорт/Експорт</h3>
+      <h3 data-translate="import_export">📁 Імпорт/Експорт</h3>
       <button onclick="closeModal('importExportModal')" class="close-modal-btn">&times;</button>
     </div>
     <div class="import-export-modal-body">
       <div class="import-export-section">
-        <h4>📤 Експорт акаунтів</h4>
+        <h4 data-translate="export_accounts">📤 Експорт акаунтів</h4>
         <button onclick="exportAccounts()" class="btn-action">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -4284,12 +4285,12 @@ select, .tab-button {
             <line x1="9" y1="15" x2="12" y2="12"/>
             <line x1="15" y1="15" x2="12" y2="12"/>
           </svg>
-          Експортувати акаунти
+          <span data-translate="export_accounts_btn">Експортувати акаунти</span>
         </button>
       </div>
       
       <div class="import-export-section">
-        <h4>📥 Імпорт акаунтів</h4>
+        <h4 data-translate="import_accounts">📥 Імпорт акаунтів</h4>
         <button onclick="importAccounts()" class="btn-action">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -4298,12 +4299,12 @@ select, .tab-button {
             <line x1="9" y1="15" x2="12" y2="18"/>
             <line x1="15" y1="15" x2="12" y2="18"/>
           </svg>
-          Імпортувати акаунти
+          <span data-translate="import_accounts_btn">Імпортувати акаунти</span>
         </button>
       </div>
       
       <div class="import-export-section">
-        <h4>🔑 Імпорт .maFile файлів</h4>
+        <h4 data-translate="import_mafiles">🔑 Імпорт .maFile файлів</h4>
         <button onclick="importMaFilesFolder()" class="btn-action">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -4311,7 +4312,7 @@ select, .tab-button {
             <line x1="9" y1="14" x2="12" y2="17"/>
             <line x1="15" y1="14" x2="12" y2="17"/>
           </svg>
-          Імпорт папки з .maFile
+          <span data-translate="import_mafiles_folder">Імпорт папки з .maFile</span>
         </button>
         <button onclick="importMaFilesIndividual()" class="btn-action">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4321,12 +4322,12 @@ select, .tab-button {
             <line x1="9" y1="14" x2="12" y2="17"/>
             <line x1="15" y1="14" x2="12" y2="17"/>
           </svg>
-          Імпорт окремих .maFile
+          <span data-translate="import_mafiles_individual">Імпорт окремих .maFile</span>
         </button>
       </div>
     </div>
     <div class="import-export-modal-footer">
-      <button onclick="closeModal('importExportModal')" class="btn-close">Закрити</button>
+      <button onclick="closeModal('importExportModal')" class="btn-close" data-translate="close">Закрити</button>
     </div>
   </div>
 </div>
@@ -4335,6 +4336,7 @@ select, .tab-button {
 </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/translations.js"></script>
   <script src="renderer.js"></script>
   <!-- Глобальний індикатор завантаження -->
   <div id="global-loading-indicator" class="global-loading" style="display:none;"></div>

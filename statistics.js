@@ -1,3 +1,27 @@
+// Імпорт системи перекладів
+let languageManager;
+
+// Функція для отримання перекладу
+function t(key) {
+  if (!languageManager) {
+    return key;
+  }
+  return languageManager.translate(key);
+}
+
+// Ініціалізація системи перекладів
+document.addEventListener('DOMContentLoaded', () => {
+  const script = document.createElement('script');
+  script.src = './js/translations.js';
+  script.onload = () => {
+    if (typeof LanguageManager !== 'undefined') {
+      languageManager = new LanguageManager();
+      updateStatCards([]); // Оновити після ініціалізації
+    }
+  };
+  document.head.appendChild(script);
+});
+
 // Функція для оновлення карток статистики
 function updateStatCards(accounts) {
   const totalAccounts = accounts.length;
@@ -7,9 +31,9 @@ function updateStatCards(accounts) {
 
   // Оновлюємо картки з анімацією
   animateCounter('total-accounts', totalAccounts, '');
-  animateCounter('total-income', totalIncome, ' грн');
-  animateCounter('total-expenses', totalExpenses, ' грн');
-  animateCounter('net-profit', netProfit, ' грн', netProfit < 0 ? '#dc3545' : '#10b981');
+  animateCounter('total-income', totalIncome, ` ${t('currency_uah')}`);
+  animateCounter('total-expenses', totalExpenses, ` ${t('currency_uah')}`);
+  animateCounter('net-profit', netProfit, ` ${t('currency_uah')}`, netProfit < 0 ? '#dc3545' : '#10b981');
 }
 
 // Функція для анімації лічильників
@@ -203,7 +227,7 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
     data: {
       labels: Object.keys(sortedDateProfit),
       datasets: [{
-        label: 'Прибуток по датах',
+        label: t('chart_tooltip_income'),
         data: Object.values(sortedDateProfit),
         borderColor: chartColors.primary,
         backgroundColor: chartColors.gradient,
@@ -265,7 +289,7 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
     data: {
       labels: accountProfits.map(acc => acc.name),
       datasets: [{
-        label: 'Прибуток по акаунтах',
+        label: t('chart_tooltip_comparison'),
         data: accountProfits.map(acc => acc.profit),
         backgroundColor: accountProfits.map((_, index) => 
           `hsl(${150 + index * 15}, 70%, ${50 + (index % 3) * 10}%)`
@@ -333,7 +357,7 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
         return `${start} - ${end}`;
       }),
       datasets: [{
-        label: 'Тижневий дохід (грн)',
+        label: `${t('chart_tooltip_weekly')} (${t('currency_uah')})`,
         data: weeklyData.map(week => week.totalRevenue),
         backgroundColor: weeklyData.map((_, index) => {
           // Створюємо градієнт кольорів для кожного стовпчика
@@ -386,15 +410,15 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
           callbacks: {
             title: function(context) {
               const weekData = weeklyData[context[0].dataIndex];
-              return `Тиждень: ${weekData.weekStart} - ${weekData.weekEnd}`;
+              return `${t('week')}: ${weekData.weekStart} - ${weekData.weekEnd}`;
             },
             label: function(context) {
-              return `Дохід: ${context.parsed.y.toLocaleString()} грн`;
+              return `${t('income')}: ${context.parsed.y.toLocaleString()} ${t('currency_uah')}`;
             },
             afterLabel: function(context) {
               const total = weeklyData.reduce((sum, week) => sum + week.totalRevenue, 0);
               const percentage = ((context.parsed.y / total) * 100).toFixed(1);
-              return `Частка: ${percentage}%`;
+              return `${t('share')}: ${percentage}%`;
             }
           }
         }
@@ -461,19 +485,19 @@ function updateWeeklySummary(weeklyData) {
   summaryContainer.innerHTML = `
     <div class="weekly-stat-item">
       <div class="weekly-stat-value">${totalWeeklyRevenue.toLocaleString()}</div>
-      <div class="weekly-stat-label">Загальний дохід</div>
+      <div class="weekly-stat-label">${t('total_income')}</div>
     </div>
     <div class="weekly-stat-item">
       <div class="weekly-stat-value">${Math.round(averageWeeklyRevenue).toLocaleString()}</div>
-      <div class="weekly-stat-label">Середній тижневий</div>
+      <div class="weekly-stat-label">${t('chart_tooltip_weekly')}</div>
     </div>
     <div class="weekly-stat-item">
       <div class="weekly-stat-value">${bestWeek.totalRevenue.toLocaleString()}</div>
-      <div class="weekly-stat-label">Найкращий тиждень</div>
+      <div class="weekly-stat-label">${t('chart_tooltip_weekly')} (${t('chart_tooltip_account')})</div>
     </div>
     <div class="weekly-stat-item">
       <div class="weekly-stat-value">${worstWeek.totalRevenue.toLocaleString()}</div>
-      <div class="weekly-stat-label">Найгірший тиждень</div>
+      <div class="weekly-stat-label">${t('chart_tooltip_weekly')} (${t('minimum')})</div>
     </div>
   `;
 }

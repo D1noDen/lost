@@ -5,6 +5,31 @@ const { ipcRenderer, clipboard } = require('electron');
 const SteamTotp = require('steam-totp');
 const TradeManager = require('./trade_manager.js');
 
+// Імпорт системи перекладів
+let languageManager;
+
+// Функція для отримання перекладу
+function t(key) {
+  if (!languageManager) {
+    // Якщо LanguageManager ще не ініціалізований, повертаємо ключ
+    return key;
+  }
+  return languageManager.translate(key);
+}
+
+// Ініціалізація системи перекладів після завантаження DOM
+document.addEventListener('DOMContentLoaded', () => {
+  // Завантажуємо скрипт перекладів
+  const script = document.createElement('script');
+  script.src = './js/translations.js';
+  script.onload = () => {
+    if (typeof LanguageManager !== 'undefined') {
+      languageManager = new LanguageManager();
+    }
+  };
+  document.head.appendChild(script);
+});
+
 let accounts = [];
 let tradeManager = null;
 let filteredAccounts = []; // Для збереження відфільтрованих акаунтів
@@ -244,7 +269,7 @@ function addWeeklyIncome(index) {
 }
 
 function deleteAccount(index) {
-  if (confirm('Видалити акаунт?')) {
+  if (confirm(t('delete_account_text'))) {
     accounts.splice(index, 1);
     
     // Перенумеровуємо ID всіх акаунтів після видалення
@@ -374,7 +399,7 @@ function selectMaFile(event, index) {
         console.log(`Файл ${fileName} скопійовано до ${destinationPath}`);
         
         // Показуємо повідомлення про успіх
-        showNotification(`✅ Файл ${fileName} успішно завантажено`, 'success');
+        showNotification(`✅ ${t('file_uploaded_successfully')}: ${fileName}`, 'success');
         
         // Автоматично перейменовуємо файл після завантаження
         setTimeout(async () => {
@@ -393,16 +418,16 @@ function selectMaFile(event, index) {
     
     reader.onerror = function(error) {
       console.error('Помилка читання файлу:', error);
-      alert('Помилка читання файлу: ' + error.message);
+      alert(t('error_reading_file') + ' ' + error.message);
     };
     
     // Читаємо файл як ArrayBuffer
     reader.readAsArrayBuffer(file);
     
   } else if (!file) {
-    alert('Файл не обрано.');
+    alert(t('file_not_selected'));
   } else if (!maFilesPath) {
-    alert('Папка maFiles не ініціалізована. Спробуйте перезапустити додаток.');
+    alert(t('mafiles_folder_not_initialized'));
   }
 }
 
@@ -431,7 +456,7 @@ async function copyMaFileViaIPC(arrayBuffer, fileName, index) {
     console.log(`IPC: Файл ${fileName} скопійовано до ${destinationPath}`);
     
     // Показуємо повідомлення про успіх
-    showNotification(`✅ Файл ${fileName} успішно завантажено через IPC`, 'success');
+    showNotification(`✅ ${t('file_uploaded_via_ipc')}: ${fileName}`, 'success');
     
     // Автоматично перейменовуємо файл після завантаження через IPC
     setTimeout(async () => {
@@ -441,7 +466,7 @@ async function copyMaFileViaIPC(arrayBuffer, fileName, index) {
     
   } catch (error) {
     console.error('Помилка копіювання через IPC:', error);
-    alert('Помилка копіювання файлу: ' + error.message);
+    alert(t('error_copying_file') + ' ' + error.message);
   }
 }
 
@@ -476,7 +501,7 @@ function toggleStar(index) {
 function generate2FA(index) {
   const maPath = accounts[index].maFilePath;
   if (!fs.existsSync(maPath)) {
-    alert("maFile не знайдено!");
+    alert(t('mafile_not_found'));
     return;
   }
 
@@ -485,9 +510,9 @@ function generate2FA(index) {
     const sharedSecret = maData.shared_secret;
 
     const code = SteamTotp.generateAuthCode(sharedSecret);
-    copyToClipboard(code, `🔐 2FA код скопійовано: ${code}`);
+    copyToClipboard(code, `🔐 ${t('code_2fa_copied')}: ${code}`);
   } catch (e) {
-    alert("Помилка при зчитуванні maFile: " + e.message);
+    alert(t('error_reading_mafile') + ' ' + e.message);
   }
 }
 
@@ -508,9 +533,9 @@ function copyToClipboard(text, message = null) {
   if (message) {
     showNotification(message, 'success');
   } else if (text && text.toString().trim() !== '') {
-    showNotification('📋 Скопійовано в буфер обміну', 'success');
+    showNotification('📋 ' + t('copied_to_clipboard'), 'success');
   } else {
-    showNotification('❌ Нічого копіювати', 'warning');
+    showNotification(`❌ ${t('nothing_to_copy')}`, 'warning');
   }
 }
 
@@ -520,9 +545,9 @@ function copyTotalDropPrice(index) {
   if (acc.lastDrops && acc.lastDrops.length > 0) {
     const totalPrice = acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0);
     const formattedTotal = totalPrice.toFixed(2);
-    copyToClipboard(formattedTotal, `💰 Загальна сума дропів скопійована: ${formattedTotal} грн`);
+    copyToClipboard(formattedTotal, `💰 ${t('total_drops_copied')}: ${formattedTotal} грн`);
   } else {
-    showNotification('❌ Немає дропів для копіювання', 'error');
+    showNotification(`❌ ${t('no_drops_to_copy')}`, 'error');
   }
 }
 
@@ -648,12 +673,12 @@ function updateDropLoadingState(index, isLoading) {
   }
 }
 
-async function fetchLastDrop(index) {
+async function fetchLastDrop(index, showLoadingModal = true) {
   const acc = accounts[index];
   console.log(`[fetchLastDrop] Початок для акаунту ${acc.login}, index: ${index}`);
   
   if (!acc.login || !acc.password) {
-    showNotification('Потрібно вказати логін та пароль для акаунту', 'warning');
+    showNotification(t('login_password_required'), 'warning');
     return;
   }
 
@@ -665,7 +690,7 @@ async function fetchLastDrop(index) {
       maFilePath = path.join(maFilesPath, `${acc.login}.maFile`);
     }
     if (!maFilePath || !fs.existsSync(maFilePath)) {
-      showNotification(`maFile не знайдено для акаунту ${acc.login}.<br>Перевірено:<br>- ${acc.maFilePath}<br>- ${maFilePath}`, 'error');
+      showNotification(`${t('mafile_not_found_for')} ${acc.login}.<br>${t('checked_paths')}:<br>- ${acc.maFilePath}<br>- ${maFilePath}`, 'error');
       return;
     }
   }
@@ -708,25 +733,35 @@ async function fetchLastDrop(index) {
       }
     });
 
-    // Показуємо глобальний індикатор завантаження
-    showLoadingIndicator(`Отримання дропів для ${acc.login}...`);
+    // Показуємо глобальний індикатор завантаження тільки якщо потрібно
+    if (showLoadingModal) {
+      showLoadingIndicator(`Отримання дропів для ${acc.login}...`);
+    }
 
     console.log(`[fetchLastDrop] Намагаємося увійти в акаунт ${acc.login}...`);
-    updateLoadingMessage(`Вхід в акаунт ${acc.login}...`);
+    if (showLoadingModal) {
+      updateLoadingMessage(`Вхід в акаунт ${acc.login}...`);
+    }
     await tradeManager.login(acc.login, acc.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
     console.log(`[fetchLastDrop] Увійшли в акаунт ${acc.login}`);
 
     console.log(`[fetchLastDrop] Отримуємо інформацію про дропи...`);
-    updateLoadingMessage(`Завантаження інвентаря ${acc.login}...`);
+    if (showLoadingModal) {
+      updateLoadingMessage(`Завантаження інвентаря ${acc.login}...`);
+    }
     const dropsInfo = await tradeManager.getLastDrops(acc.login, 2); // Отримуємо 2 останні дропи
     console.log(`[fetchLastDrop] Результат getLastDrops:`, dropsInfo);
     
-    updateLoadingMessage(`Обробка даних для ${acc.login}...`);
+    if (showLoadingModal) {
+      updateLoadingMessage(`Обробка даних для ${acc.login}...`);
+    }
     
     if (dropsInfo && dropsInfo.length > 0) {
       console.log('[fetchLastDrop] Отримано інформацію про дропи:', dropsInfo);
       
-      updateLoadingMessage(`Конвертація цін для ${acc.login}...`);
+      if (showLoadingModal) {
+        updateLoadingMessage(`Конвертація цін для ${acc.login}...`);
+      }
       // Конвертуємо ціни в гривні та оновлюємо дані
       const convertedDrops = dropsInfo.map(drop => ({
         ...drop,
@@ -748,7 +783,9 @@ async function fetchLastDrop(index) {
       
       // Зберігаємо та перерендеруємо
       console.log('[fetchLastDrop] Зберігаємо дані...');
-      updateLoadingMessage(`Збереження даних для ${acc.login}...`);
+      if (showLoadingModal) {
+        updateLoadingMessage(`Збереження даних для ${acc.login}...`);
+      }
       saveAccounts();
       console.log('[fetchLastDrop] Перерендеруємо...');
       // Оновлюємо відфільтровані акаунти після зміни
@@ -763,10 +800,10 @@ async function fetchLastDrop(index) {
         `${i + 1}. ${drop.name} - ${drop.priceUAH} грн (${drop.originalPrice})`
       ).join('<br>');
       
-      showNotification(`✅ Дропи оновлено для ${acc.login}!<br><br>${dropsText}`, 'success');
+      showNotification(`✅ ${t('drops_updated_for')} ${acc.login}!<br><br>${dropsText}`, 'success');
     } else {
       console.log('[fetchLastDrop] dropsInfo is null, undefined або порожній');
-      showNotification('Не вдалося знайти інформацію про дропи або інвентар порожній', 'warning');
+      showNotification(t('no_drops_info_found'), 'warning');
     }
 
     tradeManager.disconnect();
@@ -778,8 +815,10 @@ async function fetchLastDrop(index) {
     // Знімаємо стан завантаження
     accounts[index].loadingDrop = false;
     
-    // Ховаємо глобальний індикатор завантаження
-    hideLoadingIndicator();
+    // Ховаємо глобальний індикатор завантаження тільки якщо показували
+    if (showLoadingModal) {
+      hideLoadingIndicator();
+    }
     
     // Відновлюємо кнопки
     const buttons = [
@@ -814,12 +853,12 @@ async function fetchLastDrop(index) {
 }
 
 // Нова функція для отримання повного інвентарю
-async function fetchFullInventory(index) {
+async function fetchFullInventory(index, showLoadingModal = true) {
   const acc = accounts[index];
   console.log(`[fetchFullInventory] Початок для акаунту ${acc.login}, index: ${index}`);
   
   if (!acc.login || !acc.password) {
-    showNotification('Потрібно вказати логін та пароль для акаунту', 'warning');
+    showNotification(t('login_password_required'), 'warning');
     return;
   }
 
@@ -831,7 +870,7 @@ async function fetchFullInventory(index) {
       maFilePath = path.join(maFilesPath, `${acc.login}.maFile`);
     }
     if (!maFilePath || !fs.existsSync(maFilePath)) {
-      showNotification(`maFile не знайдено для акаунту ${acc.login}.<br>Перевірено:<br>- ${acc.maFilePath}<br>- ${maFilePath}`, 'error');
+      showNotification(`${t('mafile_not_found_for')} ${acc.login}.<br>${t('checked_paths')}:<br>- ${acc.maFilePath}<br>- ${maFilePath}`, 'error');
       return;
     }
   }
@@ -866,23 +905,31 @@ async function fetchFullInventory(index) {
       }
     });
 
-    // Показуємо глобальний індикатор завантаження
-    showLoadingIndicator(`Отримання повного інвентарю для ${acc.login}...`);
+    // Показуємо глобальний індикатор завантаження тільки якщо потрібно
+    if (showLoadingModal) {
+      showLoadingIndicator(`Отримання повного інвентарю для ${acc.login}...`);
+    }
 
     console.log(`[fetchFullInventory] Намагаємося увійти в акаунт ${acc.login}...`);
-    updateLoadingMessage(`Вхід в акаунт ${acc.login}...`);
+    if (showLoadingModal) {
+      updateLoadingMessage(`Вхід в акаунт ${acc.login}...`);
+    }
     await tradeManager.login(acc.login, acc.password, SteamTotp.generateAuthCode(sharedSecret), identitySecret);
     console.log(`[fetchFullInventory] Увійшли в акаунт ${acc.login}`);
 
     console.log(`[fetchFullInventory] Отримуємо повний інвентар...`);
-    updateLoadingMessage(`Завантаження повного інвентарю ${acc.login}...`);
+    if (showLoadingModal) {
+      updateLoadingMessage(`Завантаження повного інвентарю ${acc.login}...`);
+    }
     const inventoryInfo = await tradeManager.getFullInventory(acc.login, 50); // Максимум 50 предметів
     console.log(`[fetchFullInventory] Результат getFullInventory:`, inventoryInfo);
     
     if (inventoryInfo && inventoryInfo.length > 0) {
       console.log('[fetchFullInventory] Отримано інформацію про інвентар:', inventoryInfo);
       
-      updateLoadingMessage(`Обробка інвентарю для ${acc.login}...`);
+      if (showLoadingModal) {
+        updateLoadingMessage(`Обробка інвентарю для ${acc.login}...`);
+      }
       
       // Оновлюємо дані акаунту
       accounts[index].fullInventory = inventoryInfo;
@@ -912,11 +959,11 @@ async function fetchFullInventory(index) {
       // Оновлюємо портфоліо завжди після зміни інвентаря
       setTimeout(calculateAndDisplayPortfolio, 500);
       
-      const inventoryText = `Завантажено ${inventoryInfo.length} предметів<br>Загальна вартість: ${totalValue.toFixed(2)} грн`;
-      showNotification(`Інвентар оновлено!<br><br>${inventoryText}`, 'success');
+      const inventoryText = `${t('loaded_items')} ${inventoryInfo.length} ${t('items_word_genitive')}<br>${t('total_cost')}: ${totalValue.toFixed(2)} ${t('currency_uah_short')}`;
+      showNotification(`${t('inventory_updated')}<br><br>${inventoryText}`, 'success');
     } else {
       console.log('[fetchFullInventory] inventoryInfo is null, undefined або порожній');
-      showNotification('Не вдалося знайти інформацію про інвентар або інвентар порожній', 'warning');
+      showNotification(t('no_inventory_info_found'), 'warning');
       // Очищаємо інвентар акаунта, щоб видалити з портфоліо
       acc.fullInventory = [];
       acc.inventoryCount = 0;
@@ -931,8 +978,10 @@ async function fetchFullInventory(index) {
     console.error(`[fetchFullInventory] Помилка при отриманні інвентарю для ${acc.login}:`, e);
     showNotification(`Помилка: ${e.message}`, 'error');
   } finally {
-    // Ховаємо глобальний індикатор завантаження
-    hideLoadingIndicator();
+    // Ховаємо глобальний індикатор завантаження тільки якщо показували
+    if (showLoadingModal) {
+      hideLoadingIndicator();
+    }
     
     // Відновлюємо кнопки
     const buttons = [
@@ -967,9 +1016,9 @@ function render() {
     container.innerHTML = `
       <div class="no-results">
         <div class="no-results-icon">🔍</div>
-        <h3>Нічого не знайдено</h3>
-        <p>За запитом "${searchQuery}" не знайдено жодного акаунту</p>
-        <button onclick="clearSearch()" class="btn-clear-search-inline">Очистити пошук</button>
+        <h3>${t('search_no_results')}</h3>
+        <p>${t('search_no_results')} "${searchQuery}"</p>
+        <button onclick="clearSearch()" class="btn-clear-search-inline">${t('clear_search')}</button>
       </div>
     `;
     return;
@@ -994,10 +1043,10 @@ function render() {
     <div class="account-header" onclick="toggleDetails(${originalIndex})">
       <div class="account-title">
         <b>#${i + 1}</b>
-        <span>${acc.name || acc.login || 'Без імені'}</span>
+        <span>${acc.name || acc.login || t('account_no_name')}</span>
         <small class="account-id">ID: ${acc.id}</small>
       </div>
-      <button class="btn-global-trade" onclick="event.stopPropagation(); openGlobalTradeModal(${originalIndex})">🌐 Перекинути скіни на глобальну трейд-лінку</button>
+      <button class="btn-global-trade" onclick="event.stopPropagation(); openGlobalTradeModal(${originalIndex})">🌐 ${t('transfer_skins_global')}</button>
 
       <!-- Завжди показуємо секцію дропу -->
       <div class="drop-preview ${(acc.lastDrops && acc.lastDrops.length > 0) || acc.lastDrop ? 'has-drop' : 'no-drop-yet'}">
@@ -1011,28 +1060,28 @@ function render() {
                   <div class="drop-price-container">
                     <span class="drop-preview-price">💰 ${drop.priceUAH} грн</span>
                     <span class="drop-preview-price-usd">(${drop.originalPrice})</span>
-                    <button onclick="event.stopPropagation(); copyDropPrice(${originalIndex}, ${dropIndex})" class="btn-copy-drop" title="Копіювати ціну">📋</button>
+                    <button onclick="event.stopPropagation(); copyDropPrice(${originalIndex}, ${dropIndex})" class="btn-copy-drop" title="${t('copy_drop_price')}">📋</button>
                   </div>
                 </div>
               </div>
             `).join('')}
             ${acc.lastDrops.length > 1 ? `
               <div class="total-drops-price">
-                <span class="total-label">Загалом:</span>
-                <span class="total-amount">${(acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2)} грн</span>
-                <button onclick="event.stopPropagation(); copyTotalDropPrice(${originalIndex})" class="btn-copy-total" title="Копіювати загальну суму">📋</button>
+                <span class="total-label">${t('total_drops_price')}:</span>
+                <span class="total-amount">${(acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2)} ${t('currency_uah')}</span>
+                <button onclick="event.stopPropagation(); copyTotalDropPrice(${originalIndex})" class="btn-copy-total" title="${t('copy_trade_link')}">📋</button>
               </div>
             ` : ''}
           </div>
-          <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дропи">🔄</button>
+          <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="${t('refresh_drops')}">🔄</button>
         ` : acc.lastDrop ? `
           <img src="${acc.lastDropImageUrl}" alt="${acc.lastDrop}" class="drop-preview-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;48&quot; height=&quot;48&quot; rx=&quot;8&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;1.5&quot; stroke-dasharray=&quot;6,3&quot;/><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;12&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M24 18v12m-6-6h12&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;2&quot; fill=&quot;#10b981&quot;/></svg></div>'">
           <div class="drop-preview-info">
             <span class="drop-preview-name">${acc.lastDrop}</span>
             <span class="drop-preview-price">💰 ${acc.lastDropPrice} грн</span>
-            <button onclick="event.stopPropagation(); copyLastDropPrice(${originalIndex})" class="btn-copy-drop" title="Копіювати ціну">📋</button>
+            <button onclick="event.stopPropagation(); copyLastDropPrice(${originalIndex})" class="btn-copy-drop" title="${t('copy_drop_price')}">📋</button>
           </div>
-          <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="Оновити дроп">🔄</button>
+          <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="${t('refresh_drops')}">🔄</button>
         ` : `
           <div class="drop-placeholder">
             <div class="drop-placeholder-content">
@@ -1045,10 +1094,10 @@ function render() {
               </svg>
             </div>
             <div class="drop-preview-info">
-              <span class="drop-preview-name">Немає дропів</span>
-              <span class="drop-preview-price">Натисніть для отримання</span>
+              <span class="drop-preview-name">${t('no_drops')}</span>
+              <span class="drop-preview-price">${t('click_to_get')}</span>
             </div>
-            <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-fetch-drop-mini" title="Отримати дропи">🎁</button>
+            <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-fetch-drop-mini" title="${t('refresh_drop')}">🎁</button>
           </div>
         `}
       </div>
@@ -1056,26 +1105,26 @@ function render() {
       <div class="account-meta">
         <span>
           👤 ${acc.login}
-          <button onclick="event.stopPropagation(); copyToClipboard('${acc.login}', '👤 Логін скопійовано: ${acc.login}')">📋</button>
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.login}', '👤 ' + t('login_copied') + ': ${acc.login}')">📋</button>
         </span>
 
         <span>
           🔒••••••
-          <button onclick="event.stopPropagation(); copyToClipboard('${acc.password}', '🔒 Пароль скопійовано')">📋</button>
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.password}', '🔒 ' + t('password_copied'))">📋</button>
         </span>
 
-        <button onclick="event.stopPropagation(); generate2FA(${originalIndex})" class="btn-2fa">📟 Копіювати 2FA</button>
+        <button onclick="event.stopPropagation(); generate2FA(${originalIndex})" class="btn-2fa">📟 ${t('copy_2fa')}</button>
 
-        <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}', '🔗 Трейд-лінка скопійована')" class="btn-trade-url" title="Копіювати трейд-лінку">
-          🔗 ${acc.tradeUrl ? 'Трейд-лінка' : 'Немає трейд-лінки'}
+        <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}', '🔗 ${t('trade_url_copied')}')" class="btn-trade-url" title="${t('copy_trade_link')}">
+          🔗 ${acc.tradeUrl ? t('trade_url') : t('no_trade_url')}
         </button>
 
         <button onclick="event.stopPropagation(); toggleFarming(${originalIndex})" class="btn-farming">
-          ${acc.farming ? '✅ Фармиться' : '🚫 Не фармиться'}
+          ${acc.farming ? '✅ ' + t('farming_status') : '🚫 ' + t('not_farming_status')}
         </button>
 
         <button id="${originalIndex}Button" class="buttonFarm ${acc.starred ? 'farm' : 'unFarm'}" onclick="event.stopPropagation(); toggleStar(${originalIndex})">
-          ${acc.starred ? 'Відфармлений' : 'Не відфармлений'}
+          ${acc.starred ? t('farmed') : t('not_farmed')}
         </button>
 
         <span class="toggle-arrow">▼</span>
@@ -1086,51 +1135,51 @@ function render() {
       <div class="account-body">
         ${acc.prime
           ? `<div class="prime-section">
-               <span title="Prime Status">🔒 Prime</span>
-               <button class="btn-prime-remove" onclick="event.stopPropagation(); togglePrime(${originalIndex})">❌ Видалити Prime</button>
+               <span title="${t('prime_status')}">🔒 Prime</span>
+               <button class="btn-prime-remove" onclick="event.stopPropagation(); togglePrime(${originalIndex})">❌ ${t('remove_prime')}</button>
              </div>`
           : `<div class="prime-section">
-               <span title="До Prime">
-                 До Prime: через ${daysUntil(acc.unlockDate)} днів
+               <span title="${t('until_prime')}">
+                 ${t('until_prime')} ${daysUntil(acc.unlockDate)} ${t('days')}
                </span>
                <input type="date" value="${acc.unlockDate || ''}" onchange="updateField(${originalIndex}, 'unlockDate', this.value)" />
-               <button class="btn-prime-add" onclick="event.stopPropagation(); togglePrime(${originalIndex})">✅ Встановити Prime</button>
+               <button class="btn-prime-add" onclick="event.stopPropagation(); togglePrime(${originalIndex})">✅ ${t('set_prime')}</button>
              </div>`}
 
         <input type="file" onchange="selectMaFile(event, ${originalIndex})" />
-        <input type="text" placeholder="Шлях до maFile" value="${acc.maFilePath || ''}" onchange="updateField(${originalIndex}, 'maFilePath', this.value)" />
+        <input type="text" placeholder="${t('mafile_path')}" value="${acc.maFilePath || ''}" onchange="updateField(${originalIndex}, 'maFilePath', this.value)" />
 
         <div class="trade-url-field">
-          <input type="text" placeholder="Трейд-лінка (Trade URL)" value="${acc.tradeUrl || ''}" onchange="updateField(${originalIndex}, 'tradeUrl', this.value)" />
-          <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}', '🔗 Трейд-лінка скопійована')" title="Копіювати трейд-лінку">🔗</button>
+          <input type="text" placeholder="${t('trade_url')}" value="${acc.tradeUrl || ''}" onchange="updateField(${originalIndex}, 'tradeUrl', this.value)" />
+          <button onclick="event.stopPropagation(); copyToClipboard('${acc.tradeUrl || ''}', '${t('trade_url_copied')}')" title="${t('copy_trade_link')}">🔗</button>
         </div>
 
-        <input type="text" placeholder="Ім'я" value="${acc.name || ''}" onchange="updateField(${originalIndex}, 'name', this.value)" />
-        <input type="text" placeholder="Login" value="${acc.login}" onchange="updateField(${originalIndex}, 'login', this.value)" />
+        <input type="text" placeholder="${t('name_placeholder')}" value="${acc.name || ''}" onchange="updateField(${originalIndex}, 'name', this.value)" />
+        <input type="text" placeholder="${t('login_placeholder')}" value="${acc.login}" onchange="updateField(${originalIndex}, 'login', this.value)" />
 
         <div class="password-field">
-          <input type="password" id="${passwordId}" placeholder="Password" value="${acc.password}" onchange="updateField(${originalIndex}, 'password', this.value)" />
+          <input type="password" id="${passwordId}" placeholder="${t('password_placeholder')}" value="${acc.password}" onchange="updateField(${originalIndex}, 'password', this.value)" />
           <button onclick="togglePasswordVisibility('${passwordId}')">👁️</button>
         </div>
 
         <div class="finance">
-          <label>💰 Загальний дохід:</label>
+          <label>${t('total_income')}</label>
           <input type="number" value="${acc.income || 0}" onchange="updateField(${originalIndex}, 'income', this.value)" /> грн
 
-          <label>➕ Дохід за тиждень:</label>
+          <label>${t('weekly_income')}</label>
           <input type="number" value="${acc.weeklyIncome || 0}" onchange="updateField(${originalIndex}, 'weeklyIncome', this.value)" /> грн
-          <button class="btn-weekly-add" onclick="addWeeklyIncome(${originalIndex})">➕ Додати</button>
+          <button class="btn-weekly-add" onclick="addWeeklyIncome(${originalIndex})">${t('add_weekly')}</button>
 
-          <label>💸 Загальні витрати:</label>
-          <input type="number" value="${acc.expenses || 0}" onchange="updateField(${originalIndex}, 'expenses', this.value)" /> грн
+          <label>${t('total_expenses')}</label>
+          <input type="number" value="${acc.expenses || 0}" onchange="updateField(${originalIndex}, 'expenses', this.value)" /> ${t('currency_uah')}
 
-          <b>📈 Чистий прибуток: ${netProfit} грн</b>
+          <b>${t('net_profit_label')} ${netProfit} ${t('currency_uah')}</b>
         </div>
 
         <div class="last-drop">
-          <label>🎁 Останні дропи:</label>
+          <label>🎁 ${t('last_drops')}:</label>
           <div class="drop-controls">
-            <button id="fetch-drop-${originalIndex}" onclick="fetchLastDrop(${originalIndex})" class="btn-fetch-drop">🎁 Отримати дропи зі Steam</button>
+            <button id="fetch-drop-${originalIndex}" onclick="fetchLastDrop(${originalIndex})" class="btn-fetch-drop">🎁 ${t('get_drops')}</button>
           </div>
           
           ${(acc.lastDrops && acc.lastDrops.length > 0) ? `
@@ -1141,17 +1190,17 @@ function render() {
                   <img src="${drop.imageUrl}" alt="${drop.name}" class="last-drop-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;64&quot; height=&quot;64&quot; viewBox=&quot;0 0 64 64&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;10&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8,4&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;16&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;2&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M32 20v24m-12-12h24&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;3&quot; fill=&quot;#10b981&quot;/></svg></div>'">
                   <div class="last-drop-details">
                     <span class="last-drop-name">${drop.name}</span>
-                    <span class="last-drop-price">Ціна: ${drop.priceUAH} грн (${drop.originalPrice})</span>
-                    <span class="last-drop-date">Дата: ${new Date(drop.date).toLocaleDateString()}</span>
+                    <span class="last-drop-price">${t('chart_tooltip_value')}: ${drop.priceUAH} ${t('currency_uah')} (${drop.originalPrice})</span>
+                    <span class="last-drop-date">${t('history_date')}: ${new Date(drop.date).toLocaleDateString()}</span>
                   </div>
                 </div>
               `).join('')}
             </div>
           ` : acc.lastDrop ? `
             <div class="legacy-drop-info">
-              <input type="text" placeholder="Назва предмету" value="${acc.lastDrop || ''}" onchange="updateField(${originalIndex}, 'lastDrop', this.value)" />
+              <input type="text" placeholder="${t('name_placeholder')}" value="${acc.lastDrop || ''}" onchange="updateField(${originalIndex}, 'lastDrop', this.value)" />
               <input type="text" placeholder="URL зображення" value="${acc.lastDropImageUrl || ''}" onchange="updateField(${originalIndex}, 'lastDropImageUrl', this.value)" />
-              <input type="number" placeholder="Ціна" value="${acc.lastDropPrice || 0}" onchange="updateField(${originalIndex}, 'lastDropPrice', this.value)" /> грн
+              <input type="number" placeholder="${t('chart_tooltip_value')}" value="${acc.lastDropPrice || 0}" onchange="updateField(${originalIndex}, 'lastDropPrice', this.value)" /> ${t('currency_uah')}
               
               <div class="last-drop-info">
                 <img src="${acc.lastDropImageUrl}" alt="${acc.lastDrop}" class="last-drop-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;64&quot; height=&quot;64&quot; viewBox=&quot;0 0 64 64&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;10&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8,4&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;16&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;2&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M32 20v24m-12-12h24&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;3&quot; fill=&quot;#10b981&quot;/></svg></div>'">
@@ -1165,13 +1214,13 @@ function render() {
         </div>
 
         <div class="full-inventory">
-          <label>📦 Повний інвентар:</label>
+          <label>📦 ${t('inventory_value')}:</label>
           <div class="inventory-controls">
-            <button id="fetch-inventory-${originalIndex}" onclick="fetchFullInventory(${originalIndex})" class="btn-fetch-inventory">📦 Завантажити повний інвентар</button>
+            <button id="fetch-inventory-${originalIndex}" onclick="fetchFullInventory(${originalIndex})" class="btn-fetch-inventory">📦 ${t('load_full_inventory')}</button>
             ${acc.fullInventory && acc.fullInventory.length > 0 ? `
               <div class="inventory-summary">
-                <span class="inventory-count">Предметів: ${acc.inventoryCount || acc.fullInventory.length}</span>
-                <span class="inventory-value">Вартість: ${acc.inventoryValue || '0.00'} грн</span>
+                <span class="inventory-count">${t('chart_tooltip_items')}: ${acc.inventoryCount || acc.fullInventory.length}</span>
+                <span class="inventory-value">${t('chart_tooltip_value')}: ${acc.inventoryValue || '0.00'} ${t('currency_uah')}</span>
               </div>
             ` : ''}
           </div>
@@ -1186,7 +1235,7 @@ function render() {
                   }
                   <div class="inventory-item-info">
                     <div class="inventory-item-name">${escapeHtml(item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name)}</div>
-                    <div class="inventory-item-price">${item.priceUAH !== '0.00' ? item.priceUAH + ' грн' : 'Без ціни'}</div>
+                    <div class="inventory-item-price">${item.priceUAH !== '0.00' ? item.priceUAH + ' ' + t('currency_uah') : t('price_no_price')}</div>
                   </div>
                 </div>
               `).join('')}
@@ -1199,10 +1248,10 @@ function render() {
                 </div>
               ` : ''}
             </div>
-          ` : '<div class="no-inventory">Інвентар не завантажено</div>'}
+          ` : `<div class="no-inventory">${t('inventory_not_loaded')}</div>`}
         </div>
 
-        <button class="delete-btn" onclick="deleteAccount(${originalIndex})">🗑️ Видалити</button>
+        <button class="delete-btn" onclick="deleteAccount(${originalIndex})">🗑️ ${t('delete')}</button>
       </div>
     </div>
   </div>
@@ -1220,7 +1269,7 @@ function render() {
 
   const totalProfitEl = document.getElementById('total-profit');
   if (totalProfitEl) {
-    totalProfitEl.innerText = `Загальний прибуток: ${totalProfit.toFixed(2)} грн`;
+    totalProfitEl.innerText = `${t('total_profit')}: ${totalProfit.toFixed(2)} грн`;
 
     if (totalProfit > 0) {
       totalProfitEl.style.color = '#4caf50'; // зелений
@@ -1373,7 +1422,7 @@ function renderHistory() {
         allHistory.push({
           ...entry,
           date: entryDate,
-          accountName: acc.name || acc.login || `Акаунт #${accIndex + 1}`,
+          accountName: acc.name || acc.login || `${t('account_no_name')} #${accIndex + 1}`,
           accountIndex: accIndex
         });
       });
@@ -1384,7 +1433,7 @@ function renderHistory() {
   allHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (allHistory.length === 0) {
-    historyList.innerHTML = '<div class="no-history">📊 Історія доходів порожня</div>';
+    historyList.innerHTML = `<div class="no-history">📊 ${t('history_empty')}</div>`;
     return;
   }
 
@@ -1530,27 +1579,27 @@ function showPasswordChangeModal() {
   modal.innerHTML = `
     <div class="password-modal-content">
       <div class="password-modal-header">
-        <h3>Зміна пароля</h3>
+        <h3>${t('change_password_title')}</h3>
         <button class="password-modal-close" onclick="closePasswordModal()">&times;</button>
       </div>
       <div class="password-modal-body">
         <div class="password-field">
-          <label for="current-password">Поточний пароль:</label>
-          <input type="password" id="current-password" placeholder="Введіть поточний пароль">
+          <label for="current-password">${t('current_password')}:</label>
+          <input type="password" id="current-password" placeholder="${t('enter_current_password')}">
         </div>
         <div class="password-field">
-          <label for="new-password">Новий пароль:</label>
-          <input type="password" id="new-password" placeholder="Введіть новий пароль">
+          <label for="new-password">${t('new_password')}:</label>
+          <input type="password" id="new-password" placeholder="${t('enter_new_password')}">
         </div>
         <div class="password-field">
-          <label for="confirm-password">Підтвердження:</label>
-          <input type="password" id="confirm-password" placeholder="Підтвердіть новий пароль">
+          <label for="confirm-password">${t('confirm_password')}:</label>
+          <input type="password" id="confirm-password" placeholder="${t('confirm_new_password')}">
         </div>
         <div class="password-error" id="password-error"></div>
       </div>
       <div class="password-modal-footer">
-        <button class="password-btn password-btn-cancel" onclick="closePasswordModal()">Скасувати</button>
-        <button class="password-btn password-btn-save" onclick="saveNewPassword()">Зберегти</button>
+        <button class="password-btn password-btn-cancel" onclick="closePasswordModal()">${t('cancel')}</button>
+        <button class="password-btn password-btn-save" onclick="saveNewPassword()">${t('save')}</button>
       </div>
     </div>
   `;
@@ -1636,7 +1685,7 @@ window.saveNewPassword = async function() {
     closePasswordModal();
     
     // Показуємо повідомлення про успіх
-    showNotification('Пароль успішно змінено! Перезапустіть додаток для застосування змін.', 'success');
+    showNotification(t('success_password_changed'), 'success');
     
   } catch (error) {
     console.error('Помилка зміни пароля:', error);
@@ -1647,7 +1696,7 @@ window.saveNewPassword = async function() {
 // Функції для імпорту/експорту
 async function importAccounts() {
   try {
-    showNotification('Виберіть файл з акаунтами для імпорту...', 'info');
+    showNotification(t('select_accounts_file'), 'info');
     const result = await ipcRenderer.invoke('import-accounts');
     
     if (result.success) {
@@ -1660,14 +1709,14 @@ async function importAccounts() {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('Помилка імпорту акаунтів:', error);
-    showNotification('Помилка імпорту акаунтів: ' + error.message, 'error');
+    console.error(`${t('import_accounts_error')}:`, error);
+    showNotification(`${t('error_import_accounts')}: ` + error.message, 'error');
   }
 }
 
 async function importTradeHistory() {
   try {
-    showNotification('Виберіть файл з історією торгівлі для імпорту...', 'info');
+    showNotification(t('select_history_file'), 'info');
     const result = await ipcRenderer.invoke('import-trade-history');
     
     if (result.success) {
@@ -1676,14 +1725,14 @@ async function importTradeHistory() {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('Помилка імпорту історії:', error);
-    showNotification('Помилка імпорту історії: ' + error.message, 'error');
+    console.error(`${t('import_history_error')}:`, error);
+    showNotification(`${t('error_import_history')}: ` + error.message, 'error');
   }
 }
 
 async function importMaFiles() {
   try {
-    showNotification('Виберіть папку з .maFile файлами для імпорту...', 'info');
+    showNotification(t('select_mafiles_folder'), 'info');
     const result = await ipcRenderer.invoke('import-mafiles-folder');
     
     if (result.success) {
@@ -1701,15 +1750,15 @@ async function importMaFiles() {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('Помилка імпорту maFiles:', error);
-    showNotification('Помилка імпорту maFiles: ' + error.message, 'error');
+    console.error(`${t('import_mafiles_error')}:`, error);
+    showNotification(`${t('error_import_mafiles')}: ` + error.message, 'error');
   }
 }
 
 // Функція для імпорту папки з .maFile файлами
 async function importMaFilesFolder() {
   try {
-    showNotification('Виберіть папку з .maFile файлами для імпорту...', 'info');
+    showNotification(t('select_mafiles_folder'), 'info');
     const result = await ipcRenderer.invoke('import-mafiles-folder');
     
     if (result.success) {
@@ -1727,15 +1776,15 @@ async function importMaFilesFolder() {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('Помилка імпорту папки maFiles:', error);
-    showNotification('Помилка імпорту папки maFiles: ' + error.message, 'error');
+    console.error(`${t('import_mafiles_folder_error')}:`, error);
+    showNotification(`${t('error_import_mafiles')}: ` + error.message, 'error');
   }
 }
 
 // Функція для імпорту окремих .maFile файлів
 async function importMaFilesIndividual() {
   try {
-    showNotification('Виберіть .maFile файли для імпорту...', 'info');
+    showNotification(t('select_mafiles'), 'info');
     const result = await ipcRenderer.invoke('import-mafiles-individual');
     
     if (result.success) {
@@ -1753,14 +1802,14 @@ async function importMaFilesIndividual() {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('Помилка імпорту окремих maFiles:', error);
-    showNotification('Помилка імпорту окремих maFiles: ' + error.message, 'error');
+    console.error(`${t('import_individual_mafiles_error')}:`, error);
+    showNotification(`${t('error_import_mafiles')}: ` + error.message, 'error');
   }
 }
 
 async function exportAccounts() {
   try {
-    showNotification('Виберіть місце для збереження файлу...', 'info');
+    showNotification(t('select_save_location'), 'info');
     const result = await ipcRenderer.invoke('export-accounts');
     
     if (result.success) {
@@ -1769,8 +1818,8 @@ async function exportAccounts() {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('Помилка експорту акаунтів:', error);
-    showNotification('Помилка експорту акаунтів: ' + error.message, 'error');
+    console.error(`${t('export_accounts_error')}:`, error);
+    showNotification(`${t('error_export_accounts')}: ` + error.message, 'error');
   }
 }
 
@@ -1781,12 +1830,12 @@ function showImportExportModal() {
   modal.innerHTML = `
     <div class="import-export-modal-content">
       <div class="import-export-modal-header">
-        <h3>Імпорт / Експорт даних</h3>
+        <h3>${t('import_export_data')}</h3>
         <button class="modal-close" onclick="closeImportExportModal()">&times;</button>
       </div>
       <div class="import-export-modal-body">
         <div class="import-export-section">
-          <h4>📥 Імпорт</h4>
+          <h4>📥 ${t('import_data')}</h4>
           <div class="import-export-buttons">
             <button class="import-export-btn import-btn" onclick="importAccounts()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1795,13 +1844,13 @@ function showImportExportModal() {
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
-              Імпорт акаунтів
+              ${t('import_accounts_btn')}
             </button>
             <button class="import-export-btn import-btn" onclick="importTradeHistory()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 3h18v18H3zM12 8v8m-4-4h8"/>
               </svg>
-              Імпорт історії торгівлі
+              ${t('import_trade_history')}
             </button>
             <button class="import-export-btn import-btn" onclick="importMaFiles()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1811,13 +1860,13 @@ function showImportExportModal() {
                 <line x1="16" y1="17" x2="8" y2="17"/>
                 <polyline points="10,9 9,9 8,9"/>
               </svg>
-              Імпорт .maFile папки
+              ${t('import_mafiles_folder')}
             </button>
           </div>
         </div>
         
         <div class="import-export-section">
-          <h4>📤 Експорт</h4>
+          <h4>📤 ${t('export_data')}</h4>
           <div class="import-export-buttons">
             <button class="import-export-btn export-btn" onclick="exportAccounts()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1826,23 +1875,23 @@ function showImportExportModal() {
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
-              Експорт акаунтів
+              ${t('export_accounts_btn')}
             </button>
           </div>
         </div>
         
         <div class="import-export-info">
-          <h4>ℹ️ Інформація</h4>
+          <h4>ℹ️ ${t('information')}</h4>
           <ul>
-            <li><strong>Імпорт акаунтів:</strong> Додає нові акаунти до існуючих (дублікати пропускаються)</li>
-            <li><strong>Імпорт історії:</strong> Замінює поточну історію торгівлі</li>
-            <li><strong>Імпорт .maFile:</strong> Копіює .maFile файли до папки програми</li>
-            <li><strong>Експорт акаунтів:</strong> Зберігає всі акаунти у JSON файл</li>
+            <li><strong>${t('import_accounts_btn')}:</strong> ${t('import_accounts_info')}</li>
+            <li><strong>${t('import_history')}:</strong> ${t('import_history_info')}</li>
+            <li><strong>${t('import_mafiles')}:</strong> ${t('import_mafiles_info')}</li>
+            <li><strong>${t('export_accounts_btn')}:</strong> ${t('export_accounts_info')}</li>
           </ul>
         </div>
       </div>
       <div class="import-export-modal-footer">
-        <button class="import-export-btn cancel-btn" onclick="closeImportExportModal()">Закрити</button>
+        <button class="import-export-btn cancel-btn" onclick="closeImportExportModal()">${t('close')}</button>
       </div>
     </div>
   `;
@@ -1871,7 +1920,7 @@ function forceCloseAllModals() {
   modals.forEach(modal => {
     modal.remove();
   });
-  showNotification('Всі модальні вікна та екрани завантаження закрито.', 'info');
+  showNotification(t('modals_closed'), 'info');
 }
 
 // Робимо функцію глобальною
@@ -1921,7 +1970,7 @@ window.debugAccounts = function() {
 // Функція для автоматичного зіставлення всіх maFiles
 async function autoLinkAllMaFiles() {
   try {
-    showNotification('Автоматично з\'язую .maFile файли з акаунтами...', 'info');
+    showNotification(t('auto_linking_mafiles'), 'info');
     const result = await ipcRenderer.invoke('auto-link-mafiles');
     
     if (result.success) {
@@ -1980,11 +2029,11 @@ window.setStarFilter = setStarFilter;
 async function renameMaFilesToAccountNames() {
   try {
     console.log('[renameMaFiles] Початок виконання функції');
-    showNotification('Перейменовуємо .maFile файли...', 'info');
+    showNotification(t('renaming_mafiles'), 'info');
     
     if (!maFilesPath) {
       console.error('[renameMaFiles] maFilesPath не визначений');
-      showNotification('Шлях до папки maFiles не ініціалізований', 'error');
+      showNotification(t('mafiles_path_not_initialized'), 'error');
       return;
     }
 
@@ -1994,13 +2043,13 @@ async function renameMaFilesToAccountNames() {
     // Перевіряємо, чи існує папка
     if (!fs.existsSync(maFilesPath)) {
       console.error('[renameMaFiles] Папка не існує:', maFilesPath);
-      showNotification(`Папка maFiles не існує: ${maFilesPath}`, 'error');
+      showNotification(`${t('mafiles_folder_not_exists')}: ${maFilesPath}`, 'error');
       return;
     }
 
     if (accounts.length === 0) {
       console.log('[renameMaFiles] Немає облікових записів для обробки');
-      showNotification('Немає облікових записів для перейменування файлів', 'warning');
+      showNotification(t('no_accounts_for_renaming'), 'warning');
       return;
     }
     
@@ -2070,7 +2119,7 @@ async function renameMaFilesToAccountNames() {
         }
         
       } catch (error) {
-        console.error(`[renameMaFiles] Загальна помилка обробки акаунту ${account.login}:`, error);
+        console.error(`[renameMaFiles] ${t('general_processing_error')} ${account.login}:`, error);
         errors.push(`Помилка обробки акаунту ${account.login}: ${error.message}`);
       }
     }
@@ -2108,14 +2157,14 @@ async function renameMaFilesToAccountNames() {
     
   } catch (error) {
     console.error('[renameMaFiles] Критична помилка:', error);
-    showNotification('Критична помилка перейменування: ' + error.message, 'error');
+    showNotification(`${t('critical_renaming_error')}: ` + error.message, 'error');
   }
 }
 
 // Функція для ручного перейменування файлів (кнопка в інтерфейсі)
 async function manualRenameFiles() {
   console.log('[manualRenameFiles] Ручний запуск перейменування...');
-  showNotification('🔄 Запускається перейменування .maFile файлів...', 'info');
+  showNotification(`🔄 ${t('starting_mafiles_renaming')}`, 'info');
   
   try {
     await renameMaFilesToAccountNames();
@@ -2132,7 +2181,7 @@ async function manualRenameFiles() {
     
   } catch (error) {
     console.error('[manualRenameFiles] Помилка:', error);
-    showNotification('❌ Помилка перейменування: ' + error.message, 'error');
+    showNotification(`❌ ${t('renaming_error')}: ` + error.message, 'error');
   }
 }
 
@@ -2171,14 +2220,14 @@ function refreshPortfolio() {
 async function autoLoadAllInventories() {
   console.log('[Portfolio] Початок автоматичного завантаження інвентарів...');
   
-  showNotification('🔄 Завантаження інвентарів для всіх акаунтів...', 'info');
+  // showNotification(`🔄 ${t('loading_all_inventories')}`, 'info'); // Прибрано модалку
   
   const accountsWithCredentials = accounts.filter(acc => 
     acc.login && acc.password && acc.login.trim() !== '' && acc.password.trim() !== ''
   );
   
   if (accountsWithCredentials.length === 0) {
-    showNotification('❌ Немає акаунтів з налаштованими даними для входу', 'warning');
+    console.warn(`[Portfolio] ${t('no_accounts_with_credentials')}`);
     return;
   }
   
@@ -2195,10 +2244,11 @@ async function autoLoadAllInventories() {
     try {
       console.log(`[Portfolio] Завантаження інвентаря ${i + 1}/${accountsWithCredentials.length}: ${account.login}`);
       
-      showNotification(`🔄 Завантаження інвентаря ${account.login || account.name} (${i + 1}/${accountsWithCredentials.length})`, 'info');
+      // Показуємо коротке сповіщення про поточний акаунт
+      showNotification(`🔄 ${t('account_loading')} ${account.login}`, 'info');
       
-      // Викликаємо існуючу функцію завантаження інвентаря
-      await fetchFullInventory(originalIndex);
+      // Викликаємо існуючу функцію завантаження інвентаря без модалки
+      await fetchFullInventory(originalIndex, false);
       
       successCount++;
       console.log(`[Portfolio] ✅ Успішно завантажено інвентар для ${account.login}`);
@@ -2210,24 +2260,24 @@ async function autoLoadAllInventories() {
       
     } catch (error) {
       errorCount++;
-      console.error(`[Portfolio] ❌ Помилка завантаження для ${account.login}:`, error);
+      console.error(`[Portfolio] ❌ ${t('portfolio_loading_error')} ${account.login}:`, error);
     }
   }
   
-  console.log(`[Portfolio] Завершено автозавантаження. Успішно: ${successCount}, Помилок: ${errorCount}`);
+  console.log(`[Portfolio] ${t('portfolio_auto_load_completed')} ${successCount}, ${t('portfolio_auto_load_errors')} ${errorCount}`);
   
   // Зберігаємо час завершення завантаження
   localStorage.setItem('lastAutoInventoryLoad', Date.now().toString());
   
   if (successCount > 0) {
-    showNotification(`✅ Завантажено інвентарі для ${successCount} акаунтів!${errorCount > 0 ? ` (${errorCount} помилок)` : ''}`, 'success');
+    console.log(`[Portfolio] ✅ ${t('inventories_loaded_success')} ${successCount} ${t('accounts_word')}!${errorCount > 0 ? ` (${errorCount} ${t('errors_word')})` : ''}`);
     
     // Оновлюємо портфоліо після завантаження
     setTimeout(() => {
       calculateAndDisplayPortfolio();
     }, 1000);
   } else {
-    showNotification(`❌ Не вдалося завантажити жоден інвентар (${errorCount} помилок)`, 'error');
+    console.error(`[Portfolio] ❌ ${t('no_inventories_loaded')} (${errorCount} ${t('errors_word')})`);
   }
 }
 
@@ -2268,10 +2318,10 @@ function calculateAndDisplayPortfolio() {
     renderPortfolioAccounts(portfolioData.accountsWithInventory);
     renderPortfolioCharts(portfolioData);
     
-    console.log('[Portfolio] Портфоліо оновлено:', portfolioData);
+    console.log(`[Portfolio] ${t('portfolio_updated')}:`, portfolioData);
   } catch (error) {
-    console.error('[Portfolio] Помилка розрахунку портфоліо:', error);
-    showNotification('❌ Помилка завантаження портфоліо: ' + error.message, 'error');
+    console.error(`[Portfolio] ${t('portfolio_error_calculation')}:`, error);
+    showNotification(`❌ ${t('error_loading_portfolio')}: ` + error.message, 'error');
   }
 }
 
@@ -2371,8 +2421,8 @@ function renderPortfolioAccounts(accountsWithInventory) {
   if (accountsWithInventory.length === 0) {
     container.innerHTML = `
       <div class="no-drops-message">
-        <p>📭 Немає інвентаря для відображення</p>
-        <p>Завантажте інвентар CS:GO та Team Fortress 2 для перегляду предметів</p>
+        <p>📭 ${t('inventory_empty')}</p>
+        <p>${t('inventory_loading')}</p>
       </div>
     `;
     return;
@@ -2383,14 +2433,14 @@ function renderPortfolioAccounts(accountsWithInventory) {
       <div class="portfolio-account-header">
         <div class="portfolio-account-name">${escapeHtml(account.name)}</div>
         <div class="portfolio-account-stats">
-          <span>📦 Предметів: ${account.inventoryCount}</span>
-          <span>💰 Вартість інвентаря: ₴${account.totalInventoryValue.toFixed(2)}</span>
+          <span>📦 ${t('chart_tooltip_items')}: ${account.inventoryCount}</span>
+          <span>💰 ${t('inventory_value')}: ₴${account.totalInventoryValue.toFixed(2)}</span>
         </div>
       </div>
       
       ${account.inventory.length > 0 ? `
         <div class="portfolio-section">
-          <h4 class="portfolio-section-title">� Інвентар CS:GO та Team Fortress 2</h4>
+          <h4 class="portfolio-section-title">🎮 ${t('inventory_value')} ${t('game_csgo')} та ${t('game_tf2')}</h4>
           
           ${(() => {
             // Групуємо предмети по іграх
@@ -2402,7 +2452,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
             if (csgoItems.length > 0) {
               html += `
                 <div class="game-section">
-                  <h5 class="game-title">🔫 CS:GO (${csgoItems.length} предметів)</h5>
+                  <h5 class="game-title">🔫 ${t('game_csgo')} (${csgoItems.length} ${t('items_word')})</h5>
                   <div class="portfolio-drops-grid">
                     ${csgoItems.slice(0, 12).map(item => `
                       <div class="portfolio-drop-item">
@@ -2412,7 +2462,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
                         }
                         <div class="drop-info">
                           <div class="drop-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name)}</div>
-                          <div class="drop-price">₴${item.price} ${item.tradeable ? '(🔄)' : '(🔒)'}</div>
+                          <div class="drop-price">₴${item.price} ${item.tradeable ? `(${t('tradeable')})` : `(${t('not_tradeable')})`}</div>
                           ${item.type ? `<div class="item-type">${escapeHtml(item.type)}</div>` : ''}
                         </div>
                       </div>
@@ -2421,7 +2471,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
                       <div class="portfolio-drop-item more-items-indicator">
                         <div class="drop-image" style="background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--emerald-400);">+${csgoItems.length - 12}</div>
                         <div class="drop-info">
-                          <div class="drop-name">Ще CS:GO предметів</div>
+                          <div class="drop-name">${t('more_items')} ${t('game_csgo')}</div>
                           <div class="drop-price">...</div>
                         </div>
                       </div>
@@ -2434,7 +2484,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
             if (tf2Items.length > 0) {
               html += `
                 <div class="game-section">
-                  <h5 class="game-title">� Team Fortress 2 (${tf2Items.length} предметів)</h5>
+                  <h5 class="game-title">🛡️ ${t('game_tf2')} (${tf2Items.length} ${t('items_word')})</h5>
                   <div class="portfolio-drops-grid">
                     ${tf2Items.slice(0, 12).map(item => `
                       <div class="portfolio-drop-item">
@@ -2444,7 +2494,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
                         }
                         <div class="drop-info">
                           <div class="drop-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name)}</div>
-                          <div class="drop-price">₴${item.price} ${item.tradeable ? '(🔄)' : '(🔒)'}</div>
+                          <div class="drop-price">₴${item.price} ${item.tradeable ? `(${t('tradeable')})` : `(${t('not_tradeable')})`}</div>
                           ${item.type ? `<div class="item-type">${escapeHtml(item.type)}</div>` : ''}
                         </div>
                       </div>
@@ -2453,7 +2503,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
                       <div class="portfolio-drop-item more-items-indicator">
                         <div class="drop-image" style="background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--emerald-400);">+${tf2Items.length - 12}</div>
                         <div class="drop-info">
-                          <div class="drop-name">Ще TF2 предметів</div>
+                          <div class="drop-name">${t('more_items')} ${t('game_tf2')}</div>
                           <div class="drop-price">...</div>
                         </div>
                       </div>
@@ -2468,8 +2518,8 @@ function renderPortfolioAccounts(accountsWithInventory) {
         </div>
       ` : `
         <div class="no-data-message">
-          <p>📭 Інвентар порожній або не завантажений</p>
-          <p>Натисніть "📦 Завантажити повний інвентар" для завантаження</p>
+          <p>📭 ${t('inventory_empty')}</p>
+          <p>${t('inventory_loading')}</p>
         </div>
       `}
     </div>
@@ -2703,7 +2753,7 @@ globalThis.openGlobalTradeModal = function(accountIndex) {
   const hasCS2 = acc.fullInventory && acc.fullInventory.some(item => item.gameApp === 'CS:GO' || item.game === 'CS:GO');
   const hasTF2 = acc.fullInventory && acc.fullInventory.some(item => item.gameApp === 'TF2' || item.game === 'TF2');
   if (!hasCS2 && !hasTF2) {
-    showNotification('У акаунта немає інвентаря CS2 або TF2 для перекидання!', 'warning');
+    showNotification(t('no_cs2_tf2_inventory'), 'warning');
     return;
   }
   const modal = document.createElement('div');
@@ -2740,7 +2790,7 @@ globalThis.sendGlobalTrade = async function(accountIndex, game) {
   if (game === 'CS2') {
     const hasCS2 = acc.fullInventory && acc.fullInventory.some(item => item.gameApp === 'CS:GO' || item.game === 'CS:GO');
     if (!hasCS2) {
-      showNotification('У акаунта немає інвентаря CS2 для перекидання!', 'warning');
+      showNotification(t('no_cs2_inventory'), 'warning');
       return;
     }
   }

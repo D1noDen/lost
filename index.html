@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
-  <title>LOST — Вхід</title>
+  <title data-translate="app_title">LOST — Вхід</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
 
@@ -217,6 +217,48 @@
         }
     }
     
+    /* Стилі для селектора мови */
+    .language-selector {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: var(--bg-glass);
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .language-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .language-btn:hover {
+      background: var(--bg-glass-hover);
+      color: var(--text-primary);
+    }
+
+    .language-btn.active {
+      background: var(--bg-button);
+      color: white;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
     /* Стилі для автоматичного оновлення */
     .update-notification {
       position: fixed;
@@ -303,28 +345,42 @@
 <body>
   <canvas id="bg-animation"></canvas>
 
+  <!-- Селектор мови -->
+  <div class="language-selector">
+    <button class="language-btn active" data-lang="uk">
+      🇺🇦 UA
+    </button>
+    <button class="language-btn" data-lang="ru">
+      🇷🇺 RU
+    </button>
+    <button class="language-btn" data-lang="en">
+      🇺🇸 EN
+    </button>
+  </div>
+
   <div class="container">
     <div class="header-content">
-      <h1 class="main-title">💼 <span>LOST</span> Accounts</h1>
-      <p class="main-sub">Управління, фарм і безпека акаунтів</p>
+      <h1 class="main-title">💼 <span data-translate="main_title">LOST Accounts</span></h1>
+      <p class="main-sub" data-translate="main_subtitle">Управління, фарм і безпека акаунтів</p>
     </div>
     
     <div class="login-form">
-      <input type="password" id="password" placeholder="Введіть пароль" autocomplete="current-password" />
-      <button onclick="login()">🔓 Увійти</button>
-      <div class="error" id="error">❌ Неправильний пароль!</div>
+      <input type="password" id="password" data-translate="password_placeholder" placeholder="Введіть пароль" autocomplete="current-password" />
+      <button onclick="login()" data-translate="login_button">🔓 Увійти</button>
+      <div class="error" id="error" data-translate="wrong_password">❌ Неправильний пароль!</div>
       <div id="default-hint" style="color: #6ee7b7; font-size: 12px; margin-top: 8px; opacity: 0.7; text-align: center;">
-        Перший запуск? Використайте пароль: <strong>admin</strong>
+        <span data-translate="first_run_hint">Перший запуск? Використайте пароль:</span> <strong>admin</strong>
       </div>
     </div>
   </div>
 
   <div class="created-by">
-    Created By <span class="den">Den</span> 
+    <span data-translate="created_by">Created By</span> <span class="den">Den</span> 
     <span id="app-version" style="margin-left: 10px; opacity: 0.7;"></span>
-    <button onclick="checkForUpdates()" style="margin-left: 10px; background: var(--bg-button); border: none; padding: 4px 8px; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">🔄 Оновлення</button>
+    <button onclick="checkForUpdates()" data-translate="check_updates" style="margin-left: 10px; background: var(--bg-button); border: none; padding: 4px 8px; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">🔄 Оновлення</button>
   </div>
 
+  <script src="js/translations.js"></script>
   <script>
     const fs = require('fs');
     const path = require('path');
@@ -342,7 +398,7 @@
         if (entered === authData.password) {
           window.location.href = 'main.html';
         } else {
-          errorBox.textContent = 'Невірний пароль!';
+          errorBox.textContent = t('wrong_password');
           errorBox.classList.add('show');
           passwordInput.focus();
           setTimeout(() => {
@@ -351,7 +407,7 @@
         }
       } catch (err) {
         console.error("Error with auth file:", err);
-        errorBox.textContent = 'Помилка конфігурації!';
+        errorBox.textContent = t('config_error');
         errorBox.classList.add('show');
       }
     }
@@ -381,11 +437,11 @@
     // Функції для автоматичного оновлення
     async function checkForUpdates() {
       try {
-        showUpdateNotification('Перевірка оновлень...', 'info');
+        showUpdateNotification(t('checking_updates'), 'info');
         await ipcRenderer.invoke('check-for-updates');
       } catch (error) {
         console.error('Error checking for updates:', error);
-        showUpdateNotification('Помилка перевірки оновлень', 'error');
+        showUpdateNotification(t('update_error'), 'error');
       }
     }
 
@@ -433,7 +489,7 @@
     });
 
     ipcRenderer.on('update-progress', (event, progress) => {
-      showUpdateNotification(`Завантаження: ${progress.percent}%`, 'info');
+      showUpdateNotification(`${t('downloading')}: ${progress.percent}%`, 'info');
     });
 
     // Ініціалізація версії додатка
@@ -445,6 +501,53 @@
     }).catch(err => {
       console.log('Could not get app version:', err);
     });
+
+    // Ініціалізація системи мов
+    document.addEventListener('DOMContentLoaded', function() {
+      // Встановлюємо активну кнопку мови
+      updateLanguageButtons();
+      
+      // Додаємо обробники подій для кнопок мови
+      document.querySelectorAll('.language-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const lang = this.getAttribute('data-lang');
+          langManager.setLanguage(lang);
+          updateLanguageButtons();
+          
+          // Повідомляємо всі відкриті сторінки про зміну мови
+          try {
+            localStorage.setItem('language_changed', Date.now());
+          } catch (e) {
+            console.warn('Could not save language change notification');
+          }
+        });
+      });
+
+      // Оновлюємо переклади при зміні мови
+      langManager.addObserver(() => {
+        updateLanguageButtons();
+      });
+      
+      // Слухаємо зміни мови з інших сторінок
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'lost_language') {
+          langManager.setLanguage(e.newValue);
+          updateLanguageButtons();
+        }
+      });
+    });
+
+    function updateLanguageButtons() {
+      const currentLang = langManager.getCurrentLanguage();
+      document.querySelectorAll('.language-btn').forEach(btn => {
+        const lang = btn.getAttribute('data-lang');
+        if (lang === currentLang) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
 
     // Анімація фону
     const canvas = document.getElementById('bg-animation');

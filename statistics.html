@@ -2,9 +2,10 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEO-Stat Dashboard</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-translate="statistics_title">NEO-Stat Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/translations.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -569,12 +570,12 @@ canvas {
 </head>
 <body>
   <div class="main-container">
-    <button onclick="location.href='main.html'" class="back-button">← Назад</button>
-    <div class="created-by">Created By <span class="den">Den</span></div>
+    <button onclick="location.href='main.html'" class="back-button" data-translate="back">← Назад</button>
+    <div class="created-by" data-translate="created_by">Created By <span class="den">Den</span></div>
     
     <div class="stats-header">
-      <h1>📊 LOST — Статистика</h1>
-      <p>Аналіз акаунтів, прибутків і активності</p>
+      <h1 data-translate="statistics_header">📊 LOST — Статистика</h1>
+      <p data-translate="statistics_subtitle">Аналіз акаунтів, прибутків і активності</p>
     </div>
 
     <!-- Картки статистики -->
@@ -582,38 +583,38 @@ canvas {
       <div class="stat-card">
         <span class="stat-icon">👥</span>
         <div class="stat-value" id="total-accounts">0</div>
-        <div class="stat-label">Всього акаунтів</div>
+        <div class="stat-label" data-translate="total_accounts">Всього акаунтів</div>
       </div>
       
       <div class="stat-card">
         <span class="stat-icon">💰</span>
         <div class="stat-value" id="total-income">0 грн</div>
-        <div class="stat-label">Загальний дохід</div>
+        <div class="stat-label" data-translate="total_income">Загальний дохід</div>
       </div>
       
       <div class="stat-card">
         <span class="stat-icon">💸</span>
         <div class="stat-value" id="total-expenses">0 грн</div>
-        <div class="stat-label">Загальні витрати</div>
+        <div class="stat-label" data-translate="total_expenses">Загальні витрати</div>
       </div>
       
       <div class="stat-card">
         <span class="stat-icon">📈</span>
         <div class="stat-value" id="net-profit">0 грн</div>
-        <div class="stat-label">Чистий прибуток</div>
+        <div class="stat-label" data-translate="net_profit">Чистий прибуток</div>
       </div>
     </div>
 
     <!-- Графіки -->
     <div class="chart-container">
-      <h2 class="chart-title">📈 Динаміка доходів</h2>
+      <h2 class="chart-title" data-translate="income_dynamics">📈 Динаміка доходів</h2>
       <div class="chart-wrapper">
         <canvas id="lineChart"></canvas>
       </div>
     </div>
     
     <div class="chart-container">
-      <h2 class="chart-title">📊 Порівняння акаунтів</h2>
+      <h2 class="chart-title" data-translate="accounts_comparison">📊 Порівняння акаунтів</h2>
       <div class="chart-wrapper">
         <canvas id="barChart"></canvas>
       </div>
@@ -621,7 +622,7 @@ canvas {
     
     <div class="weekly-chart-container">
       <div class="weekly-chart-header">
-        <h2 class="weekly-chart-title">📅 Тижневі доходи</h2>
+        <h2 class="weekly-chart-title" data-translate="weekly_income">📅 Тижневі доходи</h2>
         <div class="weekly-stats-summary" id="weekly-summary">
           <!-- Статистика буде додана динамічно -->
         </div>

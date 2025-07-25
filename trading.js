@@ -52,8 +52,8 @@ function renderHistory(history) {
         container.innerHTML = `
             <div class="no-trades">
                 <div class="icon">📊</div>
-                <h3>Історія порожня</h3>
-                <p>Тут будуть відображатися завершені угоди</p>
+                <h3>${t('history_empty')}</h3>
+                <p>${t('completed_trades_here')}</p>
             </div>
         `;
         return;
@@ -129,7 +129,7 @@ async function loadAccountsManually() {
         event.target.style.display = 'none';
     } catch (error) {
         console.error('Помилка завантаження акаунтів:', error);
-        alert('Помилка завантаження акаунтів!');
+        alert(t('error_loading_accounts') + '!');
     }
 }
 
@@ -183,7 +183,7 @@ async function login() {
         loginToNextAccount([selectedAccount], 0);
     } catch (error) {
         console.error('Помилка входу в акаунт:', error);
-        showMessage('❌ Помилка входу в акаунт!', 'error');
+        showMessage(`❌ ${t('error_account_login')}!`, 'error');
     }
 }
 
@@ -250,7 +250,7 @@ function loadTrades() {
             hideLoadingMessages();
             
             console.error('Failed to get trades:', err);
-            showMessage(`❌ Помилка завантаження трейдів: ${err.message}`, 'error');
+            showMessage(`❌ ${t('error_loading_trades')}: ${err.message}`, 'error');
         });
 }
 
@@ -280,8 +280,8 @@ function renderTrades(offers) {
         container.innerHTML = `
             <div class="no-trades">
                 <div class="icon">📦</div>
-                <h3>Немає активних угод</h3>
-                <p>На даний момент немає трейдів для обробки</p>
+                <h3>${t('no_active_trades')}</h3>
+                <p>${t('no_trades_to_process')}</p>
             </div>
         `;
         return;
@@ -322,10 +322,10 @@ function renderTrades(offers) {
             </div>
             <div class="trade-actions">
                 <button class="btn-accept" onclick="acceptTrade('${offer.id}')">
-                    ✅ Прийняти
+                    ✅ ${t('accept_trade')}
                 </button>
                 <button class="btn-decline" onclick="declineTrade('${offer.id}')">
-                    ❌ Відхилити
+                    ❌ ${t('decline_trade')}
                 </button>
             </div>
         `;
@@ -336,16 +336,16 @@ function renderTrades(offers) {
 function acceptTrade(offerId) {
     const offer = activeOffers.find(o => o.id === offerId);
     if (!offer) {
-        showMessage('❌ Трейд не знайдено!', 'error');
+        showMessage(`❌ ${t('trade_not_found')}`, 'error');
         return;
     }
 
-    showMessage('⏳ Прийняття трейду...', 'loading');
+    showMessage(`⏳ ${t('accepting_trade')}`, 'loading');
     
     tradeManager.acceptOffer(offer)
         .then(() => {
             hideLoadingMessages();
-            showMessage('✅ Трейд успішно прийнято!', 'success');
+            showMessage(`✅ ${t('trade_accepted_success')}`, 'success');
             const historyEntry = {
                 id: offer.id,
                 partnerId: offer.partner.getSteamID64(),
@@ -364,7 +364,7 @@ function acceptTrade(offerId) {
         .catch(err => {
             hideLoadingMessages();
             console.error('Failed to accept trade:', err);
-            showMessage(`❌ Помилка при прийнятті трейду: ${err.message}`, 'error');
+            showMessage(`❌ ${t('error_accepting_trade')}: ${err.message}`, 'error');
         });
 }
 
@@ -379,12 +379,12 @@ function declineTrade(offerId) {
         return;
     }
 
-    showMessage('⏳ Відхилення трейду...', 'loading');
+    showMessage(`⏳ ${t('declining_trade')}`, 'loading');
     
     tradeManager.declineOffer(offer)
         .then(() => {
             hideLoadingMessages();
-            showMessage('✅ Трейд успішно відхилено!', 'success');
+            showMessage(`✅ ${t('trade_declined_success')}`, 'success');
             const historyEntry = {
                 id: offer.id,
                 partnerId: offer.partner.getSteamID64(),
@@ -399,7 +399,7 @@ function declineTrade(offerId) {
         .catch(err => {
             hideLoadingMessages();
             console.error('Failed to decline trade:', err);
-            showMessage(`❌ Помилка при відхиленні трейду: ${err.message}`, 'error');
+            showMessage(`❌ ${t('error_declining_trade')}: ${err.message}`, 'error');
         });
 }
 
@@ -476,7 +476,7 @@ async function loginToNextAccount(accounts, index = 0) {
         
         if (!maFileResult.success) {
             console.error(`Помилка читання maFile для ${account.login}:`, maFileResult.error);
-            showMessage(`❌ Помилка читання maFile для ${account.login}: ${maFileResult.error}`, 'error');
+            showMessage(`❌ ${t('error_reading_mafile')} ${account.login}: ${maFileResult.error}`, 'error');
             return;
         }
         
@@ -490,7 +490,7 @@ async function loginToNextAccount(accounts, index = 0) {
         hideLoadingMessages();
         
         // Показуємо повідомлення про успішний вхід
-        showMessage(`✅ Успішно увійшли як ${account.name || account.login}`, 'success');
+        showMessage(`✅ ${t('login_success')} ${account.name || account.login}`, 'success');
         
         loadTrades();
     } catch (e) {
@@ -500,7 +500,7 @@ async function loginToNextAccount(accounts, index = 0) {
         hideLoadingMessages();
         
         // Показуємо повідомлення про помилку
-        showMessage(`❌ Помилка входу: ${e.message}`, 'error');
+        showMessage(`❌ ${t('error_login')}: ${e.message}`, 'error');
         
         // Повертаємо інтерфейс логіну при помилці
         document.getElementById('login-container').style.display = 'block';
@@ -560,7 +560,7 @@ window.onload = async () => {
         }
     } catch (error) {
         console.error('Помилка при завантаженні акаунтів:', error);
-        accountSelect.innerHTML = '<option value="">🚫 Помилка завантаження</option>';
+        accountSelect.innerHTML = `<option value="">🚫 ${t('error_loading')}</option>`;
         accountSelect.className = 'with-icon error';
     }
     

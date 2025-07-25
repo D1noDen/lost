@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOST - Trading Interface</title>
+    <title data-translate="trading_title">LOST - Trading Interface</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -1067,54 +1067,54 @@
 </head>
 <body>
      <div class="header">
-        <h1 class="main-title">📈 Trade Management</h1>
-        <p class="main-sub">💼 Управління трейдами Steam</p>
+        <h1 class="main-title" data-translate="trade_management">📈 Trade Management</h1>
+        <p class="main-sub" data-translate="trade_subtitle">💼 Управління трейдами Steam</p>
     </div>
 
     <div class="navigation">
-        <a href="main.html" class="nav-button">
-            🏠 Повернутися до акаунтів
+        <a href="main.html" class="nav-button" data-translate="back_to_accounts">
+            🏠 <span data-translate="back_to_accounts">Повернутися до акаунтів</span>
         </a>
     </div>
 
     <div id="login-container" class="login-section">
-        <h3>💻 Вхід в акаунт</h3>
-        <button onclick="loadAccountsManually()" class="btn-primary" style="display: none;">
-            🔄 Завантажити акаунти
+        <h3 data-translate="account_login">💻 Вхід в акаунт</h3>
+        <button onclick="loadAccountsManually()" class="btn-primary" data-translate="load_accounts" style="display: none;">
+            🔄 <span data-translate="load_accounts">Завантажити акаунти</span>
         </button>
         
         <div class="select-wrapper">
-            <label class="select-label" for="account-select">
-                👤 Оберіть акаунт
+            <label class="select-label" for="account-select" data-translate="select_account">
+                👤 <span data-translate="select_account">Оберіть акаунт</span>
             </label>
             <div class="custom-select">
              
                 <select id="account-select" class="with-icon">
-                    <option value="">⏳ Завантаження акаунтів...</option>
+                    <option value="" data-translate="loading_accounts">⏳ Завантаження акаунтів...</option>
                 </select>
             </div>
         </div>
         
         <button onclick="login()" id="login-btn" class="btn-primary">
-            🚀 Увійти в Steam
+            🚀 <span data-translate="login_steam">Увійти в Steam</span>
         </button>
     </div>
 
     <div id="account-info" class="account-info">
         <div class="account-name">
-            🎮 Увійшли як: <span id="current-account-name"></span>
+            🎮 <span data-translate="logged_in_as">Увійшли як:</span> <span id="current-account-name"></span>
         </div>
         <button onclick="logout()" class="btn-secondary">
-            🚪 Вийти
+            🚪 <span data-translate="logout">Вийти</span>
         </button>
     </div>
 
     <div class="tabs">
         <button class="tab-button active" onclick="showTab('active-trades-tab', this)">
-            ⚡ Активні угоди
+            ⚡ <span data-translate="active_trades">Активні угоди</span>
         </button>
         <button class="tab-button" onclick="showTab('history-tab', this)">
-            📜 Історія
+            📜 <span data-translate="history">Історія</span>
         </button>
     </div>
     <div class="trades-container">
@@ -1122,8 +1122,8 @@
             <div id="trades-container" class="trades-grid">
                 <div class="no-trades">
                     <div class="icon">📦</div>
-                    <h3>Немає активних угод</h3>
-                    <p>Увійдіть в акаунт щоб переглянути трейди</p>
+                    <h3 data-translate="no_active_trades">Немає активних угод</h3>
+                    <p data-translate="login_to_view_trades">Увійдіть в акаунт щоб переглянути трейди</p>
                 </div>
             </div>
         </div>
@@ -1132,13 +1132,14 @@
             <div id="history-container" class="trades-grid">
                 <div class="no-trades">
                     <div class="icon">📊</div>
-                    <h3>Історія порожня</h3>
-                    <p>Тут будуть відображатися завершені угоди</p>
+                    <h3 data-translate="history_empty">Історія порожня</h3>
+                    <p data-translate="completed_trades_here">Тут будуть відображатися завершені угоди</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="js/translations.js"></script>
     <script src="trading.js"></script>
 </body>
 </html>
