@@ -1,6 +1,14 @@
 // Імпорт системи перекладів
 let languageManager;
 
+// Змінні для зберігання екземплярів графіків
+let lineChart = null;
+let barChart = null;
+let weeklyChart = null;
+
+// Глобальна змінна для зберігання weekly data
+let currentWeeklyData = [];
+
 // Функція для отримання перекладу
 function t(key) {
   if (!languageManager) {
@@ -14,12 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const script = document.createElement('script');
   script.src = './js/translations.js';
   script.onload = () => {
-    if (typeof LanguageManager !== 'undefined') {
-      languageManager = new LanguageManager();
+    if (typeof langManager !== 'undefined') {
+      languageManager = langManager;
       updateStatCards([]); // Оновити після ініціалізації
+      
+      // Слухаємо зміни валюти
+      if (languageManager.addCurrencyObserver) {
+        languageManager.addCurrencyObserver((newCurrency) => {
+          console.log('[Statistics] Валюту змінено на:', newCurrency);
+          // Перезавантажуємо дані для оновлення відображення
+          updateChartsForCurrency();
+        });
+      }
     }
   };
   document.head.appendChild(script);
+  
+  // Завантажуємо дані при ініціалізації
+  loadData();
 });
 
 // Функція для оновлення карток статистики
@@ -29,11 +49,41 @@ function updateStatCards(accounts) {
   const totalExpenses = accounts.reduce((sum, acc) => sum + (parseFloat(acc.expenses) || 0), 0);
   const netProfit = totalIncome - totalExpenses;
 
-  // Оновлюємо картки з анімацією
+  // Конвертуємо валюту та оновлюємо картки з анімацією
+  const convertedIncome = window.convertCurrency ? window.convertCurrency(totalIncome) : totalIncome;
+  const convertedExpenses = window.convertCurrency ? window.convertCurrency(totalExpenses) : totalExpenses;
+  const convertedNetProfit = window.convertCurrency ? window.convertCurrency(netProfit) : netProfit;
+  
+  const currencySymbol = languageManager ? languageManager.getCurrencySymbol() : 'грн';
+
   animateCounter('total-accounts', totalAccounts, '');
-  animateCounter('total-income', totalIncome, ` ${t('currency_uah')}`);
-  animateCounter('total-expenses', totalExpenses, ` ${t('currency_uah')}`);
-  animateCounter('net-profit', netProfit, ` ${t('currency_uah')}`, netProfit < 0 ? '#dc3545' : '#10b981');
+  animateCounter('total-income', convertedIncome, ` ${currencySymbol}`);
+  animateCounter('total-expenses', convertedExpenses, ` ${currencySymbol}`);
+  animateCounter('net-profit', convertedNetProfit, ` ${currencySymbol}`, convertedNetProfit < 0 ? '#dc3545' : '#10b981');
+}
+
+// Функція для оновлення графіків при зміні валюти
+function updateChartsForCurrency() {
+  console.log('[Statistics] Оновлення графіків з новою валютою');
+  // Перезавантажуємо дані для оновлення графіків
+  loadData();
+}
+
+// Функція для знищення існуючих графіків
+function destroyExistingCharts() {
+  if (lineChart) {
+    lineChart.destroy();
+    lineChart = null;
+  }
+  if (barChart) {
+    barChart.destroy();
+    barChart = null;
+  }
+  if (weeklyChart) {
+    weeklyChart.destroy();
+    weeklyChart = null;
+  }
+  console.log('[Statistics] Існуючі графіки знищено');
 }
 
 // Функція для анімації лічильників
@@ -66,8 +116,21 @@ function animateCounter(elementId, targetValue, suffix = '', color = '#10b981') 
 
 async function loadData() {
   try {
-    // Використовуємо IPC для отримання шляху до файлу акаунтів
+    // Ініціалізуємо налаштування валюти при завантаженні статистики
     const { ipcRenderer } = require('electron');
+    
+    // Завантажуємо збережені налаштування
+    try {
+      const settings = await ipcRenderer.invoke('get-settings');
+      if (settings.currency && languageManager) {
+        languageManager.setCurrency(settings.currency);
+        console.log('[Statistics] Застосовано валюту з налаштувань:', settings.currency);
+      }
+    } catch (error) {
+      console.error('[Statistics] Помилка завантаження налаштувань валюти:', error);
+    }
+    
+    // Використовуємо IPC для отримання шляху до файлу акаунтів
     const accountsFilePath = await ipcRenderer.invoke('get-accounts-file-path');
     
     // Читаємо файл через Node.js fs замість fetch
@@ -114,6 +177,7 @@ async function loadData() {
     };
 
     const weeklyData = calculateWeeklyRevenue(data.accounts);
+    currentWeeklyData = weeklyData; // Зберігаємо глобально
     const sortedDateProfit = sortDateProfit(dateProfit);
     
     // Оновлюємо картки статистики
@@ -212,6 +276,9 @@ function formatDate(date) {
 }
 
 function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
+  // Знищуємо існуючі графіки перед створенням нових
+  destroyExistingCharts();
+  
   // Покращені кольори та градієнти
   const chartColors = {
     primary: '#10b981',
@@ -221,14 +288,14 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
     gradient: 'rgba(16, 185, 129, 0.3)'
   };
 
-  // Лінійний графік доходів
-  new Chart(document.getElementById('lineChart'), {
+  // Лінійний графік доходів (з валютною конвертацією)
+  lineChart = new Chart(document.getElementById('lineChart'), {
     type: 'line',
     data: {
       labels: Object.keys(sortedDateProfit),
       datasets: [{
         label: t('chart_tooltip_income'),
-        data: Object.values(sortedDateProfit),
+        data: Object.values(sortedDateProfit).map(value => window.convertCurrency ? window.convertCurrency(value) : value),
         borderColor: chartColors.primary,
         backgroundColor: chartColors.gradient,
         fill: true,
@@ -283,14 +350,14 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
     }
   });
 
-  // Стовпчикова діаграма акаунтів
-  new Chart(document.getElementById('barChart'), {
+  // Стовпчикова діаграма акаунтів (з валютною конвертацією)
+  barChart = new Chart(document.getElementById('barChart'), {
     type: 'bar',
     data: {
       labels: accountProfits.map(acc => acc.name),
       datasets: [{
         label: t('chart_tooltip_comparison'),
-        data: accountProfits.map(acc => acc.profit),
+        data: accountProfits.map(acc => window.convertCurrency ? window.convertCurrency(acc.profit) : acc.profit),
         backgroundColor: accountProfits.map((_, index) => 
           `hsl(${150 + index * 15}, 70%, ${50 + (index % 3) * 10}%)`
         ),
@@ -344,10 +411,11 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
   });
 
   // Оновлюємо статистику тижневих доходів
+  currentWeeklyData = weeklyData; // Зберігаємо глобально
   updateWeeklySummary(weeklyData);
 
   // Тижневий графік з покращеним дизайном
-  new Chart(document.getElementById('weeklyChart'), {
+  weeklyChart = new Chart(document.getElementById('weeklyChart'), {
     type: 'bar',
     data: {
       labels: weeklyData.map(week => {
@@ -357,8 +425,8 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
         return `${start} - ${end}`;
       }),
       datasets: [{
-        label: `${t('chart_tooltip_weekly')} (${t('currency_uah')})`,
-        data: weeklyData.map(week => week.totalRevenue),
+        label: `${t('chart_tooltip_weekly')} (${languageManager ? languageManager.getCurrencySymbol() : 'грн'})`,
+        data: weeklyData.map(week => window.convertCurrency ? window.convertCurrency(week.totalRevenue) : week.totalRevenue),
         backgroundColor: weeklyData.map((_, index) => {
           // Створюємо градієнт кольорів для кожного стовпчика
           const hue = 150 + (index * 25) % 60; // Варіація зелених відтінків
@@ -413,11 +481,12 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
               return `${t('week')}: ${weekData.weekStart} - ${weekData.weekEnd}`;
             },
             label: function(context) {
-              return `${t('income')}: ${context.parsed.y.toLocaleString()} ${t('currency_uah')}`;
+              const symbol = languageManager ? languageManager.getCurrencySymbol() : 'грн';
+              return `${t('income')}: ${(context.parsed.y || 0).toLocaleString()} ${symbol}`;
             },
             afterLabel: function(context) {
-              const total = weeklyData.reduce((sum, week) => sum + week.totalRevenue, 0);
-              const percentage = ((context.parsed.y / total) * 100).toFixed(1);
+              const total = weeklyData.reduce((sum, week) => sum + (week.totalRevenue || 0), 0);
+              const percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : '0.0';
               return `${t('share')}: ${percentage}%`;
             }
           }
@@ -430,7 +499,8 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
             color: chartColors.accent,
             font: { size: 12, weight: '500' },
             callback: function(value) {
-              return value.toLocaleString() + ' грн';
+              const symbol = languageManager ? languageManager.getCurrencySymbol() : 'грн';
+              return (value || 0).toLocaleString() + ' ' + symbol;
             }
           },
           grid: {
@@ -473,33 +543,77 @@ function renderCharts(sortedDateProfit, accountProfits, statuses, weeklyData) {
 // Функція для оновлення статистики тижневих доходів
 function updateWeeklySummary(weeklyData) {
   const summaryContainer = document.getElementById('weekly-summary');
-  if (!summaryContainer || weeklyData.length === 0) return;
+  if (!summaryContainer) return;
 
-  const totalWeeklyRevenue = weeklyData.reduce((sum, week) => sum + week.totalRevenue, 0);
+  // Перевіряємо чи weeklyData не порожній
+  if (!weeklyData || weeklyData.length === 0) {
+    summaryContainer.innerHTML = `
+      <div class="weekly-stat-item">
+        <div class="weekly-stat-value">0</div>
+        <div class="weekly-stat-label">${t('total_income')}</div>
+      </div>
+      <div class="weekly-stat-item">
+        <div class="weekly-stat-value">0</div>
+        <div class="weekly-stat-label">${t('chart_tooltip_weekly')}</div>
+      </div>
+      <div class="weekly-stat-item">
+        <div class="weekly-stat-value">0</div>
+        <div class="weekly-stat-label">${t('chart_tooltip_weekly')} (${t('chart_tooltip_account')})</div>
+      </div>
+      <div class="weekly-stat-item">
+        <div class="weekly-stat-value">0</div>
+        <div class="weekly-stat-label">${t('chart_tooltip_weekly')} (${t('minimum')})</div>
+      </div>
+    `;
+    return;
+  }
+
+  const totalWeeklyRevenue = weeklyData.reduce((sum, week) => sum + (week.totalRevenue || 0), 0);
   const averageWeeklyRevenue = totalWeeklyRevenue / weeklyData.length;
   const bestWeek = weeklyData.reduce((best, week) => 
-    week.totalRevenue > best.totalRevenue ? week : best, weeklyData[0]);
+    (week.totalRevenue || 0) > (best.totalRevenue || 0) ? week : best, weeklyData[0]);
   const worstWeek = weeklyData.reduce((worst, week) => 
-    week.totalRevenue < worst.totalRevenue ? week : worst, weeklyData[0]);
+    (week.totalRevenue || 0) < (worst.totalRevenue || 0) ? week : worst, weeklyData[0]);
+
+  // Конвертуємо значення валют
+  const convertedTotal = window.convertCurrency ? window.convertCurrency(totalWeeklyRevenue) : totalWeeklyRevenue;
+  const convertedAverage = window.convertCurrency ? window.convertCurrency(averageWeeklyRevenue) : averageWeeklyRevenue;
+  const convertedBest = window.convertCurrency ? window.convertCurrency(bestWeek.totalRevenue || 0) : (bestWeek.totalRevenue || 0);
+  const convertedWorst = window.convertCurrency ? window.convertCurrency(worstWeek.totalRevenue || 0) : (worstWeek.totalRevenue || 0);
+  
+  const currencySymbol = languageManager ? languageManager.getCurrencySymbol() : 'грн';
 
   summaryContainer.innerHTML = `
     <div class="weekly-stat-item">
-      <div class="weekly-stat-value">${totalWeeklyRevenue.toLocaleString()}</div>
+      <div class="weekly-stat-value">${convertedTotal.toLocaleString()} ${currencySymbol}</div>
       <div class="weekly-stat-label">${t('total_income')}</div>
     </div>
     <div class="weekly-stat-item">
-      <div class="weekly-stat-value">${Math.round(averageWeeklyRevenue).toLocaleString()}</div>
+      <div class="weekly-stat-value">${Math.round(convertedAverage).toLocaleString()} ${currencySymbol}</div>
       <div class="weekly-stat-label">${t('chart_tooltip_weekly')}</div>
     </div>
     <div class="weekly-stat-item">
-      <div class="weekly-stat-value">${bestWeek.totalRevenue.toLocaleString()}</div>
+      <div class="weekly-stat-value">${convertedBest.toLocaleString()} ${currencySymbol}</div>
       <div class="weekly-stat-label">${t('chart_tooltip_weekly')} (${t('chart_tooltip_account')})</div>
     </div>
     <div class="weekly-stat-item">
-      <div class="weekly-stat-value">${worstWeek.totalRevenue.toLocaleString()}</div>
+      <div class="weekly-stat-value">${convertedWorst.toLocaleString()} ${currencySymbol}</div>
       <div class="weekly-stat-label">${t('chart_tooltip_weekly')} (${t('minimum')})</div>
     </div>
   `;
 }
 
 window.onload = loadData;
+
+// Функція для оновлення графіків при зміні валюти
+window.updateChartsForCurrency = function() {
+  console.log('[Statistics] Оновлення графіків для нової валюти');
+  if (typeof renderCharts === 'function') {
+    renderCharts();
+  }
+  // Також оновлюємо weekly summary з збереженими даними
+  if (currentWeeklyData && currentWeeklyData.length > 0) {
+    console.log('[Statistics] Оновлюємо weekly summary для нової валюти');
+    updateWeeklySummary(currentWeeklyData);
+  }
+};

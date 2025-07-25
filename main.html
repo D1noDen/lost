@@ -3384,6 +3384,185 @@ select, .tab-button {
   border-left: 4px solid #60a5fa;
 }
 
+/* Модальне вікно налаштувань */
+.settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.settings-modal-content {
+  background: var(--bg-card);
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90vw;
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.settings-modal-header h3 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-modal-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.settings-modal-body {
+  padding: 20px;
+}
+
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section label {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+.settings-section select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.settings-section select:focus {
+  outline: none;
+  border-color: var(--emerald-500);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.settings-section option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 8px;
+}
+
+.settings-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid var(--border-primary);
+  justify-content: flex-end;
+}
+
+.btn-save,
+.btn-close {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-close {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-save {
+  background: var(--emerald-600);
+  color: white;
+}
+
+.btn-save:hover {
+  background: var(--emerald-700);
+}
+
+.btn-settings {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.btn-settings:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.settings-icon {
+  transition: transform 0.2s ease;
+}
+
+.btn-settings:hover .settings-icon {
+  transform: rotate(90deg);
+}
+
+.settings-text {
+  white-space: nowrap;
+}
+
 /* === Compact Account Card Adjustments === */
 .account-grid {
   gap: 16px;
@@ -4144,6 +4323,18 @@ select, .tab-button {
         </svg>
         <span class="update-text" data-translate="update_button">Оновити</span>
       </button>
+      <button class="btn-settings" onclick="openSettingsModal()" data-translate-title="settings">
+        <svg class="settings-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="m12 1 0 6m0 6 0 6"/>
+          <path d="m12 1-3 3m6 0-3-3"/>
+          <path d="m12 23 3-3m-6 0 3 3"/>
+          <path d="M1 12l6 0m6 0l6 0"/>
+          <path d="M1 12l3-3m0 6-3-3"/>
+          <path d="M23 12l-3 3m0-6 3 3"/>
+        </svg>
+        <span class="settings-text" data-translate="settings">Налаштування</span>
+      </button>
     </div>
   </div>
  <div class="app-version">
@@ -4328,6 +4519,39 @@ select, .tab-button {
     </div>
     <div class="import-export-modal-footer">
       <button onclick="closeModal('importExportModal')" class="btn-close" data-translate="close">Закрити</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальне вікно налаштувань -->
+<div id="settingsModal" class="settings-modal" style="display: none;">
+  <div class="settings-modal-content">
+    <div class="settings-modal-header">
+      <h3 data-translate="settings_title">⚙️ Налаштування</h3>
+      <button onclick="closeModal('settingsModal')" class="close-modal-btn">&times;</button>
+    </div>
+    <div class="settings-modal-body">
+      <div class="settings-section">
+        <label for="languageSelect" data-translate="language_setting">🌐 Мова інтерфейсу:</label>
+        <select id="languageSelect" onchange="changeLanguage(this.value)">
+          <option value="uk">Українська</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      
+      <div class="settings-section">
+        <label for="currencySelect" data-translate="currency_setting">💰 Валюта відображення:</label>
+        <select id="currencySelect" onchange="changeCurrency(this.value)">
+          <option value="uah" data-translate="currency_uah">Гривні (₴)</option>
+          <option value="rub" data-translate="currency_rub">Рублі (₽)</option>
+          <option value="usd" data-translate="currency_usd">Долари ($)</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-modal-footer">
+      <button onclick="saveSettings()" class="btn-save" data-translate="save">Зберегти</button>
+      <button onclick="closeModal('settingsModal')" class="btn-close" data-translate="close">Закрити</button>
     </div>
   </div>
 </div>

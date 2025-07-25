@@ -18,13 +18,45 @@ function t(key) {
 }
 
 // Ініціалізація системи перекладів після завантаження DOM
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+  // Ініціалізуємо languageManager після завантаження translations.js
+  setTimeout(() => {
+    if (window.languageManager) {
+      languageManager = window.languageManager;
+      console.log('LanguageManager ініціалізовано:', languageManager.getCurrentCurrency());
+          setTimeout(() => updatePriceDisplays(), 100);
+    }
+  }, 100);
+});
+document.addEventListener('DOMContentLoaded', async () => {
   // Завантажуємо скрипт перекладів
   const script = document.createElement('script');
   script.src = './js/translations.js';
-  script.onload = () => {
-    if (typeof LanguageManager !== 'undefined') {
-      languageManager = new LanguageManager();
+  script.onload = async () => {
+    if (typeof langManager !== 'undefined') {
+      languageManager = langManager;
+      
+      // Завантажуємо налаштування при ініціалізації
+      try {
+        const settings = await ipcRenderer.invoke('get-settings');
+        
+        // Застосовуємо мову
+        if (settings.language) {
+          languageManager.setLanguage(settings.language);
+        }
+        
+        // Застосовуємо валюту
+        if (settings.currency) {
+          languageManager.setCurrency(settings.currency);
+          // Оновлюємо відображення цін після завантаження
+          setTimeout(() => updatePriceDisplays(), 200);
+        }
+        
+        console.log('Налаштування завантажено:', settings);
+        console.log('LanguageManager ініціалізовано, валюта:', languageManager.getCurrentCurrency());
+      } catch (error) {
+        console.error('Помилка завантаження налаштувань при ініціалізації:', error);
+      }
     }
   };
   document.head.appendChild(script);
@@ -243,18 +275,22 @@ function addWeeklyIncome(index) {
   const weekly = parseFloat(acc.weeklyIncome) || 0;
   if (weekly <= 0) return;
 
-  acc.income = (parseFloat(acc.income) || 0) + weekly;
+  // Конвертуємо weekly income згідно з поточною валютою
+  const convertedWeekly = window.convertCurrency ? window.convertCurrency(weekly) : weekly;
+  
+  acc.income = (parseFloat(acc.income) || 0) + convertedWeekly;
   acc.weeklyIncome = 0;
 
   // Зберігаємо дату в ISO форматі для коректного сортування
   const date = new Date().toISOString();
   acc.history = acc.history || [];
-  acc.history.unshift({ date, amount: weekly });
+  acc.history.unshift({ date, amount: convertedWeekly });
 
   saveAccounts();
   
-  // Показуємо сповіщення
-  showNotification(`💰 Додано ${weekly} грн до ${acc.name || acc.login}`, 'success');
+  // Показуємо сповіщення з конвертованою сумою
+  const formattedWeekly = languageManager ? languageManager.formatPriceSync(convertedWeekly) : convertedWeekly + ' грн';
+  showNotification(`💰 Додано ${formattedWeekly} до ${acc.name || acc.login}`, 'success');
   
   // Оновлюємо відфільтровані акаунти після зміни
   if (searchQuery && searchQuery !== '') {
@@ -544,10 +580,33 @@ function copyTotalDropPrice(index) {
   const acc = accounts[index];
   if (acc.lastDrops && acc.lastDrops.length > 0) {
     const totalPrice = acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0);
-    const formattedTotal = totalPrice.toFixed(2);
-    copyToClipboard(formattedTotal, `💰 ${t('total_drops_copied')}: ${formattedTotal} грн`);
+    const formattedTotal = languageManager ? languageManager.formatPriceSync(totalPrice) : totalPrice.toFixed(2) + ' грн';
+    copyToClipboard(formattedTotal, `💰 ${t('total_drops_copied')}: ${formattedTotal}`);
   } else {
     showNotification(`❌ ${t('no_drops_to_copy')}`, 'error');
+  }
+}
+
+// Функція для копіювання ціни конкретного дропу
+function copyDropPrice(accountIndex, dropIndex) {
+  const acc = accounts[accountIndex];
+  if (acc.lastDrops && acc.lastDrops[dropIndex]) {
+    const drop = acc.lastDrops[dropIndex];
+    const formattedPrice = languageManager ? languageManager.formatPriceSync(drop.priceUAH) : drop.priceUAH + ' грн';
+    copyToClipboard(formattedPrice, `💰 ${t('drop_price_copied')}: ${formattedPrice}`);
+  } else {
+    showNotification(`❌ ${t('no_drop_found')}`, 'error');
+  }
+}
+
+// Функція для копіювання ціни останнього дропу
+function copyLastDropPrice(accountIndex) {
+  const acc = accounts[accountIndex];
+  if (acc.lastDropPrice && acc.lastDropPrice > 0) {
+    const formattedPrice = languageManager ? languageManager.formatPriceSync(acc.lastDropPrice) : acc.lastDropPrice + ' грн';
+    copyToClipboard(formattedPrice, `💰 ${t('drop_price_copied')}: ${formattedPrice}`);
+  } else {
+    showNotification(`❌ ${t('no_drop_price')}`, 'error');
   }
 }
 
@@ -797,7 +856,7 @@ async function fetchLastDrop(index, showLoadingModal = true) {
       }
       
       const dropsText = convertedDrops.map((drop, i) => 
-        `${i + 1}. ${drop.name} - ${drop.priceUAH} грн (${drop.originalPrice})`
+        `${i + 1}. ${drop.name} - ${languageManager ? languageManager.formatPriceSync(drop.priceUAH) : drop.priceUAH + ' грн'} (${drop.originalPrice})`
       ).join('<br>');
       
       showNotification(`✅ ${t('drops_updated_for')} ${acc.login}!<br><br>${dropsText}`, 'success');
@@ -937,6 +996,7 @@ async function fetchFullInventory(index, showLoadingModal = true) {
       // Зберігаємо загальну кількість та вартість
       const totalValue = inventoryInfo.reduce((sum, item) => sum + parseFloat(item.priceUAH || 0), 0);
       accounts[index].inventoryValue = totalValue.toFixed(2);
+      accounts[index].totalInventoryValue = totalValue; // Додаємо це поле для сумісності
       accounts[index].inventoryCount = inventoryInfo.length;
       
       console.log('[fetchFullInventory] Оновлений інвентар:', {
@@ -959,7 +1019,7 @@ async function fetchFullInventory(index, showLoadingModal = true) {
       // Оновлюємо портфоліо завжди після зміни інвентаря
       setTimeout(calculateAndDisplayPortfolio, 500);
       
-      const inventoryText = `${t('loaded_items')} ${inventoryInfo.length} ${t('items_word_genitive')}<br>${t('total_cost')}: ${totalValue.toFixed(2)} ${t('currency_uah_short')}`;
+      const inventoryText = `${t('loaded_items')} ${inventoryInfo.length} ${t('items_word_genitive')}<br>${t('total_cost')}: ${languageManager ? languageManager.formatPriceSync(totalValue) : totalValue.toFixed(2) + ' ' + t('currency_uah_short')}`;
       showNotification(`${t('inventory_updated')}<br><br>${inventoryText}`, 'success');
     } else {
       console.log('[fetchFullInventory] inventoryInfo is null, undefined або порожній');
@@ -1058,7 +1118,7 @@ function render() {
                 <div class="drop-preview-info">
                   <span class="drop-preview-name">${drop.name}</span>
                   <div class="drop-price-container">
-                    <span class="drop-preview-price">💰 ${drop.priceUAH} грн</span>
+                    <span class="drop-preview-price" data-price="${drop.priceUAH}">💰 ${languageManager ? languageManager.formatPriceSync(drop.priceUAH) : drop.priceUAH + ' грн'}</span>
                     <span class="drop-preview-price-usd">(${drop.originalPrice})</span>
                     <button onclick="event.stopPropagation(); copyDropPrice(${originalIndex}, ${dropIndex})" class="btn-copy-drop" title="${t('copy_drop_price')}">📋</button>
                   </div>
@@ -1068,7 +1128,7 @@ function render() {
             ${acc.lastDrops.length > 1 ? `
               <div class="total-drops-price">
                 <span class="total-label">${t('total_drops_price')}:</span>
-                <span class="total-amount">${(acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2)} ${t('currency_uah')}</span>
+                <span class="total-amount" data-price="${(acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2)}">${languageManager ? languageManager.formatPriceSync((acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2)) : (acc.lastDrops.reduce((sum, drop) => sum + parseFloat(drop.priceUAH || 0), 0)).toFixed(2) + ' ' + t('currency_uah')}</span>
                 <button onclick="event.stopPropagation(); copyTotalDropPrice(${originalIndex})" class="btn-copy-total" title="${t('copy_trade_link')}">📋</button>
               </div>
             ` : ''}
@@ -1078,7 +1138,7 @@ function render() {
           <img src="${acc.lastDropImageUrl}" alt="${acc.lastDrop}" class="drop-preview-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;48&quot; height=&quot;48&quot; rx=&quot;8&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;1.5&quot; stroke-dasharray=&quot;6,3&quot;/><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;12&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M24 18v12m-6-6h12&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;2&quot; fill=&quot;#10b981&quot;/></svg></div>'">
           <div class="drop-preview-info">
             <span class="drop-preview-name">${acc.lastDrop}</span>
-            <span class="drop-preview-price">💰 ${acc.lastDropPrice} грн</span>
+            <span class="drop-preview-price" data-price="${acc.lastDropPrice}">💰 ${languageManager ? languageManager.formatPriceSync(acc.lastDropPrice) : acc.lastDropPrice + ' грн'}</span>
             <button onclick="event.stopPropagation(); copyLastDropPrice(${originalIndex})" class="btn-copy-drop" title="${t('copy_drop_price')}">📋</button>
           </div>
           <button onclick="event.stopPropagation(); fetchLastDrop(${originalIndex})" class="btn-refresh-drop" title="${t('refresh_drops')}">🔄</button>
@@ -1164,16 +1224,16 @@ function render() {
 
         <div class="finance">
           <label>${t('total_income')}</label>
-          <input type="number" value="${acc.income || 0}" onchange="updateField(${originalIndex}, 'income', this.value)" /> грн
+          <input type="number" value="${acc.income || 0}" onchange="updateField(${originalIndex}, 'income', this.value)" /> <span data-price="1">${languageManager ? languageManager.getCurrencySymbol() : 'грн'}</span>
 
           <label>${t('weekly_income')}</label>
-          <input type="number" value="${acc.weeklyIncome || 0}" onchange="updateField(${originalIndex}, 'weeklyIncome', this.value)" /> грн
+          <input type="number" value="${acc.weeklyIncome || 0}" onchange="updateField(${originalIndex}, 'weeklyIncome', this.value)" /> <span data-price="1">${languageManager ? languageManager.getCurrencySymbol() : 'грн'}</span>
           <button class="btn-weekly-add" onclick="addWeeklyIncome(${originalIndex})">${t('add_weekly')}</button>
 
           <label>${t('total_expenses')}</label>
-          <input type="number" value="${acc.expenses || 0}" onchange="updateField(${originalIndex}, 'expenses', this.value)" /> ${t('currency_uah')}
+          <input type="number" value="${acc.expenses || 0}" onchange="updateField(${originalIndex}, 'expenses', this.value)" /> <span data-price="1">${languageManager ? languageManager.getCurrencySymbol() : 'грн'}</span>
 
-          <b>${t('net_profit_label')} ${netProfit} ${t('currency_uah')}</b>
+          <b>${t('net_profit_label')} <span data-price="${netProfit}">${languageManager ? languageManager.formatPriceSync(netProfit) : netProfit + ' ' + t('currency_uah')}</span></b>
         </div>
 
         <div class="last-drop">
@@ -1190,7 +1250,7 @@ function render() {
                   <img src="${drop.imageUrl}" alt="${drop.name}" class="last-drop-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;64&quot; height=&quot;64&quot; viewBox=&quot;0 0 64 64&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;10&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8,4&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;16&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;2&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M32 20v24m-12-12h24&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;3&quot; fill=&quot;#10b981&quot;/></svg></div>'">
                   <div class="last-drop-details">
                     <span class="last-drop-name">${drop.name}</span>
-                    <span class="last-drop-price">${t('chart_tooltip_value')}: ${drop.priceUAH} ${t('currency_uah')} (${drop.originalPrice})</span>
+                    <span class="last-drop-price">${t('chart_tooltip_value')}: <span data-price="${drop.priceUAH}">${languageManager ? languageManager.formatPriceSync(drop.priceUAH) : drop.priceUAH + ' ' + t('currency_uah')}</span> (${drop.originalPrice})</span>
                     <span class="last-drop-date">${t('history_date')}: ${new Date(drop.date).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -1206,7 +1266,7 @@ function render() {
                 <img src="${acc.lastDropImageUrl}" alt="${acc.lastDrop}" class="last-drop-image" onerror="this.onerror=null; this.outerHTML='<div class=&quot;drop-fallback-svg&quot;><svg width=&quot;64&quot; height=&quot;64&quot; viewBox=&quot;0 0 64 64&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><rect width=&quot;64&quot; height=&quot;64&quot; rx=&quot;10&quot; fill=&quot;#1f2937&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8,4&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;16&quot; stroke=&quot;#10b981&quot; stroke-width=&quot;2&quot; fill=&quot;none&quot; opacity=&quot;0.6&quot;/><path d=&quot;M32 20v24m-12-12h24&quot; stroke=&quot;#059669&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot;/><circle cx=&quot;32&quot; cy=&quot;32&quot; r=&quot;3&quot; fill=&quot;#10b981&quot;/></svg></div>'">
                 <div class="last-drop-details">
                   <span class="last-drop-name">${acc.lastDrop}</span>
-                  <span class="last-drop-price">Ціна: ${acc.lastDropPrice} грн</span>
+                  <span class="last-drop-price">${t('chart_tooltip_value')}: <span data-price="${acc.lastDropPrice}">${languageManager ? languageManager.formatPriceSync(acc.lastDropPrice) : acc.lastDropPrice + ' грн'}</span></span>
                 </div>
               </div>
             </div>
@@ -1220,7 +1280,7 @@ function render() {
             ${acc.fullInventory && acc.fullInventory.length > 0 ? `
               <div class="inventory-summary">
                 <span class="inventory-count">${t('chart_tooltip_items')}: ${acc.inventoryCount || acc.fullInventory.length}</span>
-                <span class="inventory-value">${t('chart_tooltip_value')}: ${acc.inventoryValue || '0.00'} ${t('currency_uah')}</span>
+                <span class="inventory-value">${t('chart_tooltip_value')}: <span data-price="${acc.totalInventoryValue || 0}">${languageManager ? languageManager.formatPriceSync(acc.totalInventoryValue || 0) : '₴' + (acc.inventoryValue || '0.00')}</span></span>
               </div>
             ` : ''}
           </div>
@@ -1235,7 +1295,7 @@ function render() {
                   }
                   <div class="inventory-item-info">
                     <div class="inventory-item-name">${escapeHtml(item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name)}</div>
-                    <div class="inventory-item-price">${item.priceUAH !== '0.00' ? item.priceUAH + ' ' + t('currency_uah') : t('price_no_price')}</div>
+                    <div class="inventory-item-price" data-price="${item.priceUAH}">${item.priceUAH !== '0.00' ? (languageManager ? languageManager.formatPriceSync(item.priceUAH) : item.priceUAH + ' ' + t('currency_uah')) : t('price_no_price')}</div>
                   </div>
                 </div>
               `).join('')}
@@ -1269,7 +1329,7 @@ function render() {
 
   const totalProfitEl = document.getElementById('total-profit');
   if (totalProfitEl) {
-    totalProfitEl.innerText = `${t('total_profit')}: ${totalProfit.toFixed(2)} грн`;
+    totalProfitEl.innerHTML = `${t('total_profit')}: <span data-price="${totalProfit}">${languageManager ? languageManager.formatPriceSync(totalProfit) : totalProfit.toFixed(2) + ' грн'}</span>`;
 
     if (totalProfit > 0) {
       totalProfitEl.style.color = '#4caf50'; // зелений
@@ -2192,6 +2252,17 @@ async function manualRenameFiles() {
 let portfolioChart = null;
 let valueChart = null;
 
+// Функція для оновлення відображення портфоліо після зміни валюти
+function updatePortfolioDisplay() {
+  console.log('[Portfolio] Оновлення відображення портфоліо з новою валютою');
+  
+  // Оновлюємо всі елементи з data-price атрибутами в портфоліо
+  const portfolioContainer = document.getElementById('portfolio-tab');
+  if (portfolioContainer && portfolioContainer.style.display !== 'none') {
+    calculateAndDisplayPortfolio();
+  }
+}
+
 // Функція для показу портфоліо
 function showPortfolio() {
   console.log('[Portfolio] Показ портфоліо...');
@@ -2397,7 +2468,9 @@ function updatePortfolioSummary(portfolioData) {
   const averageDropValueEl = document.getElementById('average-drop-value');
 
   if (totalValueEl) {
-    totalValueEl.textContent = `₴${portfolioData.totalInventoryValue.toFixed(2)}`;
+    const formattedValue = window.formatCurrency ? window.formatCurrency(portfolioData.totalInventoryValue) : `₴${portfolioData.totalInventoryValue.toFixed(2)}`;
+    totalValueEl.textContent = formattedValue;
+    totalValueEl.setAttribute('data-price', portfolioData.totalInventoryValue);
   }
   
   if (totalDropsEl) {
@@ -2409,7 +2482,9 @@ function updatePortfolioSummary(portfolioData) {
   }
   
   if (averageDropValueEl) {
-    averageDropValueEl.textContent = `₴${portfolioData.averageValue.toFixed(2)}`;
+    const averageValue = portfolioData.averageValue;
+    const formattedAverage = window.formatCurrency ? window.formatCurrency(averageValue) : `₴${averageValue.toFixed(2)}`;
+    averageDropValueEl.innerHTML = `<span data-price="${averageValue}">${formattedAverage}</span>`;
   }
 }
 
@@ -2434,7 +2509,7 @@ function renderPortfolioAccounts(accountsWithInventory) {
         <div class="portfolio-account-name">${escapeHtml(account.name)}</div>
         <div class="portfolio-account-stats">
           <span>📦 ${t('chart_tooltip_items')}: ${account.inventoryCount}</span>
-          <span>💰 ${t('inventory_value')}: ₴${account.totalInventoryValue.toFixed(2)}</span>
+          <span>💰 ${t('inventory_value')}: <span data-price="${account.totalInventoryValue}">${window.formatCurrency ? window.formatCurrency(account.totalInventoryValue) : '₴' + account.totalInventoryValue.toFixed(2)}</span></span>
         </div>
       </div>
       
@@ -2841,5 +2916,177 @@ function updateAutoLoadButtonText() {
       autoLoadButton.style.background = 'linear-gradient(135deg, var(--emerald-400), var(--emerald-500))';
       autoLoadButton.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.1)';
     }
+  }
+}
+
+// Функції для модального вікна налаштувань
+function openSettingsModal() {
+  const modal = document.getElementById('settingsModal');
+  if (modal) {
+    // Завантажуємо поточні налаштування
+    loadCurrentSettings();
+    modal.style.display = 'flex';
+  }
+}
+
+async function loadCurrentSettings() {
+  try {
+    const settings = await ipcRenderer.invoke('get-settings');
+    
+    // Встановлюємо поточну мову
+    const languageSelect = document.getElementById('languageSelect');
+    if (languageSelect && settings.language) {
+      languageSelect.value = settings.language;
+    }
+    
+    // Встановлюємо поточну валюту
+    const currencySelect = document.getElementById('currencySelect');
+    if (currencySelect && settings.currency) {
+      currencySelect.value = settings.currency;
+    }
+  } catch (error) {
+    console.error('Помилка завантаження налаштувань:', error);
+  }
+}
+
+function changeLanguage(language) {
+  if (languageManager) {
+    languageManager.setLanguage(language);
+  }
+}
+
+function changeCurrency(currency) {
+  console.log('Зміна валюти на:', currency);
+  if (languageManager) {
+    languageManager.setCurrency(currency);
+    console.log('Валюта встановлена, поточна валюта:', languageManager.getCurrentCurrency());
+    // Оновлюємо відображення цін в інтерфейсі
+    updatePriceDisplays();
+  } else {
+    console.error('LanguageManager не ініціалізований');
+  }
+}
+
+function updatePriceDisplays() {
+  console.log('Оновлення відображення цін');
+  console.log('LanguageManager:', languageManager);
+  console.log('Поточна валюта:', languageManager ? languageManager.getCurrentCurrency() : 'undefined');
+  
+  // Оновлюємо всі ціни в інтерфейсі після зміни валюти
+  const priceElements = document.querySelectorAll('[data-price]');
+  console.log('Знайдено елементів з цінами:', priceElements.length);
+  
+  priceElements.forEach((element, index) => {
+    const priceInUah = parseFloat(element.dataset.price);
+    console.log(`Елемент ${index}: data-price="${element.dataset.price}", parsed=${priceInUah}, text="${element.textContent}"`);
+    
+    if (!isNaN(priceInUah) && languageManager) {
+      // Спеціальний випадок для валютних символів (data-price="1")
+      if (priceInUah === 1 && (element.textContent.includes('грн') || element.textContent.includes('₴') || element.textContent.includes('₽') || element.textContent.includes('$'))) {
+        const newSymbol = languageManager.getCurrencySymbol();
+        element.textContent = newSymbol;
+        console.log(`Оновлення валютного символу: ${newSymbol}`);
+      } else {
+        const formattedPrice = languageManager.formatPriceSync(priceInUah);
+        console.log(`Оновлення ціни: ${priceInUah} UAH -> ${formattedPrice}`);
+        element.textContent = formattedPrice;
+      }
+    }
+  });
+  
+  // Оновлюємо статистику якщо вона відображається
+  if (typeof updateStatistics === 'function') {
+    updateStatistics();
+  }
+  
+  // Оновлюємо графіки статистики якщо вони відображаються
+  if (typeof renderCharts === 'function') {
+    console.log('Оновлення графіків статистики');
+    renderCharts();
+  }
+  
+  console.log('Оновлення цін завершено');
+}
+
+// Дублікат testCurrency для тестування
+function testCurrencyLocal(currency) {
+  console.log('LOCAL: Тестування зміни валюти на:', currency);
+  languageManager.setCurrency(currency);
+  setTimeout(() => {
+    if (typeof updatePriceDisplays === 'function') {
+      updatePriceDisplays();
+    }
+    // Також оновлюємо статистику якщо функція існує
+    if (typeof updateStatCards === 'function' && typeof accounts !== 'undefined') {
+      updateStatCards(accounts || []);
+    }
+    // Оновлюємо графіки статистики
+    if (typeof updateChartsForCurrency === 'function') {
+      updateChartsForCurrency();
+    }
+    // Оновлюємо портфоліо якщо функція існує
+    if (typeof updatePortfolioDisplay === 'function') {
+      updatePortfolioDisplay();
+    }
+  }, 100);
+}
+
+// Глобальна змінна для тестування
+window.testLocal = testCurrencyLocal;
+
+async function saveSettings() {
+  try {
+    const languageSelect = document.getElementById('languageSelect');
+    const currencySelect = document.getElementById('currencySelect');
+    
+    const settings = {
+      language: languageSelect.value,
+      currency: currencySelect.value
+    };
+    
+    console.log('Зберігання налаштувань:', settings);
+    
+    const result = await ipcRenderer.invoke('save-settings', settings);
+    
+    if (result.success) {
+      console.log('Налаштування успішно збережено');
+      
+      // Перевіряємо чи languageManager ініціалізований
+      if (!languageManager) {
+        console.error('LanguageManager не ініціалізований!');
+        showNotification('Помилка: система перекладів не готова', 'error');
+        return;
+      }
+      
+      // Застосовуємо мову
+      languageManager.setLanguage(settings.language);
+      languageManager.updatePage();
+      
+      // Використовуємо локальну копію testCurrency
+      console.log('Використовуємо локальну функцію для зміни валюти на:', settings.currency);
+      console.log('Поточна валюта ДО зміни:', languageManager.getCurrentCurrency());
+      testCurrencyLocal(settings.currency);
+      console.log('Поточна валюта ПІСЛЯ зміни:', languageManager.getCurrentCurrency());
+      
+      // НЕ закриваємо modal відразу, щоб бачити зміни
+      showNotification(t('settings_saved'), 'success');
+      
+      // Закриваємо modal через 2 секунди
+      setTimeout(() => {
+        closeModal('settingsModal');
+      }, 2000);
+    } else {
+      showNotification(result.message, 'error');
+    }
+  } catch (error) {
+    console.error('Помилка збереження налаштувань:', error);
+    showNotification('Помилка збереження налаштувань', 'error');
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
   }
 }

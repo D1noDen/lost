@@ -907,3 +907,37 @@ ipcMain.handle('export-accounts', async () => {
     return { success: false, message: 'Помилка експорту акаунтів: ' + error.message };
   }
 });
+
+// Обробники для налаштувань
+ipcMain.handle('get-settings', async () => {
+  try {
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    
+    if (!fs.existsSync(settingsPath)) {
+      // Створюємо дефолтні налаштування
+      const defaultSettings = {
+        language: 'uk',
+        currency: 'uah'
+      };
+      fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+      return defaultSettings;
+    }
+    
+    const settingsData = fs.readFileSync(settingsPath, 'utf8');
+    return JSON.parse(settingsData);
+  } catch (error) {
+    console.error('Помилка завантаження налаштувань:', error);
+    return { language: 'uk', currency: 'uah' };
+  }
+});
+
+ipcMain.handle('save-settings', async (event, settings) => {
+  try {
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    return { success: true, message: 'Налаштування збережено' };
+  } catch (error) {
+    console.error('Помилка збереження налаштувань:', error);
+    return { success: false, message: 'Помилка збереження налаштувань: ' + error.message };
+  }
+});

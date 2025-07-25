@@ -372,6 +372,9 @@ const translations = {
     chart_tooltip_daily: "Денний дохід",
     chart_tooltip_monthly: "Місячний дохід",
     total_drops_copied: "Загальна сума дропів скопійована",
+    drop_price_copied: "Ціна дропу скопійована",
+    no_drop_found: "Дроп не знайдено",
+    no_drop_price: "Немає ціни дропу",
     general_processing_error: "Загальна помилка обробки акаунту",
     prime_status: "Статус Prime",
     check_updates: "Перевірити оновлення",
@@ -395,7 +398,16 @@ const translations = {
     week: "Тиждень",
     income: "Дохід",
     share: "Частка",
-    minimum: "мін"
+    minimum: "мін",
+    
+    // Налаштування
+    settings_title: "⚙️ Налаштування",
+    language_setting: "Мова інтерфейсу",
+    currency_setting: "Валюта",
+    currency_uah: "Гривні (UAH)",
+    currency_rub: "Рублі (RUB)",
+    currency_usd: "Долари (USD)",
+    settings_saved: "Налаштування збережено!"
   },
   
   ru: {
@@ -771,6 +783,9 @@ const translations = {
     chart_tooltip_daily: "Дневной доход",
     chart_tooltip_monthly: "Месячный доход",
     total_drops_copied: "Общая сумма дропов скопирована",
+    drop_price_copied: "Цена дропа скопирована",
+    no_drop_found: "Дроп не найден",
+    no_drop_price: "Нет цены дропа",
     general_processing_error: "Общая ошибка обработки аккаунта",
     prime_status: "Статус Prime",
     check_updates: "Проверить обновления", 
@@ -794,7 +809,16 @@ const translations = {
     week: "Неделя",
     income: "Доход",
     share: "Доля",
-    minimum: "мин"
+    minimum: "мин",
+    
+    // Налаштування
+    settings_title: "⚙️ Настройки",
+    language_setting: "Язык интерфейса",
+    currency_setting: "Валюта",
+    currency_uah: "Гривны (UAH)",
+    currency_rub: "Рубли (RUB)",
+    currency_usd: "Доллары (USD)",
+    settings_saved: "Настройки сохранены!"
   },
   
   en: {
@@ -1170,6 +1194,9 @@ const translations = {
     chart_tooltip_daily: "Daily income",
     chart_tooltip_monthly: "Monthly income",
     total_drops_copied: "Total drops amount copied",
+    drop_price_copied: "Drop price copied",
+    no_drop_found: "Drop not found",
+    no_drop_price: "No drop price",
     general_processing_error: "General account processing error",
     prime_status: "Prime Status",
     check_updates: "Check for updates",
@@ -1193,15 +1220,26 @@ const translations = {
     week: "Week",
     income: "Income",
     share: "Share",
-    minimum: "min"
+    minimum: "min",
+    
+    // Settings
+    settings_title: "⚙️ Settings",
+    language_setting: "Interface Language",
+    currency_setting: "Currency",
+    currency_uah: "Hryvnias (UAH)",
+    currency_rub: "Rubles (RUB)",
+    currency_usd: "Dollars (USD)",
+    settings_saved: "Settings saved!"
   }
 };
 
-// Система управління мовами
+// Система управління мовами та валютами
 class LanguageManager {
   constructor() {
     this.currentLanguage = this.getStoredLanguage() || 'uk';
+    this.currentCurrency = this.getStoredCurrency() || 'UAH';
     this.observers = [];
+    this.currencyObservers = [];
   }
 
   getStoredLanguage() {
@@ -1210,6 +1248,15 @@ class LanguageManager {
     } catch (error) {
       console.warn('Could not access localStorage:', error);
       return 'uk';
+    }
+  }
+
+  getStoredCurrency() {
+    try {
+      return localStorage.getItem('lost_currency') || 'UAH';
+    } catch (error) {
+      console.warn('Could not access localStorage:', error);
+      return 'UAH';
     }
   }
 
@@ -1231,8 +1278,49 @@ class LanguageManager {
     this.updatePage();
   }
 
+  setCurrency(currency) {
+    console.log('Встановлення валюти:', currency);
+    
+    // Приводимо валюту до верхнього регістру
+    currency = currency.toUpperCase();
+    console.log('Валюта після приведення до верхнього регістру:', currency);
+    
+    const validCurrencies = ['UAH', 'RUB', 'USD'];
+    if (!validCurrencies.includes(currency)) {
+      console.warn(`Currency ${currency} not supported, defaulting to UAH`);
+      currency = 'UAH';
+    }
+    
+    console.log('Попередня валюта:', this.currentCurrency);
+    this.currentCurrency = currency;
+    console.log('Нова валюта:', this.currentCurrency);
+    
+    try {
+      localStorage.setItem('lost_currency', currency);
+      console.log('Валюта збережена в localStorage');
+    } catch (error) {
+      console.warn('Could not save currency to localStorage:', error);
+    }
+    
+    this.notifyCurrencyObservers();
+    console.log('Currency observers notified');
+  }
+
   getCurrentLanguage() {
     return this.currentLanguage;
+  }
+
+  getCurrentCurrency() {
+    return this.currentCurrency;
+  }
+
+  getCurrencySymbol() {
+    switch (this.currentCurrency) {
+      case 'UAH': return 'грн';
+      case 'RUB': return '₽';
+      case 'USD': return '$';
+      default: return 'грн';
+    }
   }
 
   translate(key) {
@@ -1244,8 +1332,100 @@ class LanguageManager {
     this.observers.push(callback);
   }
 
+  addCurrencyObserver(callback) {
+    this.currencyObservers.push(callback);
+  }
+
   notifyObservers() {
     this.observers.forEach(callback => callback(this.currentLanguage));
+  }
+
+  notifyCurrencyObservers() {
+    this.currencyObservers.forEach(callback => callback(this.currentCurrency));
+  }
+
+  // Конвертація валют (базова валюта - UAH)
+  async convertPrice(priceUAH, targetCurrency = null) {
+    const currency = targetCurrency || this.currentCurrency;
+    
+    if (currency === 'UAH' || !priceUAH) {
+      return priceUAH;
+    }
+
+    try {
+      // Використовуємо фіксовані курси або API
+      const rates = await this.getExchangeRates();
+      
+      switch (currency) {
+        case 'RUB':
+          return (priceUAH * rates.UAH_TO_RUB).toFixed(2);
+        case 'USD':
+          return (priceUAH * rates.UAH_TO_USD).toFixed(2);
+        default:
+          return priceUAH;
+      }
+    } catch (error) {
+      console.warn('Currency conversion failed:', error);
+      return priceUAH;
+    }
+  }
+
+  async getExchangeRates() {
+    // Можна використати API або фіксовані курси
+    // Для простоти використаємо приблизні курси
+    return {
+      UAH_TO_RUB: 2.5,  // 1 грн ≈ 2.5 рублів
+      UAH_TO_USD: 0.027  // 1 грн ≈ 0.027 доларів
+    };
+  }
+
+  async formatPrice(price, currency = null) {
+    const targetCurrency = currency || this.currentCurrency;
+    
+    if (typeof price === 'string') {
+      price = parseFloat(price);
+    }
+
+    if (isNaN(price)) {
+      return '0 грн';
+    }
+
+    // Конвертуємо ціну з UAH в потрібну валюту
+    let convertedPrice = price;
+    if (targetCurrency !== 'UAH') {
+      convertedPrice = await this.convertPrice(price, targetCurrency);
+      convertedPrice = parseFloat(convertedPrice);
+    }
+
+    const symbol = targetCurrency === 'UAH' ? 'грн' : 
+                   targetCurrency === 'RUB' ? '₽' : '$';
+    
+    return `${convertedPrice.toLocaleString()} ${symbol}`;
+  }
+
+  formatPriceSync(price, currency = null) {
+    const targetCurrency = currency || this.currentCurrency;
+    
+    if (typeof price === 'string') {
+      price = parseFloat(price);
+    }
+
+    if (isNaN(price)) {
+      return '0 грн';
+    }
+
+    // Синхронна конвертація з фіксованими курсами
+    let convertedPrice = price;
+    if (targetCurrency === 'RUB') {
+      convertedPrice = (price * 2.5).toFixed(2);
+    } else if (targetCurrency === 'USD') {
+      convertedPrice = (price * 0.027).toFixed(2);
+    }
+
+    const symbol = targetCurrency === 'UAH' ? 'грн' : 
+                   targetCurrency === 'RUB' ? '₽' : '$';
+    
+    return `${parseFloat(convertedPrice).toLocaleString()} ${symbol}`;
   }
 
   updatePage() {
@@ -1293,6 +1473,68 @@ class LanguageManager {
 
 // Глобальний екземпляр менеджера мов
 const langManager = new LanguageManager();
+// Створюємо глобальний псевдонім
+window.LanguageManager = langManager;
+window.languageManager = langManager;
+
+// Глобальна функція для конвертації валюти (доступна з будь-якого файлу)
+window.convertCurrency = function(amountUAH, targetCurrency = null) {
+  // Перевіряємо чи amountUAH є валідним числом
+  if (!langManager || amountUAH === null || amountUAH === undefined || isNaN(amountUAH)) {
+    return 0;
+  }
+  
+  const currency = targetCurrency || langManager.getCurrentCurrency();
+  
+  if (currency === 'UAH') {
+    return parseFloat(amountUAH) || 0;
+  }
+  
+  let convertedAmount = parseFloat(amountUAH) || 0;
+  if (currency === 'RUB') {
+    convertedAmount = convertedAmount * 2.5;
+  } else if (currency === 'USD') {
+    convertedAmount = convertedAmount * 0.027;
+  }
+  
+  return parseFloat(convertedAmount.toFixed(2));
+};
+
+// Функція для форматування валюти (доступна глобально)
+window.formatCurrency = function(amount, targetCurrency = null) {
+  // Перевіряємо чи amount є валідним числом
+  if (!langManager || amount === null || amount === undefined || isNaN(amount)) {
+    return '0 грн';
+  }
+  
+  const currency = targetCurrency || langManager.getCurrentCurrency();
+  const convertedAmount = convertCurrency(amount, currency);
+  const symbol = currency === 'UAH' ? 'грн' : 
+                 currency === 'RUB' ? '₽' : '$';
+  
+  return `${convertedAmount.toLocaleString()} ${symbol}`;
+};
+window.testCurrency = function(currency) {
+  console.log('Тестування зміни валюти на:', currency);
+  langManager.setCurrency(currency);
+  setTimeout(() => {
+    if (typeof updatePriceDisplays === 'function') {
+      updatePriceDisplays();
+    }
+    // Також оновлюємо статистику якщо функція існує
+    if (typeof updateStatCards === 'function' && typeof accounts !== 'undefined') {
+      updateStatCards(accounts || []);
+    }
+    // Оновлюємо графіки статистики
+    if (typeof updateChartsForCurrency === 'function') {
+      updateChartsForCurrency();
+    }
+    // Оновлюємо портфоліо якщо функція існує
+    if (typeof updatePortfolioDisplay === 'function') {
+      updatePortfolioDisplay();
+    }
+  }, 100);
+};
 
 // Функція для швидкого перекладу
 function t(key) {
@@ -1308,6 +1550,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'lost_language') {
       langManager.currentLanguage = e.newValue;
       langManager.updatePage();
+    }
+    if (e.key === 'lost_currency') {
+      langManager.currentCurrency = e.newValue;
+      // Оновлюємо ціни при зміні валюти
+      if (typeof updatePriceDisplays === 'function') {
+        updatePriceDisplays();
+      }
     }
   });
 });
