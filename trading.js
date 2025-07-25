@@ -8,7 +8,23 @@ const TradeOfferManager = require('steam-tradeoffer-manager'); // Додано �
 const tradeManager = new TradeManager();
 let activeOffers = [];
 let selectedAccountName = null;
-const historyFilePath = path.join(__dirname, 'trade_history.json');
+let historyFilePath = null;
+
+// Функція ініціалізації шляху
+async function initializeHistoryPath() {
+    try {
+        const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+        historyFilePath = path.join(userDataPath, 'trade_history.json');
+        console.log('History file path initialized:', historyFilePath);
+    } catch (err) {
+        console.error('Error getting user data path:', err);
+        // Fallback до старого методу, якщо не вдається отримати шлях
+        historyFilePath = path.join(__dirname, 'trade_history.json');
+    }
+}
+
+// Ініціалізуємо шлях при завантаженні
+initializeHistoryPath();
 
 function showTab(tabId, element) {
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -18,6 +34,11 @@ function showTab(tabId, element) {
 }
 
 function saveToHistory(entry) {
+    if (!historyFilePath) {
+        console.error('History file path not initialized yet');
+        return;
+    }
+    
     let history = [];
     if (fs.existsSync(historyFilePath)) {
         try {
@@ -31,6 +52,12 @@ function saveToHistory(entry) {
 }
 
 function loadAndRenderHistory() {
+    if (!historyFilePath) {
+        console.error('History file path not initialized yet');
+        renderHistory([]);
+        return;
+    }
+    
     if (fs.existsSync(historyFilePath)) {
         try {
             const history = JSON.parse(fs.readFileSync(historyFilePath));
@@ -564,7 +591,8 @@ window.onload = async () => {
         accountSelect.className = 'with-icon error';
     }
     
-    // Завантажуємо історію
+    // Завантажуємо історію після ініціалізації шляху
+    await initializeHistoryPath();
     loadAndRenderHistory();
     
     // Налаштовуємо обробник подій для нових оферів

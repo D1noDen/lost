@@ -1,6 +1,6 @@
 const EventEmitter = require('events');
 const SteamUser = require('steam-user');
-const SteamCommunity = require('steamcommunity');
+const SteamCommunity = require('./components/steamcommunity-extensions');
 const TradeOfferManager = require('steam-tradeoffer-manager');
 
 class TradeManager extends EventEmitter {
