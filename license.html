@@ -111,6 +111,50 @@
             margin-top: 20px;
         }
         
+        .updates-section {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .updates-section h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        
+        .update-status {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .btn-update {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-update:hover {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+            transform: translateY(-2px);
+        }
+        
+        .btn-update:disabled {
+            background: rgba(255,255,255,0.2);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .hidden {
             display: none;
         }
@@ -148,6 +192,19 @@
             <div id="license-details"></div>
             <button class="btn btn-secondary" onclick="removeLicense()">
                 Видалити ліцензію
+            </button>
+        </div>
+        
+        <div id="updates-section" class="updates-section">
+            <h3>🔄 Оновлення</h3>
+            <div id="update-status" class="update-status">
+                Натисніть кнопку для перевірки оновлень
+            </div>
+            <button id="check-updates-btn" class="btn-update" onclick="checkForUpdates()">
+                Перевірити оновлення
+            </button>
+            <button id="download-update-btn" class="btn-update hidden" onclick="downloadUpdate()">
+                Завантажити оновлення
             </button>
         </div>
         
@@ -290,6 +347,94 @@
             if (e.key === 'Enter') {
                 activateLicense();
             }
+        });
+        
+        // === Функції для роботи з оновленнями ===
+        
+        // Перевірка оновлень
+        async function checkForUpdates() {
+            const checkBtn = document.getElementById('check-updates-btn');
+            const downloadBtn = document.getElementById('download-update-btn');
+            const statusDiv = document.getElementById('update-status');
+            
+            checkBtn.disabled = true;
+            checkBtn.textContent = 'Перевірка...';
+            statusDiv.textContent = 'Перевірка наявності оновлень...';
+            
+            try {
+                const result = await ipcRenderer.invoke('check-for-updates-manual');
+                
+                if (result.available) {
+                    statusDiv.innerHTML = `
+                        <strong>🎉 Доступне оновлення!</strong><br>
+                        Поточна версія: ${result.currentVersion}<br>
+                        Нова версія: ${result.newVersion}<br>
+                        <small>Розмір: ${result.size || 'Невідомо'}</small>
+                    `;
+                    downloadBtn.classList.remove('hidden');
+                    checkBtn.textContent = 'Перевірити знову';
+                } else {
+                    statusDiv.innerHTML = `
+                        <strong>✅ У вас остання версія</strong><br>
+                        Версія: ${result.currentVersion}
+                    `;
+                    downloadBtn.classList.add('hidden');
+                    checkBtn.textContent = 'Перевірити знову';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <strong>❌ Помилка перевірки оновлень</strong><br>
+                    ${error.message}
+                `;
+                downloadBtn.classList.add('hidden');
+                checkBtn.textContent = 'Спробувати знову';
+            }
+            
+            checkBtn.disabled = false;
+        }
+        
+        // Завантаження оновлення
+        async function downloadUpdate() {
+            const downloadBtn = document.getElementById('download-update-btn');
+            const statusDiv = document.getElementById('update-status');
+            
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Завантаження...';
+            statusDiv.innerHTML = '<strong>📥 Завантаження оновлення...</strong>';
+            
+            try {
+                const result = await ipcRenderer.invoke('download-update-manual');
+                
+                if (result.success) {
+                    statusDiv.innerHTML = `
+                        <strong>✅ Оновлення завантажено!</strong><br>
+                        Додаток перезапуститься для установки оновлення
+                    `;
+                    
+                    // Показуємо повідомлення і закриваємо вікно
+                    showMessage('Оновлення завантажено. Додаток перезапуститься...', 'success');
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Невідома помилка завантаження');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <strong>❌ Помилка завантаження</strong><br>
+                    ${error.message}
+                `;
+                downloadBtn.textContent = 'Спробувати знову';
+                downloadBtn.disabled = false;
+            }
+        }
+        
+        // Автоматична перевірка оновлень при завантаженні
+        window.addEventListener('DOMContentLoaded', () => {
+            // Затримка для завантаження HWID
+            setTimeout(() => {
+                checkForUpdates();
+            }, 2000);
         });
     </script>
 </body>

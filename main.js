@@ -1056,6 +1056,80 @@ ipcMain.handle('open-license-window', async () => {
   }
 });
 
+// === IPC обробники для оновлень у вікні ліцензування ===
+
+// Ручна перевірка оновлень
+ipcMain.handle('check-for-updates-manual', async () => {
+  try {
+    console.log('Manual update check requested from license window');
+    
+    if (!app.isPackaged) {
+      return {
+        available: false,
+        currentVersion: require('./package.json').version,
+        message: 'Оновлення доступні тільки для збудованих версій'
+      };
+    }
+    
+    const result = await autoUpdater.checkForUpdates();
+    const currentVersion = require('./package.json').version;
+    
+    if (result && result.updateInfo) {
+      const newVersion = result.updateInfo.version;
+      const isNewerVersion = newVersion !== currentVersion;
+      
+      return {
+        available: isNewerVersion,
+        currentVersion: currentVersion,
+        newVersion: newVersion,
+        size: result.updateInfo.files?.[0]?.size ? 
+              `${Math.round(result.updateInfo.files[0].size / 1024 / 1024)} MB` : 
+              'Невідомо'
+      };
+    }
+    
+    return {
+      available: false,
+      currentVersion: currentVersion
+    };
+  } catch (error) {
+    console.error('Помилка перевірки оновлень:', error);
+    throw new Error('Не вдалося перевірити оновлення: ' + error.message);
+  }
+});
+
+// Ручне завантаження оновлення
+ipcMain.handle('download-update-manual', async () => {
+  try {
+    console.log('Manual update download requested from license window');
+    
+    if (!app.isPackaged) {
+      throw new Error('Завантаження оновлень доступне тільки для збудованих версій');
+    }
+    
+    // Спочатку перевіряємо оновлення
+    const updateCheck = await autoUpdater.checkForUpdates();
+    
+    if (!updateCheck || !updateCheck.updateInfo) {
+      throw new Error('Оновлення не знайдено');
+    }
+    
+    // Завантажуємо оновлення
+    await autoUpdater.downloadUpdate();
+    
+    return {
+      success: true,
+      message: 'Оновлення завантажено успішно'
+    };
+  } catch (error) {
+    console.error('Помилка завантаження оновлення:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
 // Функція для створення головного вікна після успішної активації ліцензії
 function createMainWindow() {
   // Створюємо необхідні директорії перед запуском
