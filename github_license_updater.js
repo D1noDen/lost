@@ -70,13 +70,20 @@ class GitHubLicenseUpdater {
 
     // Оновлення файлу licenses.json на GitHub
     async updateLicensesFile(newContent, commitMessage = 'Update licenses') {
+        console.log('=== updateLicensesFile Debug ===');
+        console.log('Token available:', !!this.token);
+        console.log('Commit message:', commitMessage);
+        
         if (!this.token) {
+            console.error('GitHub token is required for updating files');
             throw new Error('GitHub token is required for updating files');
         }
 
         try {
             // Спочатку отримуємо поточний файл для SHA
+            console.log('Getting current file from GitHub...');
             const currentFile = await this.getLicensesFile();
+            console.log('Current file SHA:', currentFile.sha);
             
             return new Promise((resolve, reject) => {
                 const content = JSON.stringify(newContent, null, 2);
@@ -89,6 +96,7 @@ class GitHubLicenseUpdater {
                 };
 
                 const postData = JSON.stringify(updateData);
+                console.log('Update data prepared, content length:', postData.length);
 
                 const options = {
                     hostname: this.apiUrl,
@@ -103,6 +111,9 @@ class GitHubLicenseUpdater {
                     }
                 };
 
+                console.log('Making PUT request to GitHub API...');
+                console.log('URL:', `https://${options.hostname}${options.path}`);
+
                 const req = https.request(options, (res) => {
                     let data = '';
 
@@ -111,20 +122,28 @@ class GitHubLicenseUpdater {
                     });
 
                     res.on('end', () => {
+                        console.log('GitHub API Response Status:', res.statusCode);
+                        console.log('GitHub API Response:', data);
+                        
                         try {
                             const response = JSON.parse(data);
                             if (res.statusCode === 200) {
+                                console.log('✅ Successfully updated licenses.json on GitHub');
                                 resolve(response);
                             } else {
+                                console.error('❌ GitHub API Error:', response.message || 'Unknown error');
                                 reject(new Error(`GitHub API Error: ${response.message || 'Unknown error'}`));
                             }
                         } catch (error) {
+                            console.error('Failed to parse GitHub response:', error.message);
+                            console.error('Raw response:', data);
                             reject(new Error('Failed to parse GitHub response: ' + error.message));
                         }
                     });
                 });
 
                 req.on('error', (error) => {
+                    console.error('Request error:', error.message);
                     reject(new Error('GitHub API request failed: ' + error.message));
                 });
 
@@ -132,6 +151,7 @@ class GitHubLicenseUpdater {
                 req.end();
             });
         } catch (error) {
+            console.error('Error in updateLicensesFile:', error.message);
             throw new Error('Failed to update licenses file: ' + error.message);
         }
     }
@@ -139,6 +159,16 @@ class GitHubLicenseUpdater {
     // Прив'язка ліцензії до HWID
     async bindLicenseToHWID(licenseKey, hwid) {
         try {
+            console.log('=== bindLicenseToHWID Debug ===');
+            console.log('License Key:', licenseKey);
+            console.log('HWID:', hwid);
+            console.log('Token available:', !!this.token);
+            
+            if (!this.token) {
+                console.error('No GitHub token available for license binding');
+                return false;
+            }
+
             const fileData = await this.getLicensesFile();
             const licenses = fileData.content;
 
@@ -146,15 +176,22 @@ class GitHubLicenseUpdater {
             const licenseIndex = licenses.licenses.findIndex(l => l.key === licenseKey);
             
             if (licenseIndex === -1) {
+                console.error('License not found in licenses.json:', licenseKey);
                 throw new Error('License not found');
             }
+
+            console.log('Found license at index:', licenseIndex);
+            console.log('Current license data:', licenses.licenses[licenseIndex]);
 
             // Оновлюємо ліцензію
             licenses.licenses[licenseIndex].hwid = hwid;
             licenses.licenses[licenseIndex].activatedAt = new Date().toISOString();
             licenses.lastUpdated = new Date().toISOString();
 
+            console.log('Updated license data:', licenses.licenses[licenseIndex]);
+
             // Оновлюємо файл на GitHub
+            console.log('Attempting to update licenses file on GitHub...');
             await this.updateLicensesFile(
                 licenses, 
                 `Bind license ${licenseKey} to HWID ${hwid.substring(0, 8)}...`
@@ -164,6 +201,7 @@ class GitHubLicenseUpdater {
             return true;
         } catch (error) {
             console.error('Failed to bind license to HWID:', error.message);
+            console.error('Error stack:', error.stack);
             return false;
         }
     }
