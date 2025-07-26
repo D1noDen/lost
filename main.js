@@ -144,6 +144,13 @@ let licenseWindow;
 
 // Функція для показу вікна активації ліцензії
 function showLicenseWindow() {
+  // Перевіряємо, чи вже існує вікно ліцензування
+  if (licenseWindow) {
+    // Якщо вікно вже існує, просто фокусуємо на ньому
+    licenseWindow.focus();
+    return;
+  }
+
   licenseWindow = new BrowserWindow({
     width: 600,
     height: 700,
