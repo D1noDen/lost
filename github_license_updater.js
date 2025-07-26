@@ -1,22 +1,19 @@
 const https = require('https');
 
-// Завантажуємо змінні з .env файлу
-require('dotenv').config();
-
 class GitHubLicenseUpdater {
     constructor(owner, repo, token = null) {
         this.owner = owner;
         this.repo = repo;
-        // Використовуємо токен з параметра або з змінних середовища
-        this.token = token || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || null;
+        // Використовуємо переданий токен
+        this.token = token;
         this.apiUrl = `api.github.com`;
         this.licensesPath = 'licenses.json';
         
         // Логування для діагностики
         if (this.token) {
-            console.log('GitHub token successfully loaded:', this.token.substring(0, 8) + '...');
+            console.log('GitHub token successfully loaded for API access');
         } else {
-            console.warn('GitHub token not found in environment variables');
+            console.warn('GitHub token not provided - API operations will be unavailable');
         }
     }
 

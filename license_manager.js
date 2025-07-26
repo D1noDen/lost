@@ -3,27 +3,31 @@ const path = require('path');
 const crypto = require('crypto');
 const { app } = require('electron');
 const GitHubLicenseUpdater = require('./github_license_updater.js');
-
-// Завантажуємо змінні з .env файлу
-require('dotenv').config();
+const ConfigManager = require('./config_manager.js');
 
 class LicenseManager {
     constructor() {
+        this.configManager = new ConfigManager();
         this.licenseUrl = 'https://raw.githubusercontent.com/D1noDen/lost/main/licenses.json';
         this.userDataPath = app.getPath('userData');
         this.licenseFile = path.join(this.userDataPath, 'license.json');
         this.localLicensesFile = path.join(__dirname, 'licenses.json'); // Backup локальний файл
         this.hwid = this.generateHWID();
         
-        // GitHub updater (токен можна встановити через змінну середовища)
+        // GitHub updater з токеном з ConfigManager
+        const token = this.configManager.getGitHubToken();
         this.githubUpdater = new GitHubLicenseUpdater(
             'D1noDen', 
             'lost', 
-            process.env.GITHUB_TOKEN || null
+            token
         );
         
-        // Переключили на GitHub режим
-        this.isLocalMode = false;
+        // Переключили на GitHub режим (якщо токен доступний)
+        this.isLocalMode = !token;
+        
+        // Логування режиму роботи
+        console.log(`License Manager mode: ${this.isLocalMode ? 'Local' : 'GitHub'}`);
+        console.log(`Token source: ${this.configManager.getTokenSource()}`);
     }
 
     // Генерація унікального HWID на основі характеристик системи
