@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-07-28T11:53:22.708Z",
+  "lastUpdated": "2025-07-28T11:53:26.075Z",
   "licenses": [
     {
       "key": "DEMO-LICENSE-KEY-001",
@@ -8,7 +8,7 @@
       "type": "demo",
       "hwid": "b08a53b8b5ee5a9958635f581c80383bf7fe32d7ae504ef538c7b34f82c36501",
       "createdAt": "2025-07-26T12:00:00Z",
-      "activatedAt": "2025-07-28T11:53:22.708Z",
+      "activatedAt": "2025-07-28T11:53:26.075Z",
       "expiryDate": "2025-12-31T23:59:59Z",
       "description": "Demo license for testing",
       "features": [
