@@ -49,9 +49,9 @@
       "key": "PR2",
       "status": "active",
       "type": "premium",
-      "hwid": "f1459ec048a3e7fe964673257d59c11920f70d86be67e792d834361ea245e411",
+      "hwid": null,
       "createdAt": "2025-07-26T12:00:00Z",
-      "activatedAt": "2025-07-28T11:59:19.739Z",
+      "activatedAt": null,
       "expiryDate": null,
       "description": "Premium license with full features",
       "features": [
