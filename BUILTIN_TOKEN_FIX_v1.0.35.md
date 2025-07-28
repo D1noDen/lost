@@ -19,7 +19,7 @@
 const token = 'your_github_token_here';
 
 // Після:
-const token = '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';
+const token = process.env.BUILT_IN_GITHUB_TOKEN || 'your_github_token_here';
 ```
 
 ### **Логіка пріоритетів:**

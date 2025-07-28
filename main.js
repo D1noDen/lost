@@ -41,19 +41,30 @@ let licenseManager;
 async function checkLicenseOnStartup() {
   try {
     licenseManager = new LicenseManager();
+    
+    // Спочатку перевіряємо чи HWID вже є в базі даних GitHub
+    console.log('🔍 Перевіряємо автоматичну ліцензію по HWID...');
+    const hwidCheck = await licenseManager.checkHWIDInDatabase();
+    
+    if (hwidCheck.found) {
+      console.log('✅ Ліцензія автоматично знайдена по HWID');
+      console.log('📋 Ключ ліцензії:', hwidCheck.license.key);
+      return true;
+    }
+    
+    // Якщо HWID не знайдено в базі, перевіряємо локальну ліцензію
+    console.log('🔍 HWID не знайдено в базі, перевіряємо локальну ліцензію...');
     const isLicensed = await licenseManager.isLicensed();
     
     if (!isLicensed) {
-      console.log('Ліцензія не активована або недійсна');
-      // Показуємо вікно активації ліцензії
-      await showLicenseWindow();
+      console.log('❌ Ліцензія не активована або недійсна');
       return false;
     }
     
-    console.log('Ліцензія активна');
+    console.log('✅ Локальна ліцензія активна');
     return true;
   } catch (error) {
-    console.error('Помилка перевірки ліцензії:', error);
+    console.error('❌ Помилка перевірки ліцензії:', error);
     return false;
   }
 }

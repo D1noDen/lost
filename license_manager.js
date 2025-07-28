@@ -213,13 +213,13 @@ class LicenseManager {
                 return { valid: false, error: 'Ліцензія прив\'язана до іншого пристрою' };
             }
 
-            // Якщо HWID не прив'язаний АБО це повторна активація, прив'язуємо через GitHub API
+            // Якщо HWID вже правильно прив'язаний, не потрібно оновлювати GitHub
             let githubUpdated = null; // null = не потрібно було оновлювати, true = успішно, false = не вдалося
             
-            if (!license.hwid || license.hwid === this.hwid) {
+            if (!license.hwid) {
+                // Ліцензія ще не прив'язана, потрібно прив'язати
                 console.log('Прив\'язуємо ліцензію до HWID:', this.hwid);
                 
-                // Обов'язково оновлюємо через GitHub API (без fallback)
                 try {
                     const updated = await this.githubUpdater.bindLicenseToHWID(licenseKey, this.hwid);
                     if (updated) {
@@ -233,6 +233,10 @@ class LicenseManager {
                     console.log('❌ GitHub API недоступний:', error.message);
                     return { valid: false, error: 'Помилка активації: GitHub API недоступний - ' + error.message };
                 }
+            } else if (license.hwid === this.hwid) {
+                // HWID вже правильно прив'язаний, оновлення не потрібно
+                console.log('✅ Ліцензія вже правильно прив\'язана до поточного HWID');
+                githubUpdated = null; // Не потрібно було оновлювати
             }
 
             // Зберігаємо інформацію локально
@@ -258,12 +262,26 @@ class LicenseManager {
             // Ліцензія дійсна, зберігаємо її
             this.saveLicenseInfo(licenseKey, this.hwid, 'active');
             
-            // GitHub завжди успішний (інакше була б помилка)
-            return { 
-                success: true, 
-                message: 'Ліцензія успішно активована та оновлена на GitHub сервері',
-                githubUpdated: true 
-            };
+            // Повертаємо відповідне повідомлення залежно від того, чи було оновлено GitHub
+            if (validation.githubUpdated === true) {
+                return { 
+                    success: true, 
+                    message: 'Ліцензія успішно активована та оновлена на GitHub сервері',
+                    githubUpdated: true 
+                };
+            } else if (validation.githubUpdated === null) {
+                return { 
+                    success: true, 
+                    message: 'Ліцензія успішно активована (вже була прив\'язана до цього пристрою)',
+                    githubUpdated: null 
+                };
+            } else {
+                return { 
+                    success: true, 
+                    message: 'Ліцензія активована локально, але GitHub оновлення недоступне',
+                    githubUpdated: false 
+                };
+            }
         } else {
             return { success: false, error: validation.error };
         }
@@ -273,6 +291,52 @@ class LicenseManager {
     async isLicensed() {
         const validation = await this.validateLicense();
         return validation.valid;
+    }
+
+    // Автоматична перевірка HWID при запуску
+    async checkHWIDInDatabase() {
+        try {
+            console.log('🔍 Перевіряємо HWID в базі даних GitHub...');
+            
+            // Завантажуємо ліцензії з GitHub
+            const licenses = await this.fetchLicensesFromGitHub();
+            
+            // Шукаємо ліцензію з нашим HWID
+            const currentHWID = this.hwid;
+            const licenseWithHWID = licenses.licenses.find(l => l.hwid === currentHWID);
+            
+            if (licenseWithHWID) {
+                console.log('✅ HWID знайдено в базі даних');
+                console.log('📋 Ліцензія:', licenseWithHWID.key);
+                console.log('🎯 Тип:', licenseWithHWID.type);
+                console.log('📅 Активовано:', licenseWithHWID.activatedAt);
+                
+                // Зберігаємо локально знайдену ліцензію
+                this.saveLicenseInfo(licenseWithHWID.key, currentHWID, 'active');
+                
+                return {
+                    found: true,
+                    license: licenseWithHWID,
+                    hwid: currentHWID
+                };
+            } else {
+                console.log('❌ HWID не знайдено в базі даних');
+                console.log('💡 Потрібна активація ліцензії');
+                
+                return {
+                    found: false,
+                    hwid: currentHWID,
+                    message: 'HWID не знайдено в базі даних - потрібна активація'
+                };
+            }
+        } catch (error) {
+            console.error('❌ Помилка перевірки HWID:', error.message);
+            return {
+                found: false,
+                error: error.message,
+                hwid: this.hwid
+            };
+        }
     }
 
     // Отримання інформації про ліцензію
