@@ -130,13 +130,17 @@ class GitHubLicenseUpdater {
                             if (res.statusCode === 200) {
                                 console.log('✅ Successfully updated licenses.json on GitHub');
                                 resolve(response);
+                            } else if (res.statusCode === 201) {
+                                console.log('✅ Successfully created licenses.json on GitHub');
+                                resolve(response);
                             } else {
-                                console.error('❌ GitHub API Error:', response.message || 'Unknown error');
-                                reject(new Error(`GitHub API Error: ${response.message || 'Unknown error'}`));
+                                console.error('❌ GitHub API Error Status:', res.statusCode);
+                                console.error('❌ GitHub API Error Response:', response);
+                                reject(new Error(`GitHub API Error (${res.statusCode}): ${response.message || 'Unknown error'}`));
                             }
                         } catch (error) {
-                            console.error('Failed to parse GitHub response:', error.message);
-                            console.error('Raw response:', data);
+                            console.error('❌ Failed to parse GitHub response:', error.message);
+                            console.error('❌ Raw response:', data);
                             reject(new Error('Failed to parse GitHub response: ' + error.message));
                         }
                     });
@@ -199,10 +203,11 @@ class GitHubLicenseUpdater {
 
             // Оновлюємо файл на GitHub
             console.log('🚀 Attempting to update licenses file on GitHub...');
-            await this.updateLicensesFile(
+            const updateResult = await this.updateLicensesFile(
                 licenses, 
                 `Bind license ${licenseKey} to HWID ${hwid.substring(0, 8)}...`
             );
+            console.log('📊 Update result:', updateResult ? 'Success' : 'Failed');
 
             console.log(`✅ License ${licenseKey} successfully bound to HWID`);
             return true;

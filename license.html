@@ -251,15 +251,7 @@
                 const result = await ipcRenderer.invoke('activate-license', licenseKey);
                 
                 if (result.success) {
-                    // Показуємо повідомлення в залежності від статусу GitHub оновлення
-                    if (result.githubUpdated === true) {
-                        showMessage(result.message + ' ✅', 'success');
-                    } else if (result.githubUpdated === false) {
-                        showMessage(result.message + ' ⚠️', 'warning');
-                    } else {
-                        showMessage(result.message, 'success');
-                    }
-                    
+                    showMessage(result.message + ' ✅', 'success');
                     document.getElementById('license-key').value = '';
                     setTimeout(() => checkLicense(), 1000);
                 } else {

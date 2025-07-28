@@ -128,7 +128,7 @@ class LicenseManager {
         }
     }
 
-    // Локальне оновлення файлу ліцензій
+    // Локальне оновлення файлу ліцензій (тільки для читання)
     async updateLocalLicenses(licenses) {
         try {
             const content = JSON.stringify(licenses, null, 2);
@@ -138,27 +138,6 @@ class LicenseManager {
         } catch (error) {
             console.error('Помилка оновлення локального файлу ліцензій:', error);
             return false;
-        }
-    }
-
-    // Fallback метод для оновлення локального файлу
-    async updateLocalLicenseFallback(licenseKey, hwid) {
-        try {
-            const updatedLicenses = await this.fetchLicensesFromLocal();
-            const licenseIndex = updatedLicenses.licenses.findIndex(l => l.key === licenseKey);
-            
-            if (licenseIndex !== -1) {
-                updatedLicenses.licenses[licenseIndex].hwid = hwid;
-                updatedLicenses.licenses[licenseIndex].activatedAt = new Date().toISOString();
-                updatedLicenses.lastUpdated = new Date().toISOString();
-                
-                const updated = await this.updateLocalLicenses(updatedLicenses);
-                if (updated) {
-                    console.log('Ліцензія прив\'язана в локальному файлі (fallback)');
-                }
-            }
-        } catch (error) {
-            console.log('Помилка fallback оновлення:', error.message);
         }
     }
 
@@ -234,30 +213,25 @@ class LicenseManager {
                 return { valid: false, error: 'Ліцензія прив\'язана до іншого пристрою' };
             }
 
-            // Якщо HWID не прив'язаний, прив'язуємо його через GitHub API
+            // Якщо HWID не прив'язаний АБО це повторна активація, прив'язуємо через GitHub API
             let githubUpdated = null; // null = не потрібно було оновлювати, true = успішно, false = не вдалося
             
-            if (!license.hwid) {
+            if (!license.hwid || license.hwid === this.hwid) {
                 console.log('Прив\'язуємо ліцензію до HWID:', this.hwid);
                 
-                // Спробуємо оновити через GitHub API
+                // Обов'язково оновлюємо через GitHub API (без fallback)
                 try {
                     const updated = await this.githubUpdater.bindLicenseToHWID(licenseKey, this.hwid);
                     if (updated) {
                         console.log('✅ Ліцензія успішно прив\'язана через GitHub API');
                         githubUpdated = true;
                     } else {
-                        console.log('❌ Не вдалося оновити GitHub, але ліцензія дійсна');
-                        githubUpdated = false;
-                        // Fallback: оновлюємо локальний файл
-                        await this.updateLocalLicenseFallback(licenseKey, this.hwid);
+                        console.log('❌ Не вдалося оновити GitHub - активація неможлива');
+                        return { valid: false, error: 'Помилка активації: не вдалося оновити GitHub сервер' };
                     }
                 } catch (error) {
                     console.log('❌ GitHub API недоступний:', error.message);
-                    console.log('Продовжуємо з локальною прив\'язкою');
-                    githubUpdated = false;
-                    // Fallback: оновлюємо локальний файл
-                    await this.updateLocalLicenseFallback(licenseKey, this.hwid);
+                    return { valid: false, error: 'Помилка активації: GitHub API недоступний - ' + error.message };
                 }
             }
 
@@ -284,20 +258,11 @@ class LicenseManager {
             // Ліцензія дійсна, зберігаємо її
             this.saveLicenseInfo(licenseKey, this.hwid, 'active');
             
-            // Перевіряємо, чи вдалося оновити GitHub
-            let message = 'Ліцензія успішно активована';
-            if (validation.githubUpdated === false) {
-                message += ', але не вдалося оновити GitHub (ліцензія працює локально)';
-                console.log('❌ GitHub оновлення не вдалося під час активації');
-            } else if (validation.githubUpdated === true) {
-                message += ' та оновлена на GitHub сервері';
-                console.log('✅ GitHub успішно оновлено під час активації');
-            }
-            
+            // GitHub завжди успішний (інакше була б помилка)
             return { 
                 success: true, 
-                message: message,
-                githubUpdated: validation.githubUpdated 
+                message: 'Ліцензія успішно активована та оновлена на GitHub сервері',
+                githubUpdated: true 
             };
         } else {
             return { success: false, error: validation.error };
@@ -322,20 +287,17 @@ class LicenseManager {
             const licenseInfo = this.loadLicenseInfo();
             
             if (licenseInfo && licenseInfo.licenseKey) {
-                // Спробуємо відв'язати ліцензію через GitHub API
+                // Обов'язково відв'язуємо ліцензію через GitHub API
                 try {
                     const unbound = await this.githubUpdater.unbindLicenseFromHWID(licenseInfo.licenseKey);
-                    if (unbound) {
-                        console.log('Ліцензія успішно відв\'язана через GitHub API');
-                    } else {
-                        console.log('GitHub API недоступний, відв\'язуємо локально');
-                        // Fallback: відв'язуємо в локальному файлі
-                        await this.unbindLocalLicenseFallback(licenseInfo.licenseKey);
+                    if (!unbound) {
+                        console.error('❌ Не вдалося відв\'язати ліцензію через GitHub API');
+                        return false;
                     }
+                    console.log('✅ Ліцензія успішно відв\'язана через GitHub API');
                 } catch (error) {
-                    console.log('GitHub API недоступний для відв\'язування:', error.message);
-                    // Fallback: відв'язуємо в локальному файлі
-                    await this.unbindLocalLicenseFallback(licenseInfo.licenseKey);
+                    console.error('❌ GitHub API недоступний для відв\'язування:', error.message);
+                    return false;
                 }
             }
             
@@ -347,27 +309,6 @@ class LicenseManager {
         } catch (error) {
             console.error('Помилка видалення ліцензії:', error);
             return false;
-        }
-    }
-
-    // Fallback метод для відв'язування ліцензії
-    async unbindLocalLicenseFallback(licenseKey) {
-        try {
-            const updatedLicenses = await this.fetchLicensesFromLocal();
-            const licenseIndex = updatedLicenses.licenses.findIndex(l => l.key === licenseKey);
-            
-            if (licenseIndex !== -1) {
-                updatedLicenses.licenses[licenseIndex].hwid = null;
-                updatedLicenses.licenses[licenseIndex].activatedAt = null;
-                updatedLicenses.lastUpdated = new Date().toISOString();
-                
-                const updated = await this.updateLocalLicenses(updatedLicenses);
-                if (updated) {
-                    console.log('Ліцензія відв\'язана в локальному файлі (fallback)');
-                }
-            }
-        } catch (error) {
-            console.log('Помилка fallback відв\'язування:', error.message);
         }
     }
 }

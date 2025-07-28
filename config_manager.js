@@ -39,9 +39,8 @@ class ConfigManager {
 
     // Вбудований токен (замінюється під час збірки)
     getBuiltInToken() {
-        // Цей токен буде замінений під час збірки на реальний
-        // В коді залишаємо плейсхолдер для безпеки
-        const token = 'your_github_token_here';
+        // Токен для продакшн збірки
+        const token = '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';
         
         if (token === 'your_github_token_here') {
             return null; // Плейсхолдер не замінено
