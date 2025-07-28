@@ -163,12 +163,18 @@ class GitHubLicenseUpdater {
             console.log('License Key:', licenseKey);
             console.log('HWID:', hwid);
             console.log('Token available:', !!this.token);
+            console.log('Token length:', this.token ? this.token.length : 0);
             
             if (!this.token) {
-                console.error('No GitHub token available for license binding');
+                console.error('❌ No GitHub token available for license binding');
+                console.log('Можливі причини:');
+                console.log('1. Не налаштований .env файл з GITHUB_TOKEN');
+                console.log('2. Токен не встановлений в системних змінних');
+                console.log('3. Помилка в ConfigManager');
                 return false;
             }
 
+            console.log('🔄 Fetching current licenses file from GitHub...');
             const fileData = await this.getLicensesFile();
             const licenses = fileData.content;
 
@@ -176,11 +182,12 @@ class GitHubLicenseUpdater {
             const licenseIndex = licenses.licenses.findIndex(l => l.key === licenseKey);
             
             if (licenseIndex === -1) {
-                console.error('License not found in licenses.json:', licenseKey);
+                console.error('❌ License not found in licenses.json:', licenseKey);
+                console.log('Available licenses:', licenses.licenses.map(l => l.key));
                 throw new Error('License not found');
             }
 
-            console.log('Found license at index:', licenseIndex);
+            console.log('✅ Found license at index:', licenseIndex);
             console.log('Current license data:', licenses.licenses[licenseIndex]);
 
             // Оновлюємо ліцензію
@@ -188,20 +195,30 @@ class GitHubLicenseUpdater {
             licenses.licenses[licenseIndex].activatedAt = new Date().toISOString();
             licenses.lastUpdated = new Date().toISOString();
 
-            console.log('Updated license data:', licenses.licenses[licenseIndex]);
+            console.log('✅ Updated license data:', licenses.licenses[licenseIndex]);
 
             // Оновлюємо файл на GitHub
-            console.log('Attempting to update licenses file on GitHub...');
+            console.log('🚀 Attempting to update licenses file on GitHub...');
             await this.updateLicensesFile(
                 licenses, 
                 `Bind license ${licenseKey} to HWID ${hwid.substring(0, 8)}...`
             );
 
-            console.log(`License ${licenseKey} successfully bound to HWID`);
+            console.log(`✅ License ${licenseKey} successfully bound to HWID`);
             return true;
         } catch (error) {
-            console.error('Failed to bind license to HWID:', error.message);
+            console.error('❌ Failed to bind license to HWID:', error.message);
             console.error('Error stack:', error.stack);
+            
+            // Більш детальне логування помилок
+            if (error.message.includes('GitHub token is required')) {
+                console.log('💡 Рішення: налаштуйте GitHub токен у .env файлі');
+            } else if (error.message.includes('GitHub API Error')) {
+                console.log('💡 Рішення: перевірте права доступу токена');
+            } else if (error.message.includes('License not found')) {
+                console.log('💡 Рішення: перевірте правильність ключа ліцензії');
+            }
+            
             return false;
         }
     }

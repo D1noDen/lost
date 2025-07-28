@@ -1,5 +1,6 @@
 class ConfigManager {
     constructor() {
+        console.log('ConfigManager constructor called');
         // Завантажуємо змінні з .env файлу (тільки в режимі розробки)
         try {
             require('dotenv').config();
@@ -11,29 +12,22 @@ class ConfigManager {
 
     // Отримання GitHub токена з різних джерел
     getGitHubToken() {
-        console.log('=== ConfigManager.getGitHubToken Debug ===');
-        
         // 1. Спочатку перевіряємо змінні середовища (.env файл або системні)
         const envToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-        console.log('Environment token available:', !!envToken);
-        console.log('Environment token length:', envToken ? envToken.length : 0);
-        
         if (envToken && envToken !== 'your_github_token_here') {
-            console.log('✅ Використовуємо токен з змінних середовища');
+            console.log('Використовуємо токен з змінних середовища');
             return envToken;
         }
 
         // 2. Перевіряємо вбудований токен (для продакшн збірки)
         const builtInToken = this.getBuiltInToken();
-        console.log('Built-in token available:', !!builtInToken);
-        
         if (builtInToken) {
-            console.log('✅ Використовуємо вбудований токен');
+            console.log('Використовуємо вбудований токен');
             return builtInToken;
         }
 
         // 3. Якщо токен не знайдено
-        console.warn('❌ GitHub токен не знайдено. Система працюватиме в локальному режимі.');
+        console.warn('GitHub токен не знайдено. Система працюватиме в локальному режимі.');
         return null;
     }
 

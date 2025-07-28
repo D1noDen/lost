@@ -235,6 +235,8 @@ class LicenseManager {
             }
 
             // Якщо HWID не прив'язаний, прив'язуємо його через GitHub API
+            let githubUpdated = null; // null = не потрібно було оновлювати, true = успішно, false = не вдалося
+            
             if (!license.hwid) {
                 console.log('Прив\'язуємо ліцензію до HWID:', this.hwid);
                 
@@ -242,15 +244,18 @@ class LicenseManager {
                 try {
                     const updated = await this.githubUpdater.bindLicenseToHWID(licenseKey, this.hwid);
                     if (updated) {
-                        console.log('Ліцензія успішно прив\'язана через GitHub API');
+                        console.log('✅ Ліцензія успішно прив\'язана через GitHub API');
+                        githubUpdated = true;
                     } else {
-                        console.log('Не вдалося оновити GitHub, але ліцензія дійсна');
+                        console.log('❌ Не вдалося оновити GitHub, але ліцензія дійсна');
+                        githubUpdated = false;
                         // Fallback: оновлюємо локальний файл
                         await this.updateLocalLicenseFallback(licenseKey, this.hwid);
                     }
                 } catch (error) {
-                    console.log('GitHub API недоступний:', error.message);
+                    console.log('❌ GitHub API недоступний:', error.message);
                     console.log('Продовжуємо з локальною прив\'язкою');
+                    githubUpdated = false;
                     // Fallback: оновлюємо локальний файл
                     await this.updateLocalLicenseFallback(licenseKey, this.hwid);
                 }
@@ -262,7 +267,8 @@ class LicenseManager {
             return { 
                 valid: true, 
                 license: license,
-                hwid: this.hwid
+                hwid: this.hwid,
+                githubUpdated: githubUpdated
             };
 
         } catch (error) {
@@ -277,7 +283,22 @@ class LicenseManager {
         if (validation.valid) {
             // Ліцензія дійсна, зберігаємо її
             this.saveLicenseInfo(licenseKey, this.hwid, 'active');
-            return { success: true, message: 'Ліцензія успішно активована' };
+            
+            // Перевіряємо, чи вдалося оновити GitHub
+            let message = 'Ліцензія успішно активована';
+            if (validation.githubUpdated === false) {
+                message += ', але не вдалося оновити GitHub (ліцензія працює локально)';
+                console.log('❌ GitHub оновлення не вдалося під час активації');
+            } else if (validation.githubUpdated === true) {
+                message += ' та оновлена на GitHub сервері';
+                console.log('✅ GitHub успішно оновлено під час активації');
+            }
+            
+            return { 
+                success: true, 
+                message: message,
+                githubUpdated: validation.githubUpdated 
+            };
         } else {
             return { success: false, error: validation.error };
         }
