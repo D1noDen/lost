@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-07-28T21:01:28.377Z",
+  "lastUpdated": "2025-07-30T11:09:11.596Z",
   "licenses": [
     {
       "key": "DEMO-LICENSE-KEY-001",
@@ -49,9 +49,9 @@
       "key": "PIDOR",
       "status": "active",
       "type": "premium",
-      "hwid": null,
+      "hwid": "f1459ec048a3e7fe964673257d59c11920f70d86be67e792d834361ea245e411",
       "createdAt": "2025-07-26T12:00:00Z",
-      "activatedAt": null,
+      "activatedAt": "2025-07-30T11:09:11.596Z",
       "expiryDate": null,
       "description": "Premium license with full features",
       "features": [
