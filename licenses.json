@@ -94,9 +94,9 @@
       "key": "1328721",
       "status": "active",
       "type": "premium",
-      "hwid": "63333da59502166227f292628d79c75d91aa2e5c0eb1b5437e1b657a8b5d3b70",
+      "hwid": null,
       "createdAt": "2025-07-26T12:00:00Z",
-      "activatedAt": "2025-08-15T10:08:25.232Z",
+      "activatedAt": null,
       "expiryDate": null,
       "description": "Premium license with full features",
       "features": [
