@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-08-25T17:56:35.158Z",
+  "lastUpdated": "2025-08-25T17:56:37.116Z",
   "licenses": [
     {
       "key": "DEMO-LICENSE-KEY-001",
@@ -111,7 +111,7 @@
       "type": "premium",
       "hwid": "09b29bc4b3fa52c82d00de89808dfa0d6b5f2e2f2876e2b9b750b141cc3900ce",
       "createdAt": "2025-07-26T12:00:00Z",
-      "activatedAt": "2025-08-25T17:56:35.158Z",
+      "activatedAt": "2025-08-25T17:56:37.116Z",
       "expiryDate": null,
       "description": "Premium license with full features",
       "features": [
