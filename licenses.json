@@ -139,7 +139,7 @@
       "key": "licensesX1250",
       "status": "active",
       "type": "premium",
-      "hwid": "fea6144e6b3884df90a5ea1c75463d271730e996631fcb65bf6fca57b43dfbe2",
+      "hwid": null,
       "createdAt": "2025-07-26T12:00:00Z",
       "activatedAt": "2025-09-18T15:26:14.489Z",
       "expiryDate": null,
