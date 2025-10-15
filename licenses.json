@@ -164,6 +164,21 @@
         "premium",
         "unlimited"
       ]
+    },
+    {
+      "key": "licensesX12360",
+      "status": "active",
+      "type": "premium",
+      "hwid": null,
+      "createdAt": "2025-07-26T12:00:00Z",
+      "activatedAt": null,
+      "expiryDate": null,
+      "description": "Premium license with full features",
+      "features": [
+        "basic",
+        "premium",
+        "unlimited"
+      ]
     }
   ]
 }
