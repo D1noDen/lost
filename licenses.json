@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-10-19T18:50:31.162Z",
+  "lastUpdated": "2025-11-07T17:44:07.362Z",
   "licenses": [
     {
       "key": "DEMO-LICENSE-KEY-001",
@@ -169,9 +169,9 @@
       "key": "licensesX12360",
       "status": "active",
       "type": "premium",
-      "hwid": null,
+      "hwid": "1abbb4bed055e37729dc25450e957d5ee678f90a98f84ba49d229296eeb051a8",
       "createdAt": "2025-07-26T12:00:00Z",
-      "activatedAt": null,
+      "activatedAt": "2025-11-07T17:44:07.330Z",
       "expiryDate": null,
       "description": "Premium license with full features",
       "features": [
@@ -180,7 +180,7 @@
         "unlimited"
       ]
     },
-     {
+    {
       "key": "licensesX0931",
       "status": "active",
       "type": "premium",
@@ -195,7 +195,7 @@
         "unlimited"
       ]
     },
-     {
+    {
       "key": "licensesX0932",
       "status": "active",
       "type": "premium",
