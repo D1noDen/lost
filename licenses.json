@@ -179,6 +179,36 @@
         "premium",
         "unlimited"
       ]
+    },
+     {
+      "key": "licensesX0931",
+      "status": "active",
+      "type": "premium",
+      "hwid": null,
+      "createdAt": "2025-07-26T12:00:00Z",
+      "activatedAt": null,
+      "expiryDate": null,
+      "description": "Premium license with full features",
+      "features": [
+        "basic",
+        "premium",
+        "unlimited"
+      ]
+    },
+     {
+      "key": "licensesX0932",
+      "status": "active",
+      "type": "premium",
+      "hwid": null,
+      "createdAt": "2025-07-26T12:00:00Z",
+      "activatedAt": null,
+      "expiryDate": null,
+      "description": "Premium license with full features",
+      "features": [
+        "basic",
+        "premium",
+        "unlimited"
+      ]
     }
   ]
 }
